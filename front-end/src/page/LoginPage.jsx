@@ -1,5 +1,5 @@
 // import React from 'react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from "react-hook-form"
 import IMAGE from '../assets/ring.jpg'
 
@@ -34,28 +34,31 @@ const PasswordInput = ({ placeholder, showPassword, setShowPassword, ...props })
 
 const LoginPage = () => {
   const [role, setRole] = useState('User')
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [mode, setMode] = useState("login")
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    formState: { errors }
+  } = useForm()
+
+  const handleLogin = async (formData) => {
     setError('');
 
-    console.log("Sending to server:", { email, password }) //debug
+    console.log("Sending to server:", { email: formData.email, password: formData.password }) //debug
     const url = role === "User" ? "login" : "login-business";
 
     try {
       const response = await fetch(`http://localhost:5000/api/${url}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
       });
 
       const data = await response.json();
@@ -70,17 +73,16 @@ const LoginPage = () => {
     }
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const handleRegister = async (formData) => {
     setError('');
 
     const url = role === "User" ? "register" : "register-business";
 
-    if (!fullName || !email || !password || !confirmPassword) {
+    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
         return setError("Please fill in all fields");
     }
 
-    if (password !== confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       return setError("Passwords do not match");
     }
 
@@ -89,10 +91,10 @@ const LoginPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          name: fullName, 
-          email: email, 
-          password: password,
-          phone: phone
+          name: formData.fullName, 
+          email: formData.email, 
+          password: formData.password,
+          phone: formData.phone
         }),
       });
 
@@ -109,46 +111,27 @@ const LoginPage = () => {
     }
   };
 
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-    setValue,
-    formState: { errors }
-  } = useForm()
-
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     if (mode === "register") {
-      if (!role || role === "Customer") {
-        alert("Please select a valid role (User or Admin)")
+      if (!role || !['User', 'Admin'].includes(role)) {
+        setError("Please select a valid role (User or Admin)")
         return
       }
       
       if (data.password !== data.confirmPassword) {
-        alert("Passwords do not match")
+        setError("Passwords do not match")
         return
       }
-    }
-
-    console.log("Validated Data:", { ...data, role })
-    alert("Form submitted successfully")
-    reset()
-    
-    // Reset local states if needed
-    if (mode === "login") {
-      setShowPassword(false)
+      
+      await handleRegister(data)
     } else {
-      setShowPassword(false)
-      setShowConfirmPassword(false)
+      await handleLogin(data)
     }
   }
 
   const handleModeSwitch = () => {
     setMode(mode === "login" ? "register" : "login")
-    setRole("Customer")
+    setRole("User")
     setShowPassword(false)
     setShowConfirmPassword(false)
     reset() // This will clear all form fields including password
@@ -290,9 +273,7 @@ const LoginPage = () => {
                       message: "Minimum 3 characters"
                     }
                   })}
-                  value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full pl-12 pr-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
@@ -311,9 +292,7 @@ const LoginPage = () => {
 
               <input
                 type="email"
-                value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email Address"
+                placeholder="Email Address"
                 {...register("email", {
                   required: "Email is required",
                   pattern: {
@@ -339,9 +318,7 @@ const LoginPage = () => {
 
                 <input
                   type="tel"
-                  value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Phone Number"
+                  placeholder="Phone Number"
                   {...register("phone", {
                     required: "Phone number is required",
                     validate: validatePhoneNumber,
@@ -373,8 +350,6 @@ const LoginPage = () => {
             <div className="w-3/4 mb-6">
               <PasswordInput
                 placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 showPassword={showPassword}
                 setShowPassword={setShowPassword}
                 {...register("password", {
@@ -395,8 +370,6 @@ const LoginPage = () => {
               <div className="w-1/2">
                 <PasswordInput
                   placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   showPassword={showPassword}
                   setShowPassword={setShowPassword}
                   {...register("password", {
@@ -416,8 +389,6 @@ const LoginPage = () => {
               <div className="w-1/2">
                 <PasswordInput
                   placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
                   showPassword={showConfirmPassword}
                   setShowPassword={setShowConfirmPassword}
                   {...register("confirmPassword", {
@@ -439,7 +410,6 @@ const LoginPage = () => {
         <div className="flex justify-center">
           <button
             type="submit"
-            onClick={mode === "login" ? handleLogin : handleRegister}
           className="w-3/4 bg-primary text-white py-3 rounded-full font-semibold cursor-pointer hover:opacity-90 transition"
           >
             Continue
