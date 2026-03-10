@@ -45,9 +45,8 @@
 
 /* HERO SECTION */
 .hero {
-  background: linear-gradient(135deg, rgba(20, 110, 60, 0.92) 0%, rgba(15, 85, 45, 0.92) 50%, rgba(10, 60, 30, 0.92) 100%), url('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1920') no-repeat center center;
-  background-size: cover;
-  color: white;
+  background: #f1f8e9;
+  color: #2e7d32;
   text-align: center;
   min-height: 100vh;
   width: 100%;
@@ -55,7 +54,6 @@
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 20px rgba(20, 110, 60, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,32 +62,23 @@
 .hero .hero-content {
   width: 100%;
   margin: 0 auto;
-  padding: 0;
+  padding: 120px 40px 0;
   box-sizing: border-box;
 }
 
 .hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image:
-    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  pointer-events: none;
+  display: none;
 }
 
 .hero h1 {
   font-size: 80px;
   font-weight: 800;
   margin: 0;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   word-break: break-word;
   position: relative;
   z-index: 2;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  color: #2e7d32;
   animation: slideDown 0.8s ease-out;
 }
 
@@ -98,9 +87,9 @@
   font-size: 30px;
   line-height: 1.8;
   max-width: 800px;
-  opacity: 0.95;
   position: relative;
   z-index: 2;
+  color: #4caf50;
   animation: slideUp 0.8s ease-out 0.2s both;
 }
 
@@ -119,18 +108,17 @@
 
 .search-container input,
 .search-container select {
-  padding: 18px 20px;
-  border-radius: 8px;
-  border: 2px solid transparent;
+  padding: 16px 20px;
+  border-radius: 50px;
+  border: 1px solid #81c784;
   width: 260px;
   max-width: calc(100% - 20px);
   flex-shrink: 0;
-  font-size: 20px;
+  font-size: 18px;
   background-color: white;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   font-weight: 500;
-  color: #333;
+  color: #2e7d32;
 }
 
 .search-container select option {
@@ -145,35 +133,30 @@
 .search-container input:focus,
 .search-container select:focus {
   outline: none;
-  border-color: #1a7a3c;
-  box-shadow: 0 0 0 4px rgba(26, 122, 60, 0.15), 0 2px 12px rgba(0, 0, 0, 0.15);
-  background-color: #fff;
+  border-color: #2e7d32;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(129, 199, 132, 0.2);
 }
 
 .search-container button {
-  padding: 18px 40px;
-  background: linear-gradient(135deg, #1a7a3c 0%, #155e2e 100%);
+  padding: 16px 50px;
+  background: #81c784;
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border: none;
+  border-radius: 50px;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   transition: all 0.3s ease;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .search-container button:hover {
-  background: linear-gradient(135deg, #155e2e 0%, #0f4a22 100%);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: #66bb6a;
 }
 
 .search-container button:active {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(2px);
 }
 
 /* VENUE SECTION */
@@ -539,28 +522,25 @@
   margin-top: auto;
   width: 100%;
   padding: 20px;
-  background: linear-gradient(135deg, #1a7a3c 0%, #155e2e 100%);
+  background: #81c784;
   color: white;
-  border: 2px solid transparent;
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 20px;
   font-weight: 700;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(26, 122, 60, 0.2);
   letter-spacing: 0.5px;
 }
 
 .card button:hover {
-  background: linear-gradient(135deg, #155e2e 0%, #0f4a22 100%);
+  background: #66bb6a;
   transform: scale(1.03);
-  box-shadow: 0 8px 20px rgba(26, 122, 60, 0.3);
-  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 20px rgba(129, 199, 132, 0.3);
 }
 
 .card button:active {
   transform: scale(0.98);
-  box-shadow: 0 4px 12px rgba(26, 122, 60, 0.2);
 }
 
 /* RESPONSIVE DESIGN */
