@@ -159,7 +159,7 @@ const Dashboard = () => {
   }, [lapangans])
 
   const tabItems = [
-    { id: 'stats', label: 'Statistik', icon: FiBarChart2 },
+    { id: 'stats', label: 'Dashboard', icon: FiBarChart2 },
     { id: 'business', label: 'Manage Business', icon: FiBriefcase },
     { id: 'fields', label: 'Manage Field', icon: FiGrid },
   ]
@@ -188,7 +188,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <nav className="px-4 pb-8 space-y-1">
+          <nav className="px-3 pb-8 space-y-1">
             {tabItems.map((tab) => (
               <button
                 key={tab.id}
