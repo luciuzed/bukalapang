@@ -139,8 +139,7 @@
 }
 
 .search-container button {
-  padding: 16px 50px;
-  background: #81c784;
+  padding: 16px 40px;
   color: white;
   border: none;
   border-radius: 50px;
@@ -151,8 +150,21 @@
   white-space: nowrap;
 }
 
-.search-container button:hover {
+.search-container .btn-search {
+  background: #81c784;
+}
+
+.search-container .btn-search:hover {
   background: #66bb6a;
+}
+
+.search-container .btn-reset {
+  background: #e57373;
+  padding: 16px 30px;
+}
+
+.search-container .btn-reset:hover {
+  background: #ef5350;
 }
 
 .search-container button:active {
@@ -434,6 +446,45 @@
   border-radius: 2px;
 }
 
+.filter-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 40px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 20px;
+}
+
+.filter-buttons button {
+  padding: 14px 32px;
+  background: white;
+  border: 2px solid #81c784;
+  color: #2e7d32;
+  border-radius: 40px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.filter-buttons button:hover {
+  background: #f1f8e9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.filter-buttons button.active {
+  background: #2e7d32;
+  color: white;
+  border-color: #2e7d32;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+}
+
+
 .card-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -516,6 +567,14 @@
   flex-grow: 1;
   line-height: 1.6;
   font-weight: 500;
+}
+
+.card .card-city {
+  flex-grow: 0;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  color: #777;
+  font-weight: 600;
 }
 
 .card button {

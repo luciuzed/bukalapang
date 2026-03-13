@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import "./navbar.css";
 
 const Navbar = () => {
@@ -6,12 +7,19 @@ const Navbar = () => {
     <div className="navbar">
       <div className="navbar-content">
         <div className="logo">
-            <h1>BUKALAPANG</h1>
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <h1>BUKALAPANG</h1>
+            </Link>
         </div>
         <ul className="menu">
-            <li><a href="#home">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#reserve">Reserve</a></li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/about">About</Link></li>
+            <li><Link to="/#reserve" onClick={(e) => {
+              if (window.location.pathname === '/') {
+                e.preventDefault();
+                document.getElementById('reserve')?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}>Reserve</Link></li>
         </ul>
 
         <div>
@@ -22,4 +30,4 @@ const Navbar = () => {
   )
 }
 
-export default Navbar
+export default Navbar;
