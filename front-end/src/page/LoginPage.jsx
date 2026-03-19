@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
-import IMAGE from '../assets/ring.jpg'
+import IMAGE_RING from '../assets/ring.jpg'
+import IMAGE_PADEL from '../assets/padel.jpg'
+import IMAGE_BILIARD from '../assets/biliard.jpg'
+import IMAGE_TENNIS from '../assets/tennis.jpg'
 
 import { FaUser, FaLock, FaPhoneAlt, FaEye, FaEyeSlash } from "react-icons/fa";
 
@@ -40,7 +43,18 @@ const LoginPage = () => {
   const [mode, setMode] = useState("login")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [activeSlide, setActiveSlide] = useState(0)
+  const images = [IMAGE_RING, IMAGE_PADEL, IMAGE_BILIARD, IMAGE_TENNIS]
+
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % images.length)
+    }, 5000)
+
+    return () => clearInterval(timer)
+  }, [images.length])
 
   const {
     register,
@@ -475,12 +489,33 @@ const LoginPage = () => {
         </form>
       </div>        
       {/* right */}
-      <div className="hidden lg:flex w-1/2 justify-center items-center py-5">
-        <img 
-          src={IMAGE}
-          alt="Ring"
-          className="w-3/4 max-h-[80vh] object-cover rounded-xl"
-        />
+      <div className="hidden lg:flex w-1/2 justify-center items-center py-5 lg:h-[80vh]">
+        <div className="w-3/4 h-full max-h-[70vh] overflow-hidden rounded-xl bg-gray-100 relative">
+          <div
+            className="h-full flex transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+          >
+            {images.map((img, idx) => (
+              <img
+                key={idx}
+                src={img}
+                alt={`Slide ${idx + 1}`}
+                className="w-full h-full flex-shrink-0 object-cover"
+              />
+            ))}
+          </div>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+            {images.map((_, idx) => (
+              <span
+                key={`dot-${idx}`}
+                className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                  idx === activeSlide ? 'bg-white scale-125' : 'bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
     </div>
