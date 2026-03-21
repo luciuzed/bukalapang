@@ -1,54 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   FaMapMarkerAlt,
   FaChevronLeft,
   FaWhatsapp
 } from 'react-icons/fa';
-import { allExperiences } from './BookingPage';
 import BookingSummaryModal from './BookingSummaryModal';
 
 const BookingDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [field, setField] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedSlots, setSelectedSlots] = useState([]);
+
+  useEffect(() => {
+    const today = new Date();
+    setSelectedDate(today.toISOString().split('T')[0]);
+    fetchFieldDetails();
+  }, [id]);
+
+  const fetchFieldDetails = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/field/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setField(data);
+      } else {
+        navigate('/venue');
+      }
+    } catch (err) {
+      console.error('Failed to fetch field:', err);
+      navigate('/venue');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRemoveSlot = (slotKey) => {
     setSelectedSlots(prev => prev.filter(key => key !== slotKey));
   };
 
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  };
-
-  const field = allExperiences.find(item => item.id === parseInt(id));
-
-  const [selectedDate, setSelectedDate] = useState(getTodayDate());
-  const [selectedSlots, setSelectedSlots] = useState([]);
+  if (loading) {
+    return <div className="p-10 text-center font-bold">Loading...</div>;
+  }
 
   if (!field) {
     return <div className="p-10 text-center font-bold">Field not found</div>;
   }
 
   const openGoogleMaps = () => {
-    if (!field.location) return;
-    const query = encodeURIComponent(field.location);
+    if (!field.address) return;
+    const query = encodeURIComponent(field.address);
     window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
   };
 
-  const openTime = field.openTime || "08:00";
-  const closeTime = field.closeTime || "22:00";
-  const slotDuration = field.slotDuration || 60;
+  const openTime = "08:00";
+  const closeTime = "22:00";
+  const slotDuration = 60;
+  const pricePerHour = 100000;
 
-  const weekdayPrice = field.weekdayPrice || 100000;
-  const weekendPrice = field.weekendPrice || 120000;
-
-  const courts = field.courts?.length
-    ? field.courts
-    : ["Court A","Court B","Court C","Court D","Court E","Court F"];
-
-  const facilities = field.facilities || [];
+  const courts = ["Court A", "Court B", "Court C"];
 
   const generateTimeSlots = (open, close, duration) => {
     const slots = [];
@@ -81,8 +95,8 @@ const BookingDetailPage = () => {
     return d.getDay() === 0 || d.getDay() === 6;
   };
 
-  const pricePerHour = isWeekend(selectedDate) ? weekendPrice : weekdayPrice;
-  const pricePerSlot = pricePerHour * (slotDuration / 60);
+  const displayPrice = isWeekend(selectedDate) ? pricePerHour * 1.2 : pricePerHour;
+  const pricePerSlot = displayPrice * (slotDuration / 60);
 
   const toggleSlot = (court, time) => {
     const key = `${court}-${time}`;
@@ -97,7 +111,7 @@ const BookingDetailPage = () => {
 
   const contactWhatsApp = () => {
     const msg = `Halo Admin,
-Venue: ${field.title}
+Venue: ${field.name}
 Tanggal: ${selectedDate}
 Slot: ${selectedSlots.join(', ')}
 Total: Rp ${totalPrice.toLocaleString()}`;
@@ -120,17 +134,23 @@ Total: Rp ${totalPrice.toLocaleString()}`;
         {/* LEFT */}
         <div className="lg:col-span-2 space-y-6">
 
-          <div className="rounded-3xl overflow-hidden aspect-video shadow-xl">
-            <img src={field.img} className="w-full h-full object-cover" />
+          <div className="rounded-3xl overflow-hidden aspect-video shadow-xl bg-gray-200">
+            {field.image_url ? (
+              <img src={field.image_url} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
+                <span className="text-gray-600">No image</span>
+              </div>
+            )}
           </div>
 
           <div>
-            <h1 className="text-3xl font-black">{field.title}</h1>
+            <h1 className="text-3xl font-black">{field.name}</h1>
             <button
               onClick={openGoogleMaps}
               className="flex items-center gap-2 text-primary mt-2 hover:underline"
             >
-              <FaMapMarkerAlt /> {field.location}
+              <FaMapMarkerAlt /> {field.address}
             </button>
           </div>
 
@@ -141,11 +161,9 @@ Total: Rp ${totalPrice.toLocaleString()}`;
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            {facilities.map((f, i) => (
-              <div key={i} className="px-3 py-1 text-xs rounded-full bg-gray-100">
-                {f}
-              </div>
-            ))}
+            <div className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-semibold">
+              {field.category}
+            </div>
           </div>
 
           <div>
@@ -165,7 +183,6 @@ Total: Rp ${totalPrice.toLocaleString()}`;
           <div>
             <p className="text-xs font-bold mb-3">Select Time & Court</p>
 
-            {/* 🔥 GRID FIXED SYSTEM */}
             <div
               className="grid gap-2"
               style={{
@@ -235,7 +252,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
                 Price ({isWeekend(selectedDate) ? "Weekend" : "Weekday"})
               </p>
               <p className="text-xl font-black">
-                Rp {pricePerHour.toLocaleString()} / hour
+                Rp {displayPrice.toLocaleString()} / hour
               </p>
             </div>
 
@@ -290,3 +307,5 @@ Total: Rp ${totalPrice.toLocaleString()}`;
 };
 
 export default BookingDetailPage;
+
+ 

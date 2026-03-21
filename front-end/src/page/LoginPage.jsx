@@ -152,6 +152,8 @@ const LoginPage = () => {
       return setError("Passwords do not match");
     }
 
+    console.log(`[REGISTER] Starting registration with role: ${role}, url: ${url}`);
+
     setIsLoading(true)
     try {
       const response = await fetch(`http://localhost:5000/api/${url}`, {
@@ -169,6 +171,7 @@ const LoginPage = () => {
 
       if (response.ok && data.otpNeeded) {
         const targetRoute = role === "User" ? "/home" : "/dashboard"
+        console.log(`[REGISTER] OTP needed. Setting pendingOtpInfo with role: ${role}`);
         setPendingOtpInfo({ email: formData.email, role, redirect: targetRoute })
         setShowOtpUI(true)
         setPendingRegisterData(null)
@@ -357,6 +360,10 @@ const LoginPage = () => {
       return
     }
 
+    console.log(`[VERIFY-OTP] Submitting OTP verification`);
+    console.log(`[VERIFY-OTP] pendingOtpInfo:`, pendingOtpInfo);
+    console.log(`[VERIFY-OTP] Email: ${pendingOtpInfo.email}, Role: ${pendingOtpInfo.role}, OTP: ${pin}`);
+
     setIsLoading(true)
     try {
       const response = await fetch('http://localhost:5000/api/verify-otp', {
@@ -371,8 +378,20 @@ const LoginPage = () => {
 
       const data = await response.json()
       if (response.ok && data.success) {
-        const userPayload = data.user || { email: pendingOtpInfo.email, role: pendingOtpInfo.role };
-        Cookies.set('user_session', JSON.stringify(userPayload), { expires: 7 });
+        if (pendingOtpInfo.role === 'Business') {
+          // Store admin session with adminId
+          const adminPayload = {
+            adminId: data.adminId,
+            adminName: data.adminName,
+            email: pendingOtpInfo.email,
+            role: 'Business'
+          };
+          Cookies.set('admin_session', JSON.stringify(adminPayload), { expires: 7 });
+          localStorage.setItem('adminId', data.adminId);
+        } else {
+          const userPayload = data.user || { email: pendingOtpInfo.email, role: pendingOtpInfo.role };
+          Cookies.set('user_session', JSON.stringify(userPayload), { expires: 7 });
+        }
         setShowOtpUI(false)
         setOtpCode(['', '', '', ''])
         setPendingOtpInfo(null)
@@ -541,14 +560,14 @@ const LoginPage = () => {
 
                   <button
                     type="button"
-                    onClick={() => setRole("Admin")}
+                    onClick={() => setRole("Business")}
                     className={`px-6 py-2 rounded-full border ${
-                      role === "Admin"
+                      role === "Business"
                         ? "bg-primary text-white border-primary"
                         : "border-gray-300 text-gray-500"
                     }`}
                   >
-                    Admin
+                    Business
                   </button>
 
                 </div>

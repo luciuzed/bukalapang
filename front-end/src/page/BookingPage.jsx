@@ -2,45 +2,64 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-export const allExperiences = Array.from({ length: 25 }, (_, i) => ({
-  id: i + 1,
-  title: `${['Petak Enam', 'Prisma', 'Holeo', 'Cilandak', 'Senayan'][i % 5]} ${['Arena', 'Hall', 'Center'][i % 3]}`,
-  location: i % 2 === 0 ? "Jakarta Barat" : "Jakarta Selatan",
-  tag: ['Badminton', 'Tennis', 'Golf', 'Billiard', 'Basket'][i % 5],
-  price: `Rp ${(i + 1) * 10}k`,
-  rating: (4 + Math.random()).toFixed(1),
-  img: `https://picsum.photos/seed/${i + 22}/500/400`,
-  description: "A premium sports venue featuring international standard facilities, professional lighting, and a comfortable atmosphere for all players."
-}));
-
 const ITEMS_PER_PAGE = 12;
 
 const BookingPage = () => {
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [fields, setFields] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeCategory, setActiveCategory] = useState('All')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
+    fetchFields()
+  }, [])
 
-  const filteredExperiences = useMemo(() => {
-    return allExperiences.filter(item => {
-      const matchesCategory = activeCategory === 'All' || item.tag === activeCategory;
-      const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, searchQuery]);
+  const fetchFields = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/fields-public')
+      if (response.ok) {
+        const data = await response.json()
+        setFields(data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch fields:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const totalPages = Math.ceil(filteredExperiences.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentItems = filteredExperiences.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentPage])
+
+  const categories = ['All', 'Futsal', 'Badminton', 'Basketball', 'Tennis']
+
+  const filteredFields = useMemo(() => {
+    return fields.filter(item => {
+      const matchesCategory = activeCategory === 'All' || item.category === activeCategory
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      return matchesCategory && matchesSearch
+    })
+  }, [activeCategory, searchQuery, fields])
+
+  const totalPages = Math.ceil(filteredFields.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const currentItems = filteredFields.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto py-6 bg-white min-h-screen pb-16">
+        <div className="text-center py-8">Loading venues...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto py-6 bg-white min-h-screen pb-16">
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary to-primary/90 rounded-2xl p-6 mb-6 text-white shadow-sm">
-        <h1 className="text-xl font-bold mb-1 tracking-tight">Find an Experience</h1>
+        <h1 className="text-xl font-bold mb-1 tracking-tight">Find a Venue</h1>
         <p className="text-[11px] text-red-100 mb-4 opacity-80 uppercase tracking-wider font-medium">Instant Booking</p>
         <div className="flex bg-white rounded-lg p-1 shadow-inner max-w-xs">
           <div className="flex-grow flex items-center px-2">
@@ -58,7 +77,7 @@ const BookingPage = () => {
 
       {/* Categories */}
       <div className="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar py-1">
-        {['All', 'Badminton', 'Tennis', 'Golf', 'Billiard', 'Basket'].map((cat) => (
+        {categories.map((cat) => (
           <button 
             key={cat} 
             onClick={() => { setActiveCategory(cat); setCurrentPage(1); }}
@@ -72,29 +91,39 @@ const BookingPage = () => {
       </div>
 
       {/* Venue Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
-        {currentItems.map((item) => (
-          <Link to={`/venue/${item.id}`} key={item.id} className="group cursor-pointer block">
-            <div className="relative aspect-[5/4] rounded-xl overflow-hidden mb-2 bg-gray-50 border border-gray-100">
-              <img src={item.img} alt={item.title} className="w-full h-full object-cover transition duration-500 group-hover:scale-105" />
-              <div className="absolute top-2 left-2 bg-white/95 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-primary shadow-sm">
-                {item.tag}
+      {currentItems.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No venues found matching your search.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
+          {currentItems.map((item) => (
+            <Link to={`/venue/${item.id}`} key={item.id} className="group cursor-pointer block">
+              <div className="relative aspect-[5/4] rounded-xl overflow-hidden mb-2 bg-gray-50 border border-gray-100">
+                {item.image_url ? (
+                  <img src={item.image_url} alt={item.name} className="w-full h-full object-cover transition duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"></div>
+                )}
+                <div className="absolute top-2 left-2 bg-white/95 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-primary shadow-sm">
+                  {item.category}
+                </div>
               </div>
-            </div>
-            <div className="px-0.5">
-              <div className="flex justify-between items-start">
-                <h3 className="font-bold text-[13px] text-gray-900 truncate pr-2 group-hover:text-primary transition-colors">{item.title}</h3>
-                <span className="text-[10px] font-bold flex items-center gap-0.5 shrink-0"><FaStar className="text-yellow-400" /> {item.rating}</span>
+              <div className="px-0.5">
+                <div className="flex justify-between items-start">
+                  <h3 className="font-bold text-[13px] text-gray-900 truncate pr-2 group-hover:text-primary transition-colors">{item.name}</h3>
+                  <span className="text-[10px] font-bold flex items-center gap-0.5 shrink-0"><FaStar className="text-yellow-400" /> {item.rating || '4.5'}</span>
+                </div>
+                <p className="text-gray-400 text-[10px] flex items-center gap-1 mt-0.5"><FaMapMarkerAlt className="text-primary/60 scale-75" /> {item.city || 'Location'}</p>
+                <div className="mt-2 flex items-baseline gap-1">
+                  <span className="text-[13px] font-black text-gray-900">Rp 100k</span>
+                  <span className="text-[9px] text-gray-400 font-medium">/ hr</span>
+                </div>
               </div>
-              <p className="text-gray-400 text-[10px] flex items-center gap-1 mt-0.5"><FaMapMarkerAlt className="text-primary/60 scale-75" /> {item.location}</p>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-[13px] font-black text-gray-900">{item.price}</span>
-                <span className="text-[9px] text-gray-400 font-medium">/ hr</span>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Restoration: Pagination Controls */}
       {totalPages > 1 && (

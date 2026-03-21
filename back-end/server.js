@@ -129,6 +129,9 @@ app.post('/api/register-business', async (req, res) => {
       }
     };
 
+    console.log(`[REGISTER-BUSINESS] Generated OTP for ${email} with key: ${key}, OTP: ${otp}`);
+    console.log(`[REGISTER-BUSINESS] OTP expires at: ${new Date(otpStore[key].expiresAt)}`);
+
     await sendOtpEmail(email, otp).catch((e) => {
       console.error('Email send failed', e);
     });
@@ -250,6 +253,12 @@ app.post('/api/verify-otp', async (req, res) => {
   const key = `${email}:${role.toLowerCase()}`;
   const entry = otpStore[key];
 
+  console.log(`[VERIFY-OTP] Attempting to verify OTP`);
+  console.log(`[VERIFY-OTP] Email: ${email}, Role: ${role}, OTP: ${otp}`);
+  console.log(`[VERIFY-OTP] Looking for key: ${key}`);
+  console.log(`[VERIFY-OTP] Current OTP store keys:`, Object.keys(otpStore));
+  console.log(`[VERIFY-OTP] Entry found:`, entry ? 'YES' : 'NO');
+
   if (!entry) {
     return res.status(401).json({ error: 'OTP not found or expired' });
   }
@@ -259,14 +268,17 @@ app.post('/api/verify-otp', async (req, res) => {
   }
 
   if (Date.now() > entry.expiresAt) {
+    console.log(`[VERIFY-OTP] OTP expired. Current time: ${new Date()}, Expires at: ${new Date(entry.expiresAt)}`);
     delete otpStore[key];
     return res.status(401).json({ error: 'OTP expired' });
   }
 
   if (entry.code !== otp) {
+    console.log(`[VERIFY-OTP] OTP code mismatch. Expected: ${entry.code}, Received: ${otp}`);
     return res.status(401).json({ error: 'Invalid OTP' });
   }
 
+  console.log(`[VERIFY-OTP] OTP verified successfully for ${email}`);
   entry.used = true;
   delete otpStore[key];
 
@@ -289,8 +301,191 @@ app.post('/api/verify-otp', async (req, res) => {
     }
   }
 
+  if (entry.role === 'Business') {
+    const [admin] = await db.execute('SELECT id, name, email FROM admin WHERE email = ?', [email]);
+    if (admin.length > 0) {
+      const adminData = admin[0];
+      return res.json({ message: 'OTP verified', success: true, redirect: '/dashboard', adminId: adminData.id, adminName: adminData.name });
+    }
+  }
+
   const redirect = entry.role === 'Business' ? '/dashboard' : '/venue';
   res.json({ message: 'OTP verified', success: true, redirect });
+});
+
+// FIELD MANAGEMENT ENDPOINTS
+
+// Get all fields for a specific admin
+app.get('/api/fields/:adminId', async (req, res) => {
+  const { adminId } = req.params;
+  try {
+    const [fields] = await db.execute(
+      'SELECT * FROM field WHERE admin_id = ? AND is_active = 1 ORDER BY created_at DESC',
+      [adminId]
+    );
+    res.json(fields);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch fields' });
+  }
+});
+
+// Get all active fields (for users to browse)
+app.get('/api/fields-public', async (req, res) => {
+  try {
+    const [fields] = await db.execute(
+      'SELECT id, admin_id, name, category, description, address, city, image_url, rating FROM field WHERE is_active = 1 ORDER BY created_at DESC'
+    );
+    res.json(fields);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch fields' });
+  }
+});
+
+// Get field details with slots
+app.get('/api/field/:fieldId', async (req, res) => {
+  const { fieldId } = req.params;
+  try {
+    const [field] = await db.execute(
+      'SELECT * FROM field WHERE id = ?',
+      [fieldId]
+    );
+    if (field.length === 0) {
+      return res.status(404).json({ error: 'Field not found' });
+    }
+
+    const [slots] = await db.execute(
+      'SELECT * FROM field_slot WHERE field_id = ? ORDER BY start_time ASC',
+      [fieldId]
+    );
+
+    res.json({ ...field[0], slots });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch field details' });
+  }
+});
+
+// Create a new field
+app.post('/api/fields', async (req, res) => {
+  const { adminId, name, category, description, address, city, imageUrl } = req.body;
+
+  if (!adminId || !name || !category || !address) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    // Verify admin exists
+    const [admin] = await db.execute('SELECT id FROM admin WHERE id = ?', [adminId]);
+    if (admin.length === 0) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    const [result] = await db.execute(
+      'INSERT INTO field (admin_id, name, category, description, address, city, image_url, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
+      [adminId, name, category, description || null, address, city || null, imageUrl || null]
+    );
+
+    res.status(201).json({
+      id: result.insertId,
+      adminId,
+      name,
+      category,
+      description,
+      address,
+      city,
+      imageUrl,
+      message: 'Field created successfully'
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create field' });
+  }
+});
+
+// Update a field
+app.put('/api/fields/:fieldId', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId, name, category, description, address, city, imageUrl } = req.body;
+
+  try {
+    // Verify field belongs to admin
+    const [field] = await db.execute('SELECT admin_id FROM field WHERE id = ?', [fieldId]);
+    if (field.length === 0) {
+      return res.status(404).json({ error: 'Field not found' });
+    }
+
+    if (field[0].admin_id !== parseInt(adminId)) {
+      return res.status(403).json({ error: 'Unauthorized: Field does not belong to this admin' });
+    }
+
+    await db.execute(
+      'UPDATE field SET name = ?, category = ?, description = ?, address = ?, city = ?, image_url = ? WHERE id = ?',
+      [name, category, description || null, address, city || null, imageUrl || null, fieldId]
+    );
+
+    res.json({ message: 'Field updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update field' });
+  }
+});
+
+// Delete a field (soft delete by setting is_active = 0)
+app.delete('/api/fields/:fieldId', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId } = req.body;
+
+  try {
+    const [field] = await db.execute('SELECT admin_id FROM field WHERE id = ?', [fieldId]);
+    if (field.length === 0) {
+      return res.status(404).json({ error: 'Field not found' });
+    }
+
+    if (field[0].admin_id !== parseInt(adminId)) {
+      return res.status(403).json({ error: 'Unauthorized: Field does not belong to this admin' });
+    }
+
+    await db.execute('UPDATE field SET is_active = 0 WHERE id = ?', [fieldId]);
+    res.json({ message: 'Field deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete field' });
+  }
+});
+
+// Create field slots
+app.post('/api/field-slots', async (req, res) => {
+  const { fieldId, adminId, slots } = req.body;
+
+  if (!fieldId || !slots || !Array.isArray(slots)) {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+
+  try {
+    // Verify field belongs to admin
+    const [field] = await db.execute('SELECT admin_id FROM field WHERE id = ?', [fieldId]);
+    if (field.length === 0) {
+      return res.status(404).json({ error: 'Field not found' });
+    }
+
+    if (field[0].admin_id !== parseInt(adminId)) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    for (const slot of slots) {
+      await db.execute(
+        'INSERT INTO field_slot (field_id, start_time, end_time, is_booked) VALUES (?, ?, ?, 0)',
+        [fieldId, slot.startTime, slot.endTime]
+      );
+    }
+
+    res.status(201).json({ message: 'Slots created successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create slots' });
+  }
 });
 
 app.listen(5000, () => console.log('Backend running on http://localhost:5000'));
