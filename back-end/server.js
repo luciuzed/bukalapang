@@ -267,30 +267,46 @@ app.post('/api/verify-otp', async (req, res) => {
     return res.status(401).json({ error: 'Invalid OTP' });
   }
 
+  // Inside /api/verify-otp ... after checking if OTP is valid
   entry.used = true;
-  delete otpStore[key];
+
+  let userData = { email: email, role: entry.role };
 
   if (entry.type === 'register') {
+    // Use the data we stored in the otpStore during the /register call
+    userData.name = entry.payload.name;
+    userData.phone = entry.payload.phone;
+
     try {
-      if (entry.role === 'Business') {
-        await db.execute(
-          'INSERT INTO admin (email, password, name, number) VALUES (?, ?, ?, ?)',
-          [entry.payload.email, entry.payload.password, entry.payload.name, entry.payload.phone]
-        );
-      } else {
-        await db.execute(
-          'INSERT INTO users (email, password, name, phone_number) VALUES (?, ?, ?, ?)',
-          [entry.payload.email, entry.payload.password, entry.payload.name, entry.payload.phone]
-        );
-      }
+      const table = entry.role === 'Business' ? 'admin' : 'users';
+      const phoneCol = entry.role === 'Business' ? 'number' : 'phone_number';
+      await db.execute(
+        `INSERT INTO ${table} (email, password, name, ${phoneCol}) VALUES (?, ?, ?, ?)`,
+        [entry.payload.email, entry.payload.password, entry.payload.name, entry.payload.phone]
+      );
     } catch (err) {
-      console.error('Registration commit failed', err);
-      return res.status(500).json({ error: 'Could not complete registration after OTP' });
+      return res.status(500).json({ error: 'Database insert failed' });
+    }
+  } else {
+    // FOR LOGIN: We need to ask the Database for the name/phone since they aren't in the OTP store
+    const table = entry.role === 'Business' ? 'admin' : 'users';
+    const phoneCol = entry.role === 'Business' ? 'number' : 'phone_number';
+    const [rows] = await db.execute(`SELECT name, ${phoneCol} as phone FROM ${table} WHERE email = ?`, [email]);
+    
+    if (rows.length > 0) {
+      userData.name = rows[0].name;
+      userData.phone = rows[0].phone;
     }
   }
 
-  const redirect = entry.role === 'Business' ? '/dashboard' : '/venue';
-  res.json({ message: 'OTP verified', success: true, redirect });
+  delete otpStore[key];
+
+  // ✅ SEND THE DATA BACK
+  res.json({ 
+    success: true, 
+    user: userData, // This now contains name and phone!
+    redirect: entry.role === 'Business' ? '/dashboard' : '/venue' 
+  });
 });
 
 app.listen(5000, () => console.log('Backend running on http://localhost:5000'));

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Link, useLocation } from "react-router-dom"
 import logo from '../assets/logo.svg'
-import { FaBars, FaTimes } from "react-icons/fa"
+import { FaBars, FaTimes, FaUserEdit, FaSignOutAlt } from "react-icons/fa"
 import { MdAccountCircle } from "react-icons/md"
 import Cookies from 'js-cookie'
 
@@ -52,14 +52,35 @@ const Navbar = () => {
 
       {/* Desktop Menu */}
       <ul className="hidden md:flex items-center gap-15 font-bold">
-        <li>
-          <NavLink to="/" className={navItemClass} end>Home</NavLink>
+        <li className="relative">
+          <NavLink to="/" className={navItemClass} end>
+            {({ isActive }) => (
+              <>
+                Home
+                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-1 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
+              </>
+            )}
+          </NavLink>
         </li>
-        <li>
-          <NavLink to="/venue" className={navItemClass}>Venue</NavLink>
+        <li className="relative">
+          <NavLink to="/venue" className={navItemClass}>
+            {({ isActive }) => (
+              <>
+                Venue
+                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-1 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
+              </>
+            )}
+          </NavLink>
         </li>
-        <li>
-          <NavLink to="/contact" className={navItemClass}>Contact</NavLink>
+        <li className="relative">
+          <NavLink to="/contact" className={navItemClass}>
+            {({ isActive }) => (
+              <>
+                Contact
+                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-1 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
+              </>
+            )}
+          </NavLink>
         </li>
       </ul>
 
@@ -76,25 +97,29 @@ const Navbar = () => {
               <MdAccountCircle size={40} className="text-primary" />
             </button>
 
-            {/* Dropdown */}
+            {/* Dropdown in Navbar.jsx */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg py-2 z-50">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl py-3 z-50 border border-gray-50 animate-in fade-in slide-in-from-top-2">
                 
-                <div className="px-4 py-2 text-sm text-gray-500 border-b">
-                  {user.name || "User"}
+                {/* Profile Info Header */}
+                <div className="px-5 py-3 border-b border-gray-50">
+                  <p className="text-sm font-black text-gray-800 truncate">{user.name || "User"}</p>
+                  <p className="text-xs text-gray-400 truncate">{user.email || "user@example.com"}</p>
                 </div>
 
-                <Link to="/profile">
-                  <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer">
-                    Profile
-                  </div>
-                </Link>
+                <div className="py-2">
+                  <Link to="/profile" onClick={() => setShowDropdown(false)}>
+                    <div className="px-5 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm font-bold text-gray-600 transition-colors">
+                      <FaUserEdit className="text-gray-400" /> Profil Saya
+                    </div>
+                  </Link>
 
-                <div
-                  onClick={handleLogout}
-                  className="px-4 py-2 hover:bg-red-100 text-red-500 cursor-pointer"
-                >
-                  Logout
+                  <div
+                    onClick={handleLogout}
+                    className="px-5 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm font-bold text-red-500 cursor-pointer transition-colors"
+                  >
+                    <FaSignOutAlt /> Keluar
+                  </div>
                 </div>
               </div>
             )}

@@ -169,7 +169,7 @@ const LoginPage = () => {
 
       if (response.ok && data.otpNeeded) {
         const targetRoute = role === "User" ? "/home" : "/dashboard"
-        setPendingOtpInfo({ email: formData.email, role, redirect: targetRoute })
+        setPendingOtpInfo({ email: formData.email, role, name: formData.fullName, phone: formData.phone, redirect: targetRoute })
         setShowOtpUI(true)
         setPendingRegisterData(null)
         setError('')
@@ -371,7 +371,7 @@ const LoginPage = () => {
 
       const data = await response.json()
       if (response.ok && data.success) {
-        const userPayload = data.user || { email: pendingOtpInfo.email, role: pendingOtpInfo.role };
+        const userPayload = data.user || { email: pendingOtpInfo.email, role: pendingOtpInfo.role, name: pendingOtpInfo.name, phone: pendingOtpInfo.phone  };
         Cookies.set('user_session', JSON.stringify(userPayload), { expires: 7 });
         setShowOtpUI(false)
         setOtpCode(['', '', '', ''])

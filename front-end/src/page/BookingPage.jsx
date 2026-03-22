@@ -57,12 +57,12 @@ const BookingPage = () => {
       </div>
 
       {/* Categories */}
-      <div className="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar py-1">
+      <div className="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar py-1 ">
         {['All', 'Badminton', 'Tennis', 'Golf', 'Billiard', 'Basket'].map((cat) => (
           <button 
             key={cat} 
             onClick={() => { setActiveCategory(cat); setCurrentPage(1); }}
-            className={`px-4 py-1.5 rounded-full text-[11px] font-bold transition-all border ${
+            className={`px-4 py-1.5 rounded-full cursor-pointer text-[11px] font-bold transition-all border ${
               activeCategory === cat ? "bg-primary text-white " : "bg-white text-gray-400 border-gray-100 hover:text-primary"
             }`}
           >
@@ -99,7 +99,7 @@ const BookingPage = () => {
           <button 
             disabled={currentPage === 1} 
             onClick={() => setCurrentPage(prev => prev - 1)} 
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-100 disabled:opacity-20 hover:bg-gray-50 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer border border-gray-100 disabled:opacity-20 hover:bg-gray-50 transition-colors"
           >
             <FaChevronLeft size={10} className="text-gray-500" />
           </button>
@@ -109,7 +109,7 @@ const BookingPage = () => {
               <button 
                 key={i} 
                 onClick={() => setCurrentPage(i + 1)} 
-                className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all ${
+                className={`w-8 h-8 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                   currentPage === i + 1 ? "bg-primary text-white" : "text-gray-400 hover:text-black"
                 }`}
               >
@@ -121,7 +121,7 @@ const BookingPage = () => {
           <button 
             disabled={currentPage === totalPages} 
             onClick={() => setCurrentPage(prev => prev + 1)} 
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-100 disabled:opacity-20 hover:bg-gray-50 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg cursor-pointer border border-gray-100 disabled:opacity-20 hover:bg-gray-50 transition-colors"
           >
             <FaChevronRight size={10} className="text-gray-500" />
           </button>

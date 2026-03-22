@@ -56,13 +56,13 @@ const BookingSummaryModal = ({
           <div className="flex flex-col gap-3">
             <button 
               onClick={() => alert("Redirecting to Gateway...")} 
-              className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-red-100 hover:opacity-90 transition-all"
+              className="w-full py-4 bg-primary text-white rounded-2xl font-bold shadow-lg cursor-pointer shadow-red-100 hover:opacity-90 transition-all"
             >
               Bayar Sekarang
             </button>
             <button 
               onClick={() => setStep(1)} 
-              className="w-full py-3 text-gray-400 font-bold hover:text-gray-600 transition-colors"
+              className="w-full py-3 text-gray-400 font-bold cursor-pointer hover:text-gray-600 transition-colors"
             >
               Cek Kembali
             </button>
@@ -78,7 +78,7 @@ const BookingSummaryModal = ({
       <div className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl animate-in fade-in duration-200" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-bold text-gray-800">Ringkasan Pemesanan</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors cursor-pointer">
             <FaTimes size={20} />
           </button>
         </div>
@@ -105,7 +105,7 @@ const BookingSummaryModal = ({
                       </div>
                       <div className="flex items-center gap-3 ml-4">
                         <p className="text-sm font-bold text-primary">Rp {pricePerSlot.toLocaleString()}</p>
-                        <button onClick={() => onRemove(slot)} className="text-gray-300 hover:text-red-500"><FaTrashAlt size={14} /></button>
+                        <button onClick={() => onRemove(slot)} className="text-gray-300 hover:text-red-500 cursor-pointer"><FaTrashAlt size={14} /></button>
                       </div>
                     </div>
                   );
@@ -114,10 +114,10 @@ const BookingSummaryModal = ({
                 <p className="text-center text-gray-400 py-4 text-sm italic">Belum ada slot terpilih</p>
               )}
             </div>
-            <button onClick={onClose} className="mt-4 px-4 py-2 border border-primary text-primary rounded-full text-xs font-bold hover:bg-primary hover:text-white transition-colors">
+            <button onClick={onClose} className="mt-4 px-4 py-2 border border-primary text-primary rounded-full cursor-pointer text-xs font-bold hover:bg-primary hover:text-white transition-colors">
               + Tambah Tiket
             </button>
-          </div>
+          </div>  
 
           <div className="pt-4 border-t border-dashed space-y-2">
             <div className="flex justify-between text-sm font-medium text-gray-400">
@@ -131,13 +131,13 @@ const BookingSummaryModal = ({
           </div>
 
           <div className="flex gap-4 pt-4">
-            <button onClick={onClose} className="flex-1 py-3 border border-primary text-primary rounded-xl font-bold hover:bg-primary hover:text-white transition-colors">
+            <button onClick={onClose} className="flex-1 py-3 border border-primary text-primary rounded-xl font-bold cursor-pointer hover:bg-primary hover:text-white transition-colors">
               Kembali
             </button>
             <button 
               onClick={() => setStep(2)} // 🔥 Move to step 2
               disabled={selectedSlots.length === 0}
-              className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:opacity-90 shadow-lg disabled:opacity-50 transition-all active:scale-95"
+              className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:opacity-90 shadow-lg cursor-pointer disabled:opacity-50 transition-all active:scale-95"
             >
               Lanjutkan
             </button>

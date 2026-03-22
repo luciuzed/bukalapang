@@ -128,7 +128,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             <h1 className="text-3xl font-black">{field.title}</h1>
             <button
               onClick={openGoogleMaps}
-              className="flex items-center gap-2 text-primary mt-2 hover:underline"
+              className="flex items-center gap-2 text-primary mt-2 cursor-pointer hover:underline"
             >
               <FaMapMarkerAlt /> {field.location}
             </button>
@@ -204,7 +204,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
                       <button
                         key={key}
                         onClick={() => toggleSlot(court, time)}
-                        className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition ${
+                        className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition cursor-pointer ${
                           isSelected
                             ? "bg-primary text-white border-primary"
                             : "bg-white text-gray-400 border-gray-200 hover:border-primary"
@@ -256,14 +256,18 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             <button
               onClick={() => setIsModalOpen(true)}
               disabled={!selectedDate || selectedSlots.length === 0}
-              className="w-full py-4 bg-primary text-white rounded-xl font-bold disabled:opacity-30"
+              className={`w-full py-4 bg-primary text-white rounded-xl font-bold transition-all ${
+                !selectedDate || selectedSlots.length === 0 
+                  ? "opacity-30" 
+                  : "opacity-100 cursor-pointer hover:opacity-90"
+              }`}
             >
               Book • Rp {totalPrice.toLocaleString()}
             </button>
 
             <button
               onClick={contactWhatsApp}
-              className="w-full py-3 bg-green-500 text-white rounded-xl flex items-center justify-center gap-2"
+              className="w-full py-3 bg-green-500 text-white rounded-xl flex items-center justify-center gap-2 cursor-pointer"
             >
               <FaWhatsapp /> Ask via WhatsApp
             </button>
