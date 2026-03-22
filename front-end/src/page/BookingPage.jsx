@@ -98,18 +98,29 @@ const BookingPage = () => {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
           {currentItems.map((item) => (
-            <Link to={`/venue/${item.id}`} key={item.id} className="group cursor-pointer block">
-              <div className="relative aspect-[5/4] rounded-xl overflow-hidden mb-2 bg-gray-50 border border-gray-100">
+            <Link to={`/venue/${item.id}`} key={item.id} className={`group cursor-pointer block ${item.is_active === 0 ? 'pointer-events-none' : ''}`}>
+              <div className={`relative aspect-[5/4] rounded-xl overflow-hidden mb-2 bg-gray-50 border transition-all ${item.is_active === 0 ? 'border-gray-200' : 'border-gray-100'}`}>
                 {item.image_url ? (
-                  <img src={item.image_url} alt={item.name} className="w-full h-full object-cover transition duration-500 group-hover:scale-105" />
+                  <>
+                    <img 
+                      src={item.image_url} 
+                      alt={item.name} 
+                      className={`w-full h-full object-cover transition duration-500 ${item.is_active === 0 ? 'grayscale' : 'group-hover:scale-105'}`} 
+                    />
+                    {item.is_active === 0 && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">Closed</span>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"></div>
+                  <div className={`w-full h-full flex items-center justify-center ${item.is_active === 0 ? 'bg-gray-300' : 'bg-gradient-to-br from-gray-200 to-gray-300'}`}></div>
                 )}
                 <div className="absolute top-2 left-2 bg-white/95 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-primary shadow-sm">
                   {item.category}
                 </div>
               </div>
-              <div className="px-0.5">
+              <div className={`px-0.5 ${item.is_active === 0 ? 'opacity-50' : ''}`}>
                 <div className="flex justify-between items-start">
                   <h3 className="font-bold text-[13px] text-gray-900 truncate pr-2 group-hover:text-primary transition-colors">{item.name}</h3>
                   <span className="text-[10px] font-bold flex items-center gap-0.5 shrink-0"><FaStar className="text-yellow-400" /> {item.rating || '4.5'}</span>

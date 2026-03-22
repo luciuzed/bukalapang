@@ -320,7 +320,7 @@ app.get('/api/fields/:adminId', async (req, res) => {
   const { adminId } = req.params;
   try {
     const [fields] = await db.execute(
-      'SELECT * FROM field WHERE admin_id = ? AND is_active = 1 ORDER BY created_at DESC',
+      'SELECT * FROM field WHERE admin_id = ? ORDER BY is_active DESC, created_at DESC',
       [adminId]
     );
     res.json(fields);
@@ -330,11 +330,11 @@ app.get('/api/fields/:adminId', async (req, res) => {
   }
 });
 
-// Get all active fields (for users to browse)
+// Get all fields including inactive ones (for users to browse - active ones prioritized)
 app.get('/api/fields-public', async (req, res) => {
   try {
     const [fields] = await db.execute(
-      'SELECT id, admin_id, name, category, description, address, city, image_url, rating FROM field WHERE is_active = 1 ORDER BY created_at DESC'
+      'SELECT id, admin_id, name, category, description, address, city, image_url, is_active, rating FROM field ORDER BY is_active DESC, created_at DESC'
     );
     res.json(fields);
   } catch (err) {
@@ -369,10 +369,11 @@ app.get('/api/field/:fieldId', async (req, res) => {
 
 // Create a new field
 app.post('/api/fields', async (req, res) => {
-  const { adminId, name, category, description, address, city, imageUrl } = req.body;
+  const { adminId, name, category, description, address, city, imageUrl, isActive, googleMapsLink } = req.body;
 
-  if (!adminId || !name || !category || !address) {
-    return res.status(400).json({ error: 'Missing required fields' });
+  // Validate required fields: Name, Category, Address, City
+  if (!adminId || !name || !category || !address || !city) {
+    return res.status(400).json({ error: 'Missing required fields: name, category, address, city' });
   }
 
   try {
@@ -383,8 +384,8 @@ app.post('/api/fields', async (req, res) => {
     }
 
     const [result] = await db.execute(
-      'INSERT INTO field (admin_id, name, category, description, address, city, image_url, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
-      [adminId, name, category, description || null, address, city || null, imageUrl || null]
+      'INSERT INTO field (admin_id, name, category, description, address, city, image_url, is_active, google_maps_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [adminId, name, category, description || null, address, city, imageUrl || null, isActive !== false ? 1 : 0, googleMapsLink || null]
     );
 
     res.status(201).json({
@@ -396,6 +397,8 @@ app.post('/api/fields', async (req, res) => {
       address,
       city,
       imageUrl,
+      isActive: isActive !== false ? 1 : 0,
+      googleMapsLink: googleMapsLink || null,
       message: 'Field created successfully'
     });
   } catch (err) {
@@ -407,7 +410,12 @@ app.post('/api/fields', async (req, res) => {
 // Update a field
 app.put('/api/fields/:fieldId', async (req, res) => {
   const { fieldId } = req.params;
-  const { adminId, name, category, description, address, city, imageUrl } = req.body;
+  const { adminId, name, category, description, address, city, imageUrl, isActive, googleMapsLink } = req.body;
+
+  // Validate required fields: Name, Category, Address, City
+  if (!name || !category || !address || !city) {
+    return res.status(400).json({ error: 'Missing required fields: name, category, address, city' });
+  }
 
   try {
     // Verify field belongs to admin
@@ -421,8 +429,8 @@ app.put('/api/fields/:fieldId', async (req, res) => {
     }
 
     await db.execute(
-      'UPDATE field SET name = ?, category = ?, description = ?, address = ?, city = ?, image_url = ? WHERE id = ?',
-      [name, category, description || null, address, city || null, imageUrl || null, fieldId]
+      'UPDATE field SET name = ?, category = ?, description = ?, address = ?, city = ?, image_url = ?, is_active = ?, google_maps_link = ? WHERE id = ?',
+      [name, category, description || null, address, city, imageUrl || null, isActive !== undefined ? (isActive ? 1 : 0) : 1, googleMapsLink || null, fieldId]
     );
 
     res.json({ message: 'Field updated successfully' });
@@ -432,7 +440,7 @@ app.put('/api/fields/:fieldId', async (req, res) => {
   }
 });
 
-// Delete a field (soft delete by setting is_active = 0)
+// Delete a field (hard delete - removes row from database entirely)
 app.delete('/api/fields/:fieldId', async (req, res) => {
   const { fieldId } = req.params;
   const { adminId } = req.body;
@@ -447,11 +455,34 @@ app.delete('/api/fields/:fieldId', async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized: Field does not belong to this admin' });
     }
 
-    await db.execute('UPDATE field SET is_active = 0 WHERE id = ?', [fieldId]);
-    res.json({ message: 'Field deleted successfully' });
+    await db.execute('DELETE FROM field WHERE id = ?', [fieldId]);
+    res.json({ message: 'Field removed successfully' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to delete field' });
+    res.status(500).json({ error: 'Failed to remove field' });
+  }
+});
+
+// Toggle field status (open/close)
+app.patch('/api/fields/:fieldId/toggle-status', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId, isActive } = req.body;
+
+  try {
+    const [field] = await db.execute('SELECT admin_id FROM field WHERE id = ?', [fieldId]);
+    if (field.length === 0) {
+      return res.status(404).json({ error: 'Field not found' });
+    }
+
+    if (field[0].admin_id !== parseInt(adminId)) {
+      return res.status(403).json({ error: 'Unauthorized: Field does not belong to this admin' });
+    }
+
+    await db.execute('UPDATE field SET is_active = ? WHERE id = ?', [isActive ? 1 : 0, fieldId]);
+    res.json({ message: isActive ? 'Field opened successfully' : 'Field closed successfully', isActive });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to toggle field status' });
   }
 });
 
