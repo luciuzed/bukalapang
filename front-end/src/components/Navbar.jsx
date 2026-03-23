@@ -1,50 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Link, useLocation } from "react-router-dom"
-import React, { useState, useEffect, useRef } from 'react'
-import { NavLink, Link, useLocation } from "react-router-dom"
 import logo from '../assets/logo.svg'
 import { FaBars, FaTimes, FaUserEdit, FaSignOutAlt } from "react-icons/fa"
 import { MdAccountCircle } from "react-icons/md"
 import Cookies from 'js-cookie'
 
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [user, setUser] = useState(null)
-  const [showDropdown, setShowDropdown] = useState(false)
-  const dropdownRef = useRef(null)
-  const location = useLocation()
-
-  // ✅ Update user on route change
-  useEffect(() => {
-    const session = Cookies.get('user_session')
-    if (session) {
-      setUser(JSON.parse(session))
-    } else {
-      setUser(null)
-    }
-  }, [location])
-
-  // ✅ Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowDropdown(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  const handleLogout = () => {
-    Cookies.remove('user_session')
-    setUser(null)
-    setShowDropdown(false)
-  }
-
-  const navItemClass = ({ isActive }) =>
-    `relative px-3 py-1 transition-all duration-300 ${
-      isActive ? 'text-[#009966] font-bold' : 'text-[#009966]/80'
-    }`
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState(null)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -214,10 +175,7 @@ const Navbar = () => {
             </Link>
           )}
 
-          )}
-
         </div>
-      )}
       )}
     </div>
   )
