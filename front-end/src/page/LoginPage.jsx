@@ -401,7 +401,19 @@ const LoginPage = () => {
       const data = await response.json()
       if (response.ok && data.success) {
         const userPayload = data.user || { email: pendingOtpInfo.email, role: pendingOtpInfo.role, name: pendingOtpInfo.name, phone: pendingOtpInfo.phone  };
-        Cookies.set('user_session', JSON.stringify(userPayload), { expires: 7 });
+        
+        // Set appropriate cookie based on role
+        if (userPayload.role === 'Business') {
+          Cookies.set('admin_session', JSON.stringify({
+            adminId: userPayload.id,
+            adminName: userPayload.name,
+            email: userPayload.email,
+            phone: userPayload.phone
+          }), { expires: 7 });
+        } else {
+          Cookies.set('user_session', JSON.stringify(userPayload), { expires: 7 });
+        }
+        
         setShowOtpUI(false)
         setOtpCode(['', '', '', ''])
         setPendingOtpInfo(null)

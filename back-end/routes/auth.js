@@ -221,48 +221,52 @@ router.post('/verify-otp', async (req, res) => {
 
   console.log(`[VERIFY-OTP] OTP verified successfully for ${email}`);
   entry.used = true;
-  delete otpStore[key];
+
+  let userData = { email: email, role: entry.role };
 
   if (entry.type === 'register') {
+    // Use the data we stored in the otpStore during the /register call
+    userData.name = entry.payload.name;
+    userData.phone = entry.payload.phone;
+
     try {
-      if (entry.role === 'Business') {
-        await db.execute(
-          'INSERT INTO admin (email, password, name, number) VALUES (?, ?, ?, ?)',
-          [entry.payload.email, entry.payload.password, entry.payload.name, entry.payload.phone]
-        );
-      } else {
-        await db.execute(
-          'INSERT INTO users (email, password, name, phone_number) VALUES (?, ?, ?, ?)',
-          [entry.payload.email, entry.payload.password, entry.payload.name, entry.payload.phone]
-        );
+      const table = entry.role === 'Business' ? 'admin' : 'users';
+      const phoneCol = entry.role === 'Business' ? 'number' : 'phone_number';
+      await db.execute(
+        `INSERT INTO ${table} (email, password, name, ${phoneCol}) VALUES (?, ?, ?, ?)`,
+        [entry.payload.email, entry.payload.password, entry.payload.name, entry.payload.phone]
+      );
+      
+      // Fetch the ID after inserting
+      const [rows] = await db.execute(`SELECT id FROM ${table} WHERE email = ?`, [email]);
+      if (rows.length > 0) {
+        userData.id = rows[0].id;
       }
     } catch (err) {
       console.error('Registration commit failed', err);
-      return res.status(500).json({ error: 'Could not complete registration after OTP' });
+      return res.status(500).json({ error: 'Database insert failed' });
+    }
+  } else {
+    // FOR LOGIN: We need to ask the Database for the name/phone since they aren't in the OTP store
+    const table = entry.role === 'Business' ? 'admin' : 'users';
+    const phoneCol = entry.role === 'Business' ? 'number' : 'phone_number';
+    const [rows] = await db.execute(`SELECT id, name, ${phoneCol} as phone FROM ${table} WHERE email = ?`, [email]);
+    
+    if (rows.length > 0) {
+      userData.id = rows[0].id;
+      userData.name = rows[0].name;
+      userData.phone = rows[0].phone;
     }
   }
 
-  if (entry.role === 'Business') {
-    const [admin] = await db.execute('SELECT id, name, email FROM admin WHERE email = ?', [email]);
-    if (admin.length > 0) {
-      const adminData = admin[0];
-      return res.json({ message: 'OTP verified', success: true, redirect: '/dashboard', adminId: adminData.id, adminName: adminData.name });
-    }
-  } else if (entry.role === 'User') {
-    const [user] = await db.execute('SELECT id, name, email FROM users WHERE email = ?', [email]);
-    if (user.length > 0) {
-      const userData = user[0];
-      return res.json({ 
-        message: 'OTP verified', 
-        success: true, 
-        redirect: '/venue',
-        user: { userId: userData.id, name: userData.name, email: userData.email, role: 'User' }
-      });
-    }
-  }
+  delete otpStore[key];
 
-  const redirect = entry.role === 'Business' ? '/dashboard' : '/venue';
-  res.json({ message: 'OTP verified', success: true, redirect });
+  // ✅ SEND THE DATA BACK
+  res.json({ 
+    success: true, 
+    user: userData, // This now contains id, name, phone, email, and role!
+    redirect: entry.role === 'Business' ? '/dashboard' : '/venue' 
+  });
 });
 
 module.exports = router;

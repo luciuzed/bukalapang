@@ -8,17 +8,25 @@ import Cookies from 'js-cookie'
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState(null)
+  const [admin, setAdmin] = useState(null)
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef(null)
   const location = useLocation()
 
-  // ✅ Update user on route change
+  // ✅ Update user/admin on route change
   useEffect(() => {
-    const session = Cookies.get('user_session')
-    if (session) {
-      setUser(JSON.parse(session))
+    const userSession = Cookies.get('user_session')
+    const adminSession = Cookies.get('admin_session')
+    
+    if (userSession) {
+      setUser(JSON.parse(userSession))
+      setAdmin(null)
+    } else if (adminSession) {
+      setAdmin(JSON.parse(adminSession))
+      setUser(null)
     } else {
       setUser(null)
+      setAdmin(null)
     }
   }, [location])
 
@@ -35,7 +43,9 @@ const Navbar = () => {
 
   const handleLogout = () => {
     Cookies.remove('user_session')
+    Cookies.remove('admin_session')
     setUser(null)
+    setAdmin(null)
     setShowDropdown(false)
   }
 
@@ -86,7 +96,7 @@ const Navbar = () => {
 
       {/* RIGHT SECTION */}
       <div className="hidden md:block relative" ref={dropdownRef}>
-        {user ? (
+        {user || admin ? (
           <div className="relative">
             
             {/* ✅ Modern Icon Button */}
@@ -103,22 +113,31 @@ const Navbar = () => {
                 
                 {/* Profile Info Header */}
                 <div className="px-5 py-3 border-b border-gray-50">
-                  <p className="text-sm font-black text-gray-800 truncate">{user.name || "User"}</p>
-                  <p className="text-xs text-gray-400 truncate">{user.email || "user@example.com"}</p>
+                  <p className="text-sm font-black text-gray-800 truncate">{admin ? admin.adminName : user?.name || "User"}</p>
+                  <p className="text-xs text-gray-400 truncate">{admin ? admin.email : user?.email || "user@example.com"}</p>
                 </div>
 
                 <div className="py-2">
-                  <Link to="/profile" onClick={() => setShowDropdown(false)}>
-                    <div className="px-5 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm font-bold text-gray-600 transition-colors">
-                      <FaUserEdit className="text-gray-400" /> Profil Saya
-                    </div>
-                  </Link>
+                  {user && (
+                    <Link to="/profile" onClick={() => setShowDropdown(false)}>
+                      <div className="px-5 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm font-bold text-gray-600 transition-colors">
+                        <FaUserEdit className="text-gray-400" /> Profile
+                      </div>
+                    </Link>
+                  )}
+                  {admin && (
+                    <Link to="/dashboard" onClick={() => setShowDropdown(false)}>
+                      <div className="px-5 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm font-bold text-gray-600 transition-colors">
+                        <FaUserEdit className="text-gray-400" /> Dashboard
+                      </div>
+                    </Link>
+                  )}
 
                   <div
                     onClick={handleLogout}
                     className="px-5 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm font-bold text-red-500 cursor-pointer transition-colors"
                   >
-                    <FaSignOutAlt /> Keluar
+                    <FaSignOutAlt /> Logout
                   </div>
                 </div>
               </div>
@@ -158,6 +177,24 @@ const Navbar = () => {
 
               <Link to="/profile" onClick={() => setIsOpen(false)}>
                 Profile
+              </Link>
+
+              <button
+                onClick={handleLogout}
+                className="text-red-500 font-semibold"
+              >
+                Logout
+              </button>
+            </>
+          ) : admin ? (
+            <>
+              <div className="flex items-center gap-2">
+                <MdAccountCircle size={28} className="text-primary" />
+                <span>{admin.adminName}</span>
+              </div>
+
+              <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+                Dashboard
               </Link>
 
               <button
