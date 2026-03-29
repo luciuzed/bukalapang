@@ -58,11 +58,11 @@ const BookingPage = () => {
   return (
     <div className="max-w-6xl mx-auto py-6 bg-white min-h-screen pb-16">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-primary to-primary/90 rounded-2xl p-6 mb-6 text-white shadow-sm">
+      <div className="bg-linear-to-br from-primary to-primary/90 rounded-2xl p-6 mb-6 text-white shadow-sm">
         <h1 className="text-xl font-bold mb-1 tracking-tight">Find a Venue</h1>
         <p className="text-[11px] text-red-100 mb-4 opacity-80 uppercase tracking-wider font-medium">Instant Booking</p>
         <div className="flex bg-white rounded-lg p-1 shadow-inner max-w-xs">
-          <div className="flex-grow flex items-center px-2">
+          <div className="grow flex items-center px-2">
             <FaSearch className="text-gray-300 text-xs mr-2" />
             <input 
               type="text" 
@@ -99,7 +99,7 @@ const BookingPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-6">
           {currentItems.map((item) => (
             <Link to={`/venue/${item.id}`} key={item.id} className={`group cursor-pointer block ${item.is_active === 0 ? 'pointer-events-none' : ''}`}>
-              <div className={`relative aspect-[5/4] rounded-xl overflow-hidden mb-2 bg-gray-50 border transition-all ${item.is_active === 0 ? 'border-gray-200' : 'border-gray-100'}`}>
+              <div className={`relative aspect-5/4 rounded-xl overflow-hidden mb-2 bg-gray-50 border transition-all ${item.is_active === 0 ? 'border-gray-200' : 'border-gray-100'}`}>
                 {item.image_url ? (
                   <>
                     <img 
@@ -114,7 +114,7 @@ const BookingPage = () => {
                     )}
                   </>
                 ) : (
-                  <div className={`w-full h-full flex items-center justify-center ${item.is_active === 0 ? 'bg-gray-300' : 'bg-gradient-to-br from-gray-200 to-gray-300'}`}></div>
+                  <div className={`w-full h-full flex items-center justify-center ${item.is_active === 0 ? 'bg-gray-300' : 'bg-linear-to-br from-gray-200 to-gray-300'}`}></div>
                 )}
                 <div className="absolute top-2 left-2 bg-white/95 px-2 py-0.5 rounded-md text-[9px] font-black uppercase text-primary shadow-sm">
                   {item.category}

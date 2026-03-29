@@ -124,7 +124,7 @@ const AdminBooking = () => {
                           <h3 className="text-lg font-bold text-gray-900">{booking.field_name}</h3>
                           <p className="text-sm text-gray-600 mt-1">Booking ID: #{booking.id}</p>
                         </div>
-                        <span className={`text-xs font-bold px-3 py-1.5 rounded-full flex-shrink-0 ${
+                        <span className={`text-xs font-bold px-3 py-1.5 rounded-full shrink-0 ${
                           booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
                           booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-red-100 text-red-700'

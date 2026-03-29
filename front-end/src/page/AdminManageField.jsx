@@ -243,7 +243,7 @@ const AdminManageField = () => {
                     className={`bg-white rounded-2xl shadow-sm border transition ${field.is_active === 0 ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-100'} hover:shadow-md overflow-hidden`}
                   >
                     <div className="flex items-start justify-between p-4">
-                      <div className="h-32 w-32 flex-shrink-0 bg-gradient-to-br from-gray-200 to-gray-300 overflow-hidden rounded-xl ml-2">
+                      <div className="h-32 w-32 shrink-0 bg-linear-to-br from-gray-200 to-gray-300 overflow-hidden rounded-xl ml-2">
 
                         {field.image_url ? (
                           <img src={field.image_url} alt={field.name} className="h-full w-full object-cover" />
@@ -271,7 +271,7 @@ const AdminManageField = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-2 pr-4 flex-shrink-0">
+                      <div className="flex gap-2 pr-4 shrink-0">
                         <button
                           onClick={() => openSlotsModal(field)}
                           className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition font-medium"

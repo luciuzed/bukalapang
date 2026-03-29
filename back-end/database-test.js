@@ -12,7 +12,7 @@ async function testConnection() {
       database: process.env.DB_NAME,
     });
 
-    console.log("Connected to MySQL Docker");
+    console.log("Connected to MySQL");
 
     await connection.end();
   } catch (err) {

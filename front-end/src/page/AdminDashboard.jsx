@@ -167,7 +167,7 @@ const AdminDashboard = () => {
             {/* Additional Dashboard Sections */}
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Quick Actions */}
-              <div className="rounded-2xl bg-gradient-to-br from-primary/5 to-transparent p-6 border border-primary/10">
+              <div className="rounded-2xl bg-linear-to-br from-primary/5 to-transparent p-6 border border-primary/10">
                 <div className="flex items-center gap-2 mb-4">
                   <FiPlus className="text-primary" />
                   <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
@@ -189,7 +189,7 @@ const AdminDashboard = () => {
               </div>
 
               {/* Performance Overview */}
-              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-transparent p-6 border border-blue-100">
+              <div className="rounded-2xl bg-linear-to-br from-blue-50 to-transparent p-6 border border-blue-100">
                 <div className="flex items-center gap-2 mb-4">
                   <FiTrendingUp className="text-blue-600" />
                   <h3 className="text-lg font-bold text-gray-900">Performance</h3>
@@ -202,7 +202,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all"
+                        className="h-full bg-linear-to-r from-blue-400 to-blue-600 transition-all"
                         style={{ width: `${stats.totalSlots > 0 ? (stats.bookedSlots / stats.totalSlots) * 100 : 0}%` }}
                       />
                     </div>

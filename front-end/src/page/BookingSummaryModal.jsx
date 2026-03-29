@@ -97,7 +97,7 @@ const BookingSummaryModal = ({
   // --- RENDERING STEP 2 (CONFIRMATION) ---
   if (step === 2) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
         <div className="bg-white w-full max-w-md rounded-3xl p-8 shadow-2xl text-center" onClick={(e) => e.stopPropagation()}>
           <div className="flex justify-center mb-4 text-primary">
             <FaCheckCircle size={60} className="animate-bounce" />
@@ -127,7 +127,7 @@ const BookingSummaryModal = ({
 
   // --- RENDERING STEP 1 (SUMMARY) ---
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-bold text-gray-800">Booking Summary</h2>

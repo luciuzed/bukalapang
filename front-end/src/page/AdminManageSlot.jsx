@@ -320,7 +320,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
             {/* COURTS LIST VIEW */}
             {slotSetupScreen === 'court-list' && (
               <div className="space-y-4">
-                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
                   <p className="text-sm font-bold mb-4 text-gray-800">Add New Court</p>
                   <div className="flex gap-3">
                     <input
@@ -331,7 +331,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                     />
                     <button
                       onClick={handleAddCourt}
-                      className="px-6 py-3 bg-primary text-white rounded-full hover:opacity-90 transition flex items-center gap-2 font-semibold text-sm flex-shrink-0"
+                      className="px-6 py-3 bg-primary text-white rounded-full hover:opacity-90 transition flex items-center gap-2 font-semibold text-sm shrink-0"
                     >
                       <FiPlus className="h-4 w-4" /> Add
                     </button>
@@ -426,7 +426,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-r from-primary/10 to-blue-50 rounded-2xl p-4 border border-primary/20">
+                <div className="bg-linear-to-r from-primary/10 to-blue-50 rounded-2xl p-4 border border-primary/20">
                   <p className="text-sm text-gray-700"><strong>Note:</strong> System will automatically create 1-hour slots between these times. For example: 8:00-9:00, 9:00-10:00, etc.</p>
                 </div>
 
@@ -567,7 +567,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                   return slotDate === viewDate
                 }).map(s => s.court_name || 'Court ' + (s.court_id || '1')))].length || 1}, 1fr)` }}>
                   <div className="px-4 py-3 text-xs font-bold text-gray-700 bg-primary/5 border-r border-gray-200">
-                    Waktu
+                    Time
                   </div>
                   {[...new Set(viewSlots
                     .filter(s => {

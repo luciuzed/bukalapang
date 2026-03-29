@@ -105,6 +105,13 @@ const BookingDetailPage = () => {
     return courtSlot ? parseInt(courtSlot.price) : 0;
   };
 
+  // Format time range (e.g., "08:00" -> "08:00 - 09:00")
+  const formatTimeRange = (startTime) => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const endHours = String((hours + 1) % 24).padStart(2, '0');
+    return `${startTime} - ${endHours}:${String(minutes).padStart(2, '0')}`;
+  };
+
   // Toggle slot selection
   const toggleSlot = (courtId, time) => {
     // Find the slot matching this court and time
@@ -166,7 +173,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             {field.image_url ? (
               <img src={field.image_url} className="w-full h-full object-cover" alt={field.name} />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
+              <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-300 to-gray-400">
                 <span className="text-gray-600">No image</span>
               </div>
             )}
@@ -182,7 +189,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             </button>
           </div>
 
-          <div className="bg-gray-200 p-6 rounded-2xl">
+          <div className="p-6 rounded-2xl" style={{backgroundColor: '#f2f2f2'}}>
             <p className="text-sm text-gray-500">
               {field.description || "No description available."}
             </p>
@@ -220,9 +227,10 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             ) : (
               /* GRID FIXED SYSTEM */
               <div
-                className="grid gap-2"
+                className="grid gap-2 p-6 rounded-2xl"
                 style={{
-                  gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`
+                  gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`,
+                  backgroundColor: '#f2f2f2'
                 }}
               >
 
@@ -245,13 +253,27 @@ Total: Rp ${totalPrice.toLocaleString()}`;
 
                     {/* TIME */}
                     <div className="h-12 sm:h-14 flex items-center text-[9px] sm:text-[11px] font-semibold leading-none">
-                      {time}
+                      {formatTimeRange(time)}
                     </div>
 
                     {/* BUTTONS */}
                     {courts.map(court => {
                       const key = `${court.id}-${time}`;
                       const isSelected = isSlotSelected(court.id, time);
+
+                      // Check if a slot exists for this court at this specific time
+                      const slotExists = selectedDateSlots.some(slot => {
+                        const slotDate = new Date(slot.start_time);
+                        const slotHours = String(slotDate.getHours()).padStart(2, '0');
+                        const slotMinutes = String(slotDate.getMinutes()).padStart(2, '0');
+                        const slotTime = `${slotHours}:${slotMinutes}`;
+                        return slotTime === time && slot.court_id === court.id;
+                      });
+
+                      // If no slot exists, render empty div
+                      if (!slotExists) {
+                        return <div key={key}></div>;
+                      }
 
                       return (
                         <button
@@ -282,7 +304,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
 
         {/* RIGHT SECTION */}
         <div>
-          <div className="sticky top-8 bg-white p-6 rounded-3xl shadow-2xl ring-1 ring-black/5 space-y-6">
+          <div className="sticky top-8 bg-white p-6 rounded-3xl shadow-2xl shadow-black/15 ring-1 ring-black/3 space-y-6">
             <div>
               <p className="text-sm text-gray-400">Price per slot</p>
               <p className="text-xl font-black">
