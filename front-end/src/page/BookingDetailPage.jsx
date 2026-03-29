@@ -261,31 +261,40 @@ Total: Rp ${totalPrice.toLocaleString()}`;
                       const key = `${court.id}-${time}`;
                       const isSelected = isSlotSelected(court.id, time);
 
-                      // Check if a slot exists for this court at this specific time
-                      const slotExists = selectedDateSlots.some(slot => {
-                        const slotDate = new Date(slot.start_time);
+                      // Find the slot for this court at this specific time
+                      const slot = selectedDateSlots.find(s => {
+                        const slotDate = new Date(s.start_time);
                         const slotHours = String(slotDate.getHours()).padStart(2, '0');
                         const slotMinutes = String(slotDate.getMinutes()).padStart(2, '0');
                         const slotTime = `${slotHours}:${slotMinutes}`;
-                        return slotTime === time && slot.court_id === court.id;
+                        return slotTime === time && s.court_id === court.id;
                       });
 
                       // If no slot exists, render empty div
-                      if (!slotExists) {
+                      if (!slot) {
                         return <div key={key}></div>;
                       }
+
+                      const isBooked = slot.is_booked === 1;
 
                       return (
                         <button
                           key={key}
-                          onClick={() => toggleSlot(court.id, time)}
-                          className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition cursor-pointer ${
-                            isSelected
-                              ? "bg-primary text-white border-primary"
-                              : "bg-white text-gray-400 border-gray-300 hover:border-primary"
+                          onClick={() => !isBooked && toggleSlot(court.id, time)}
+                          disabled={isBooked}
+                          className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition ${
+                            isBooked
+                              ? "bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed"
+                              : isSelected
+                              ? "bg-primary text-white border-primary cursor-pointer"
+                              : "bg-white text-gray-400 border-gray-300 hover:border-primary cursor-pointer"
                           }`}
                         >
-                          {isSelected ? "✓" : (
+                          {isBooked ? (
+                            <span className="text-[9px] sm:text-[11px]">Unavailable</span>
+                          ) : isSelected ? (
+                            "✓"
+                          ) : (
                             <span className="text-[9px] sm:text-[11px]">
                               Rp {getCourtPrice(court.id).toLocaleString()}
                             </span>

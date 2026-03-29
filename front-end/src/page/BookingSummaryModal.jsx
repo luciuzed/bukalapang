@@ -41,13 +41,18 @@ const BookingSummaryModal = ({
       setError('');
       setIsProcessing(true);
 
-      // Get userId from session/auth
-      const userCookie = Cookies.get('user_session');
+      // Get userId from session/auth - try both user_session and admin_session
+      let userCookie = Cookies.get('user_session');
+      if (!userCookie) {
+        userCookie = Cookies.get('admin_session');
+      }
+      
       let userId;
 
       if (userCookie) {
         const userData = JSON.parse(userCookie);
-        userId = userData.userId;
+        // The property is 'id', not 'userId' or 'adminId'
+        userId = userData.id || userData.adminId;
       }
 
       if (!userId) {
@@ -73,7 +78,7 @@ const BookingSummaryModal = ({
 
       const bookingData = await bookingResponse.json();
       
-      // Store booking details for payment page
+      // Store booking details for reference (stays in pending status)
       sessionStorage.setItem('pendingBooking', JSON.stringify({
         bookingId: bookingData.id,
         totalAmount: bookingData.totalAmount,

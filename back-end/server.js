@@ -23,8 +23,6 @@ app.use('/api/fields-public', fieldRoutes);
 app.use('/api/fields', fieldRoutes);
 app.use('/api/field', fieldRoutes);
 app.use('/api/bookings', bookingRoutes);
-app.use('/api/user', bookingRoutes);
-app.use('/api/admin', bookingRoutes);
 app.use('/api/courts', courtRoutes);
 
 app.listen(5000, () => console.log('Backend running on http://localhost:5000'));

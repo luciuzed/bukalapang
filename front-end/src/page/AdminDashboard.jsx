@@ -65,10 +65,13 @@ const AdminDashboard = () => {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/${adminId}/bookings`)
+      const response = await fetch(`http://localhost:5000/api/bookings/admin/${adminId}`)
       if (response.ok) {
         const data = await response.json()
         setBookings(data)
+        console.log('Fetched bookings:', data)
+      } else {
+        console.error('Failed to fetch bookings:', response.status)
       }
     } catch (err) {
       console.error('Failed to fetch bookings:', err)
@@ -83,11 +86,8 @@ const AdminDashboard = () => {
 
   const stats = {
     totalFields: fields.length,
-    totalSlots: fields.reduce((sum, field) => sum + (field.slots?.length || 0), 0),
-    bookedSlots: fields.reduce(
-      (sum, field) => sum + (field.slots?.filter((s) => s.is_booked)?.length || 0),
-      0
-    ),
+    pendingBookings: bookings.filter((b) => b.status === 'pending').length,
+    confirmedBookings: bookings.filter((b) => b.status === 'confirmed').length,
   }
 
   const tabItems = [
@@ -140,26 +140,26 @@ const AdminDashboard = () => {
                 <div className="rounded-2xl bg-white px-6 py-8 shadow-sm border border-gray-100 hover:shadow-md transition">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Available Slots
+                      Pending Bookings
                     </p>
                     <FiTrendingUp className="text-primary/40 h-5 w-5" />
                   </div>
                   <p className="text-4xl font-bold text-primary">
-                    {stats.totalSlots}
+                    {stats.pendingBookings}
                   </p>
-                  <p className="text-xs text-gray-400 mt-2">Total time slots</p>
+                  <p className="text-xs text-gray-400 mt-2">Awaiting confirmation</p>
                 </div>
                 <div className="rounded-2xl bg-white px-6 py-8 shadow-sm border border-gray-100 hover:shadow-md transition">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                      Bookings
+                      Confirmed Bookings
                     </p>
                     <FiAward className="text-primary/40 h-5 w-5" />
                   </div>
                   <p className="text-4xl font-bold text-primary">
-                    {stats.bookedSlots}
+                    {stats.confirmedBookings}
                   </p>
-                  <p className="text-xs text-gray-400 mt-2">Confirmed bookings</p>
+                  <p className="text-xs text-gray-400 mt-2">Completed bookings</p>
                 </div>
               </div>
             </div>
@@ -197,13 +197,13 @@ const AdminDashboard = () => {
                 <div className="space-y-3">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-700 font-medium">Booking Rate</span>
-                      <span className="text-gray-900 font-bold">{stats.totalSlots > 0 ? Math.round((stats.bookedSlots / stats.totalSlots) * 100) : 0}%</span>
+                      <span className="text-gray-700 font-medium">Confirmation Rate</span>
+                      <span className="text-gray-900 font-bold">{(stats.pendingBookings + stats.confirmedBookings) > 0 ? Math.round((stats.confirmedBookings / (stats.pendingBookings + stats.confirmedBookings)) * 100) : 0}%</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-linear-to-r from-blue-400 to-blue-600 transition-all"
-                        style={{ width: `${stats.totalSlots > 0 ? (stats.bookedSlots / stats.totalSlots) * 100 : 0}%` }}
+                        style={{ width: `${(stats.pendingBookings + stats.confirmedBookings) > 0 ? (stats.confirmedBookings / (stats.pendingBookings + stats.confirmedBookings)) * 100 : 0}%` }}
                       />
                     </div>
                   </div>

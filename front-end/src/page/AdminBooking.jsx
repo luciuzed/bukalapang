@@ -46,13 +46,16 @@ const AdminBooking = () => {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/${adminId}/bookings`)
+      const response = await fetch(`http://localhost:5000/api/bookings/admin/${adminId}`)
       if (response.ok) {
         const data = await response.json()
         setBookings(data)
+      } else {
+        setError('Failed to load bookings')
       }
     } catch (err) {
       console.error('Failed to fetch bookings:', err)
+      setError('Unable to connect to server')
     } finally {
       setLoading(false)
     }
@@ -62,6 +65,54 @@ const AdminBooking = () => {
     localStorage.removeItem('adminId')
     Cookies.remove('admin_session')
     navigate('/login')
+  }
+
+  const handleConfirmBooking = async (bookingId) => {
+    try {
+      setSuccess('')
+      setError('')
+      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      
+      if (response.ok) {
+        setSuccess('Booking confirmed successfully')
+        fetchBookings()
+        setTimeout(() => setSuccess(''), 3000)
+      } else {
+        const data = await response.json()
+        setError(data.error || 'Failed to confirm booking')
+      }
+    } catch (err) {
+      console.error('Confirm error:', err)
+      setError('Unable to connect to server')
+    }
+  }
+
+  const handleCancelBooking = async (bookingId) => {
+    if (window.confirm('Are you sure you want to cancel this booking?')) {
+      try {
+        setSuccess('')
+        setError('')
+        const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+        
+        if (response.ok) {
+          setSuccess('Booking cancelled successfully')
+          fetchBookings()
+          setTimeout(() => setSuccess(''), 3000)
+        } else {
+          const data = await response.json()
+          setError(data.error || 'Failed to cancel booking')
+        }
+      } catch (err) {
+        console.error('Cancel error:', err)
+        setError('Unable to connect to server')
+      }
+    }
   }
 
   const tabItems = [
@@ -124,32 +175,60 @@ const AdminBooking = () => {
                           <h3 className="text-lg font-bold text-gray-900">{booking.field_name}</h3>
                           <p className="text-sm text-gray-600 mt-1">Booking ID: #{booking.id}</p>
                         </div>
-                        <span className={`text-xs font-bold px-3 py-1.5 rounded-full shrink-0 ${
-                          booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
+                         <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full shrink-0 ${
+                            booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                            booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
                         }`}>
-                          {booking.status === 'confirmed' ? '✓ Confirmed' :
-                           booking.status === 'pending' ? '⏳ Pending' :
-                           '✗ Cancelled'}
+                            {booking.status === 'confirmed' && <span>✓ Confirmed</span>}
+                            
+                            {booking.status === 'pending' && (
+                                <>
+                                    <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        width="12" 
+                                        height="12" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="2.5" 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round"
+                                    >
+                                        <path d="M5 22h14" />
+                                        <path d="M5 2h14" />
+                                        <path d="M17 22c0-4-3-6-5-8-2 2-5 4-5 8" />
+                                        <path d="M17 2c0 4-3 6-5 8-2-2-5-4-5-8" />
+                                    </svg>
+                                    <span>Pending</span>
+                                </>
+                            )}
+
+                            {booking.status === 'cancelled' && <span>✗ Cancelled</span>}
                         </span>
                       </div>
 
                       <div className="grid sm:grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-gray-600 font-medium">User</p>
                           <p className="text-gray-900 font-semibold mt-1">{booking.user_name}</p>
                           <p className="text-gray-500 text-xs mt-1">{booking.user_email}</p>
                           {booking.user_phone && (
                             <p className="text-gray-500 text-xs">{booking.user_phone}</p>
                           )}
                         </div>
-                        <div>
-                          <p className="text-gray-600 font-medium">Time Slots</p>
-                          <p className="text-gray-900 mt-1 text-xs font-mono">
-                            {booking.time_slots}
-                          </p>
-                        </div>
+                       <div>
+  <p className="text-gray-600 font-medium mb-2">Time Slots</p>
+  <div className="flex flex-wrap gap-2">
+    {booking.time_slots.split(',').map((slot, index) => (
+      <span 
+        key={index} 
+        className="px-3 py-1 bg-gray-200 text-black text-xs font-mono rounded-full border border-gray-300"
+      >
+        {slot.trim()}
+      </span>
+    ))}
+  </div>
+</div>
                         <div>
                           <p className="text-gray-600 font-medium">Booking Date</p>
                           <p className="text-gray-900 font-semibold mt-1">
@@ -169,6 +248,25 @@ const AdminBooking = () => {
                           </p>
                         </div>
                       </div>
+
+                      {/* ACTION BUTTONS */}
+                      {booking.status === 'pending' && (
+                        <div className="flex gap-3 justify-end mt-6 pt-6 border-t border-gray-200">
+                          <button
+                            onClick={() => handleCancelBooking(booking.id)}
+                            className="px-4 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => handleConfirmBooking(booking.id)}
+                            className="px-4 py-2 text-sm font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition flex items-center gap-2"
+                          >
+                            <FiCheck size={16} />
+                            Confirm
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
