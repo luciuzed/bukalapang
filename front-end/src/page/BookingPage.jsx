@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import LoadingOverlay from '../components/LoadingOverlay';
+import { apiUrl } from '../config/api';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -18,7 +19,7 @@ const BookingPage = () => {
 
   const fetchFields = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/fields-public')
+      const response = await fetch(apiUrl('/fields-public'))
       if (response.ok) {
         const data = await response.json()
         setFields(data)

@@ -6,6 +6,7 @@ import LoadingOverlay from '../components/LoadingOverlay'
 import Notification from '../components/Notification'
 import Sidebar from '../components/Sidebar'
 import SuccessMessage from '../components/SuccessMessage'
+import { apiUrl } from '../config/api'
 
 const revenueColors = [
   'rgba(0, 110, 70, 0.95)',
@@ -144,7 +145,7 @@ const AdminDashboard = () => {
   const fetchFields = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:5000/api/fields/${adminId}`)
+      const response = await fetch(apiUrl(`/fields/${adminId}`))
       if (response.ok) {
         const data = await response.json()
         setFields(data)
@@ -160,7 +161,7 @@ const AdminDashboard = () => {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/admin/${adminId}`)
+      const response = await fetch(apiUrl(`/bookings/admin/${adminId}`))
       if (response.ok) {
         const data = await response.json()
         setBookings(data)
@@ -175,7 +176,7 @@ const AdminDashboard = () => {
 
   const fetchWeeklyPerformance = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/admin/${adminId}/performance`)
+      const response = await fetch(apiUrl(`/bookings/admin/${adminId}/performance`))
       if (response.ok) {
         const data = await response.json()
         const counts = Array.isArray(data.daily)
@@ -192,7 +193,7 @@ const AdminDashboard = () => {
 
   const fetchRevenueSummary = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/admin/${adminId}/revenue`)
+      const response = await fetch(apiUrl(`/bookings/admin/${adminId}/revenue`))
       if (response.ok) {
         const data = await response.json()
         setRevenueSummary({

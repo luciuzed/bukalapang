@@ -3,6 +3,7 @@ import { FiX, FiCheck, FiPlus, FiTrash2 } from 'react-icons/fi'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ConfirmationModal from './ConfirmationModal'
 import SuccessMessage from '../components/SuccessMessage'
+import { apiUrl } from '../config/api'
 
 const AdminManageSlot = ({ field, adminId, onClose }) => {
   const [courts, setCourts] = useState([])
@@ -51,8 +52,8 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
     setCourtsLoading(true)
     try {
       const [courtsResponse, slotsResponse] = await Promise.all([
-        fetch(`http://localhost:5000/api/field/${field.id}/courts`),
-        fetch(`http://localhost:5000/api/field/${field.id}/slots`)
+        fetch(apiUrl(`/field/${field.id}/courts`)),
+        fetch(apiUrl(`/field/${field.id}/slots`))
       ])
 
       if (courtsResponse.ok) {
@@ -79,7 +80,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
 
   const fetchSlotsOnly = async () => {
     try {
-      const slotsResponse = await fetch(`http://localhost:5000/api/field/${field.id}/slots`)
+      const slotsResponse = await fetch(apiUrl(`/field/${field.id}/slots`))
       if (slotsResponse.ok) {
         const slotsData = await slotsResponse.json()
         setViewSlots(slotsData)
@@ -96,7 +97,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/field/${field.id}/courts`, {
+      const response = await fetch(apiUrl(`/field/${field.id}/courts`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,7 +110,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
         showSuccessMessage('Court added')
         setNewCourtName('')
         // Refresh courts
-        const refreshResponse = await fetch(`http://localhost:5000/api/field/${field.id}/courts`)
+        const refreshResponse = await fetch(apiUrl(`/field/${field.id}/courts`))
         if (refreshResponse.ok) {
           const data = await refreshResponse.json()
           setCourts(data)
@@ -137,7 +138,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
 
     try {
       setIsDeleteProcessing(true)
-      const response = await fetch(`http://localhost:5000/api/field/${field.id}/courts/${courtToDelete}`, {
+      const response = await fetch(apiUrl(`/field/${field.id}/courts/${courtToDelete}`), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminId })
@@ -146,7 +147,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
       if (response.ok) {
         showSuccessMessage('Court deleted')
         setCourtToDelete(null)
-        const refreshResponse = await fetch(`http://localhost:5000/api/field/${field.id}/courts`)
+        const refreshResponse = await fetch(apiUrl(`/field/${field.id}/courts`))
         if (refreshResponse.ok) {
           const data = await refreshResponse.json()
           setCourts(data)
@@ -194,7 +195,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
 
     setSlotsLoading(true)
     try {
-      const response = await fetch(`http://localhost:5000/api/field/${field.id}/generate-slots`, {
+      const response = await fetch(apiUrl(`/field/${field.id}/generate-slots`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -217,7 +218,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
 
         // Refresh viewSlots to show newly generated slots
         try {
-          const refreshResponse = await fetch(`http://localhost:5000/api/field/${field.id}/slots`)
+          const refreshResponse = await fetch(apiUrl(`/field/${field.id}/slots`))
           if (refreshResponse.ok) {
             const data = await refreshResponse.json()
             setViewSlots(data)
@@ -250,7 +251,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/field/${field.id}/slots/override`, {
+      const response = await fetch(apiUrl(`/field/${field.id}/slots/override`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -287,7 +288,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
     setViewDate(today)
 
     try {
-      const response = await fetch(`http://localhost:5000/api/field/${field.id}/slots`)
+      const response = await fetch(apiUrl(`/field/${field.id}/slots`))
       if (response.ok) {
         const data = await response.json()
         setViewSlots(data)

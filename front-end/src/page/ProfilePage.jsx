@@ -5,8 +5,7 @@ import { FiCheck } from 'react-icons/fi';
 import Cookies from 'js-cookie';
 import LoadingOverlay from '../components/LoadingOverlay';
 import ProfileSidebar from '../components/ProfileSidebar';
-
-const API_BASE_URL = 'http://localhost:5000/api';
+import { API_BASE_URL } from '../config/api';
 
 const getAccountId = (session) =>
   session?.id ?? session?.userId ?? session?.user_id ?? session?.accountId ?? null;

@@ -6,6 +6,7 @@ import LoadingOverlay from '../components/LoadingOverlay'
 import Sidebar from '../components/Sidebar'
 import ConfirmationModal from './ConfirmationModal'
 import SuccessMessage from '../components/SuccessMessage'
+import { apiUrl } from '../config/api'
 
 const AdminBooking = () => {
   const navigate = useNavigate()
@@ -64,7 +65,7 @@ const AdminBooking = () => {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/admin/${adminId}`)
+      const response = await fetch(apiUrl(`/bookings/admin/${adminId}`))
       if (response.ok) {
         const data = await response.json()
         setBookings(data)
@@ -89,7 +90,7 @@ const AdminBooking = () => {
     try {
       setSuccess(null)
       setError('')
-      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}/confirm`, {
+      const response = await fetch(apiUrl(`/bookings/${bookingId}/confirm`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
@@ -123,7 +124,7 @@ const AdminBooking = () => {
       setIsCancelProcessing(true)
       setSuccess(null)
       setError('')
-      const response = await fetch(`http://localhost:5000/api/bookings/${bookingToCancel}/cancel`, {
+      const response = await fetch(apiUrl(`/bookings/${bookingToCancel}/cancel`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })

@@ -8,6 +8,7 @@ import Sidebar from '../components/Sidebar'
 import AdminManageSlot from './AdminManageSlot'
 import ConfirmationModal from './ConfirmationModal'
 import SuccessMessage from '../components/SuccessMessage'
+import { apiUrl } from '../config/api'
 
 const MAX_DESCRIPTION_LENGTH = 160
 
@@ -71,7 +72,7 @@ const AdminManageField = () => {
   const fetchFields = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`http://localhost:5000/api/fields/${adminId}`)
+      const response = await fetch(apiUrl(`/fields/${adminId}`))
       if (response.ok) {
         const data = await response.json()
         setFields(data)
@@ -103,8 +104,8 @@ const AdminManageField = () => {
       }
 
       const url = editingField
-        ? `http://localhost:5000/api/fields/${editingField.id}`
-        : 'http://localhost:5000/api/fields'
+        ? apiUrl(`/fields/${editingField.id}`)
+        : apiUrl('/fields')
 
       const method = editingField ? 'PUT' : 'POST'
 
@@ -158,7 +159,7 @@ const AdminManageField = () => {
 
     try {
       setIsDeleteProcessing(true)
-      const response = await fetch(`http://localhost:5000/api/fields/${fieldToDelete}`, {
+      const response = await fetch(apiUrl(`/fields/${fieldToDelete}`), {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminId }),

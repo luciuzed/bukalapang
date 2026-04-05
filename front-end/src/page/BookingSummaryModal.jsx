@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { FaCalendarAlt, FaClock, FaTrashAlt, FaTimes, FaCheckCircle } from 'react-icons/fa';
+import { apiUrl } from '../config/api';
 
 const BookingSummaryModal = ({ 
   isOpen, 
@@ -57,7 +58,7 @@ const BookingSummaryModal = ({
       }
 
       // Create booking
-      const bookingResponse = await fetch('http://localhost:5000/api/bookings', {
+      const bookingResponse = await fetch(apiUrl('/bookings'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

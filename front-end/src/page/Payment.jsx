@@ -4,6 +4,7 @@ import { FaClock, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Navbar from '../components/Navbar';
 import qrImg from '../assets/qr.png';
+import { apiUrl } from '../config/api';
 
 const Payment = () => {
   const { paymentId } = useParams();
@@ -44,7 +45,7 @@ const Payment = () => {
     const fetchPayment = async () => {
       try {
         console.log('Fetching payment with ID:', paymentId);
-        const response = await fetch(`http://localhost:5000/api/bookings/payment/${paymentId}`);
+        const response = await fetch(apiUrl(`/bookings/payment/${paymentId}`));
         console.log('Response status:', response.status);
         
         if (!response.ok) {
@@ -101,7 +102,7 @@ const Payment = () => {
 
         const fetchPaymentStatus = async () => {
           try {
-            const response = await fetch(`http://localhost:5000/api/bookings/payment/${paymentId}`);
+            const response = await fetch(apiUrl(`/bookings/payment/${paymentId}`));
             if (response.ok) {
               const data = await response.json();
               setPayment(data);
@@ -127,7 +128,7 @@ const Payment = () => {
       setError('');
       setProcessing(true);
 
-      const response = await fetch(`http://localhost:5000/api/bookings/payment/${paymentId}/confirm`, {
+      const response = await fetch(apiUrl(`/bookings/payment/${paymentId}/confirm`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

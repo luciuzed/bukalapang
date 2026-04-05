@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import LoadingOverlay from '../components/LoadingOverlay';
 import BookingSummaryModal from './BookingSummaryModal';
+import { apiUrl } from '../config/api';
 
 const BookingDetailPage = () => {
   const { id } = useParams();
@@ -36,7 +37,7 @@ const BookingDetailPage = () => {
 
   const fetchFieldDetails = async () => {
     try {
-      const fieldResponse = await fetch(`http://localhost:5000/api/field/detail/${id}`);
+      const fieldResponse = await fetch(apiUrl(`/field/detail/${id}`));
       if (!fieldResponse.ok) {
         navigate('/venue');
         return;
@@ -56,7 +57,7 @@ const BookingDetailPage = () => {
 
   const fetchCourts = async () => {
     try {
-      const courtsResponse = await fetch(`http://localhost:5000/api/courts/${id}`);
+      const courtsResponse = await fetch(apiUrl(`/courts/${id}`));
       if (courtsResponse.ok) {
         const courtsData = await courtsResponse.json();
         setCourts(courtsData);

@@ -6,6 +6,7 @@ import IMAGE_RING from '../assets/ring.jpg'
 import IMAGE_PADEL from '../assets/padel.jpg'
 import IMAGE_BILIARD from '../assets/biliard.jpg'
 import IMAGE_TENNIS from '../assets/tennis.jpg'
+import { apiUrl } from '../config/api'
 
 import Cookies from 'js-cookie';
 import { FaUser, FaLock, FaPhoneAlt, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -111,7 +112,7 @@ const LoginPage = () => {
     const url = role === "User" ? "login" : "login-business";
 
     try {
-      const response = await fetch(`http://localhost:5000/api/${url}`, {
+      const response = await fetch(apiUrl(`/${url}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email, password: formData.password }),
@@ -157,7 +158,7 @@ const LoginPage = () => {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`http://localhost:5000/api/${url}`, {
+      const response = await fetch(apiUrl(`/${url}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -254,7 +255,7 @@ const LoginPage = () => {
 
     setIsLoading(true)
     try {
-      const response = await fetch('http://localhost:5000/api/resend-otp', {
+      const response = await fetch(apiUrl('/resend-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingOtpInfo.email, role: pendingOtpInfo.role }),
@@ -366,7 +367,7 @@ const LoginPage = () => {
 
     setIsLoading(true)
     try {
-      const response = await fetch('http://localhost:5000/api/verify-otp', {
+      const response = await fetch(apiUrl('/verify-otp'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
