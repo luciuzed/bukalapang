@@ -311,6 +311,7 @@ router.get('/user/:userId', async (req, res) => {
     const [bookings] = await db.execute(`
       SELECT 
         b.id,
+        MAX(p.id) as payment_id,
         b.user_id,
         b.booking_date,
         b.status,
@@ -323,6 +324,7 @@ router.get('/user/:userId', async (req, res) => {
         f.city,
         GROUP_CONCAT(CONCAT(fs.start_time, ' - ', fs.end_time) SEPARATOR ', ') as time_slots
       FROM booking b
+      LEFT JOIN payment p ON p.booking_id = b.id
       JOIN booking_slot bs ON b.id = bs.booking_id
       JOIN field_slot fs ON bs.slot_id = fs.id
       JOIN field f ON fs.field_id = f.id

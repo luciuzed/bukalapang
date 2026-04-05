@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { FiBarChart2, FiBriefcase, FiGrid, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar } from 'react-icons/fi'
+import { FiBarChart2, FiBriefcase, FiGrid, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar } from 'react-icons/fi'
 import Cookies from 'js-cookie'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Sidebar from '../components/Sidebar'
@@ -240,9 +240,9 @@ const AdminManageField = () => {
                   reset()
                   setShowFieldForm(true)
                 }}
-                className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full hover:opacity-90 transition font-semibold text-sm"
+                className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full hover:opacity-90 transition font-semibold text-sm"
               >
-                <FiPlus className="h-4 w-4" /> Add Field
+                <span className="text-white font-black text-base leading-none">+</span> Add Field
               </button>
             </div>
 

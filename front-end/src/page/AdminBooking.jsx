@@ -194,7 +194,7 @@ const AdminBooking = () => {
                     key={booking.id}
                     id={`booking-${booking.id}`}
                     className={`bg-white rounded-2xl shadow-sm border transition hover:shadow-md overflow-hidden ${
-                      booking.status === 'pending' ? 'border-yellow-100' :
+                      booking.status === 'pending' ? 'border-gray-300' :
                       'border-gray-200'
                     }`}
                   >
