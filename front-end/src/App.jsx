@@ -10,6 +10,7 @@ import AdminDashboard from "./page/AdminDashboard"
 import AdminManageField from "./page/AdminManageField"
 import AdminBooking from "./page/AdminBooking"
 import ProfilePage from "./page/ProfilePage"
+import Payment from "./page/Payment"
 
 // Protected route wrapper to redirect users based on role
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -96,7 +97,8 @@ const LoginGuard = ({ children }) => {
 function App() {
   const location = useLocation()
   const fullWidthPages = ["/dashboard", "/profile", "/field", "/booking"]
-  const showNavbar = !fullWidthPages.includes(location.pathname)
+  const paymentPages = location.pathname.match(/^\/payment\//)
+  const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages
   const isFullWidth = fullWidthPages.includes(location.pathname)
   const wrapperClass = isFullWidth ? "min-h-screen" : "container mx-auto px-10"
 
@@ -108,11 +110,11 @@ function App() {
         <Route path="/" element={<></>} />
         <Route 
           path="/venue" 
-          element={
-            <ProtectedRoute allowedRole="user">
-              <BookingPage />
-            </ProtectedRoute>
-          } 
+          element={<BookingPage />} 
+        />
+        <Route 
+          path="/venues" 
+          element={<BookingPage />} 
         />
         <Route path="/login" element={<LoginGuard><LoginPage /></LoginGuard>} />
         <Route 
@@ -149,9 +151,21 @@ function App() {
         />
         <Route 
           path="/venue/:id" 
+          element={<BookingDetailPage />} 
+        />
+        <Route 
+          path="/venues/:id" 
+          element={<BookingDetailPage />} 
+        />
+        <Route 
+          path="/payment" 
+          element={<Navigate to="/venue" replace />} 
+        />
+        <Route 
+          path="/payment/:paymentId" 
           element={
             <ProtectedRoute allowedRole="user">
-              <BookingDetailPage />
+              <Payment />
             </ProtectedRoute>
           } 
         />

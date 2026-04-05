@@ -31,7 +31,7 @@ const getConfirmedRevenueForField = async (fieldId) => {
   return Number(rows[0]?.revenue) || 0;
 };
 
-// ============ CREATE BOOKING ============
+
 // POST /api/bookings
 router.post('/', async (req, res) => {
   const { userId, fieldId, selectedSlotIds } = req.body;
@@ -43,16 +43,22 @@ router.post('/', async (req, res) => {
     });
   }
 
+  const connection = await db.getConnection();
+
   try {
+    // Start transaction
+    await connection.beginTransaction();
+
     // Get slot details and prices
     const placeholders = selectedSlotIds.map(() => '?').join(',');
-    const [slots] = await db.execute(
+    const [slots] = await connection.execute(
       `SELECT id, price, is_booked FROM field_slot WHERE id IN (${placeholders}) AND field_id = ?`,
       [...selectedSlotIds, fieldId]
     );
 
     // Check if all requested slots exist and belong to the field
     if (slots.length !== selectedSlotIds.length) {
+      await connection.rollback();
       return res.status(400).json({ 
         error: 'One or more selected slots do not exist or do not belong to this field',
         requested: selectedSlotIds.length,
@@ -63,57 +69,78 @@ router.post('/', async (req, res) => {
     // Check if any slot is already booked
     const bookedSlot = slots.find(s => s.is_booked === 1);
     if (bookedSlot) {
+      await connection.rollback();
       return res.status(409).json({ error: 'One or more selected slots are already booked' });
     }
 
     // Calculate total amount
     const totalAmount = slots.reduce((sum, slot) => sum + parseFloat(slot.price), 0);
 
-    // Step 1: Insert booking record into booking table
-    const [bookingResult] = await db.execute(
+    // Step 1: Insert booking record into booking table with 'unpaid' status
+    const [bookingResult] = await connection.execute(
       'INSERT INTO booking (user_id, status, total_amount) VALUES (?, ?, ?)',
-      [userId, 'pending', totalAmount]
+      [userId, 'unpaid', totalAmount]
     );
 
     const bookingId = bookingResult.insertId;
+    console.log('Booking created with ID:', bookingId);
 
-    // Step 2: Insert entries into booking_slot for each slot
+    // Step 2: Create payment record for this booking
+    const [paymentResult] = await connection.execute(
+      'INSERT INTO payment (booking_id, amount, status) VALUES (?, ?, ?)',
+      [bookingId, totalAmount, 'unpaid']
+    );
+
+    const paymentId = paymentResult.insertId;
+    console.log('Payment created with ID:', paymentId);
+
+    // Step 3: Insert entries into booking_slot for each slot
     for (const slotId of selectedSlotIds) {
-      await db.execute(
+      await connection.execute(
         'INSERT INTO booking_slot (booking_id, slot_id) VALUES (?, ?)',
         [bookingId, slotId]
       );
     }
 
-    // Step 3: Mark all slots as booked in field_slot table
+    // Step 4: Mark all slots as booked in field_slot table
     for (const slotId of selectedSlotIds) {
-      await db.execute(
+      await connection.execute(
         'UPDATE field_slot SET is_booked = 1 WHERE id = ?',
         [slotId]
       );
     }
 
-    // Return successful response
+    // Commit transaction
+    await connection.commit();
+
+    // Return successful response with payment_id
     res.status(201).json({
       id: bookingId,
+      paymentId: parseInt(paymentId),
       userId,
       fieldId,
-      status: 'pending',
+      status: 'unpaid',
       totalAmount,
       selectedSlots: selectedSlotIds,
-      message: 'Booking created successfully'
+      message: 'Booking created successfully. Proceeding to payment.'
     });
 
   } catch (err) {
+    try {
+      await connection.rollback();
+    } catch (rollbackErr) {
+      console.error('Rollback error:', rollbackErr);
+    }
     console.error('Booking creation error:', err);
     res.status(500).json({ 
       error: 'Failed to create booking',
       details: err.message
     });
+  } finally {
+    connection.release();
   }
 });
 
-// ============ CONFIRM PAYMENT (Update booking status to confirmed) ============
 // POST /api/bookings/:bookingId/confirm
 router.post('/:bookingId/confirm', async (req, res) => {
   const { bookingId } = req.params;
@@ -154,7 +181,75 @@ router.post('/:bookingId/confirm', async (req, res) => {
   }
 });
 
-// ============ CANCEL BOOKING ============
+// POST /api/bookings/:bookingId/cancel-unpaid
+router.post('/:bookingId/cancel-unpaid', async (req, res) => {
+  const { bookingId } = req.params;
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Verify booking exists and is unpaid
+    const [booking] = await connection.execute(
+      'SELECT id, status FROM booking WHERE id = ?',
+      [bookingId]
+    );
+
+    if (booking.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    if (booking[0].status !== 'unpaid') {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Only unpaid bookings can be cancelled. Current status: ' + booking[0].status });
+    }
+
+    // Update booking status to cancelled
+    await connection.execute(
+      'UPDATE booking SET status = ? WHERE id = ?',
+      ['cancelled', bookingId]
+    );
+
+    // Unmark all slots as booked
+    await connection.execute(`
+      UPDATE field_slot 
+      SET is_booked = 0 
+      WHERE id IN (
+        SELECT slot_id FROM booking_slot WHERE booking_id = ?
+      )
+    `, [bookingId]);
+
+    // Update associated payment to failed
+    await connection.execute(
+      'UPDATE payment SET status = ? WHERE booking_id = ?',
+      ['failed', bookingId]
+    );
+
+    await connection.commit();
+
+    res.json({
+      id: bookingId,
+      status: 'cancelled',
+      message: 'Unpaid booking cancelled successfully. Slots have been released.'
+    });
+
+  } catch (err) {
+    try {
+      await connection.rollback();
+    } catch (rollbackErr) {
+      console.error('Rollback error:', rollbackErr);
+    }
+    console.error('Cancel unpaid booking error:', err);
+    res.status(500).json({ 
+      error: 'Failed to cancel booking',
+      details: err.message
+    });
+  } finally {
+    connection.release();
+  }
+});
+
 // POST /api/bookings/:bookingId/cancel
 router.post('/:bookingId/cancel', async (req, res) => {
   const { bookingId } = req.params;
@@ -204,8 +299,6 @@ router.post('/:bookingId/cancel', async (req, res) => {
   }
 });
 
-
-// ============ GET BOOKINGS FOR A USER ============
 // GET /api/user/:userId/bookings
 router.get('/user/:userId', async (req, res) => {
   const { userId } = req.params;
@@ -242,7 +335,6 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// ============ GET BOOKINGS FOR AN ADMIN (All their fields' bookings) ============
 // GET /api/bookings/admin/:adminId/performance
 router.get('/admin/:adminId/performance', async (req, res) => {
   const { adminId } = req.params;
@@ -304,7 +396,6 @@ router.get('/admin/:adminId/performance', async (req, res) => {
   }
 });
 
-// ============ GET REVENUE FOR AN ADMIN (All their fields' revenue) ============
 // GET /api/bookings/admin/:adminId/revenue
 router.get('/admin/:adminId/revenue', async (req, res) => {
   const { adminId } = req.params;
@@ -352,7 +443,6 @@ router.get('/admin/:adminId/revenue', async (req, res) => {
   }
 });
 
-// ============ GET BOOKINGS FOR AN ADMIN (All their fields' bookings) ============
 // GET /api/bookings/admin/:adminId
 router.get('/admin/:adminId', async (req, res) => {
   const { adminId } = req.params;
@@ -377,6 +467,7 @@ router.get('/admin/:adminId', async (req, res) => {
       JOIN field f ON fs.field_id = f.id
       JOIN user u ON b.user_id = u.id
       WHERE f.admin_id = ?
+        AND b.status IN ('pending', 'confirmed', 'cancelled')
       GROUP BY b.id
       ORDER BY b.booking_date DESC
     `, [adminId]);
@@ -392,7 +483,171 @@ router.get('/admin/:adminId', async (req, res) => {
   }
 });
 
-// ============ GET SINGLE BOOKING DETAILS ============
+// GET /api/bookings/payment/:paymentId
+router.get('/payment/:paymentId', async (req, res) => {
+  const { paymentId } = req.params;
+
+  try {
+    console.log('Fetching payment with ID:', paymentId);
+    
+    // First check if payment exists
+    const [payment] = await db.execute(
+      'SELECT id, booking_id, amount, status, transaction_time FROM payment WHERE id = ?',
+      [paymentId]
+    );
+
+    console.log('Payment query result:', payment);
+
+    if (!payment || payment.length === 0) {
+      console.log('Payment not found in database');
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    // Then get booking details
+    const [booking] = await db.execute(
+      'SELECT id, status, total_amount FROM booking WHERE id = ?',
+      [payment[0].booking_id]
+    );
+
+    console.log('Booking query result:', booking);
+
+    if (!booking || booking.length === 0) {
+      return res.status(404).json({ error: 'Associated booking not found' });
+    }
+
+    res.json({
+      id: payment[0].id,
+      booking_id: payment[0].booking_id,
+      amount: payment[0].amount,
+      status: payment[0].status,
+      transaction_time: payment[0].transaction_time,
+      booking_status: booking[0].status,
+      total_amount: booking[0].total_amount
+    });
+
+  } catch (err) {
+    console.error('Fetch payment error:', err);
+    res.status(500).json({ 
+      error: 'Failed to fetch payment',
+      details: err.message
+    });
+  }
+});
+
+// POST /api/bookings/payment/:paymentId/confirm
+router.post('/payment/:paymentId/confirm', async (req, res) => {
+  const { paymentId } = req.params;
+
+  try {
+    // Get payment and booking details
+    const [payment] = await db.execute(`
+      SELECT p.id, p.booking_id, p.status, b.id as booking_id, b.status as booking_status
+      FROM payment p
+      JOIN booking b ON p.booking_id = b.id
+      WHERE p.id = ?
+    `, [paymentId]);
+
+    if (payment.length === 0) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    if (payment[0].status !== 'unpaid') {
+      return res.status(400).json({ error: 'Payment is not in unpaid status' });
+    }
+
+    const bookingId = payment[0].booking_id;
+
+    // Update payment status to 'paid'
+    await db.execute(
+      'UPDATE payment SET status = ? WHERE id = ?',
+      ['paid', paymentId]
+    );
+
+    // Update booking status to 'pending'
+    await db.execute(
+      'UPDATE booking SET status = ? WHERE id = ?',
+      ['pending', bookingId]
+    );
+
+    res.json({
+      paymentId,
+      bookingId,
+      status: 'paid',
+      bookingStatus: 'pending',
+      message: 'Payment confirmed successfully'
+    });
+
+  } catch (err) {
+    console.error('Payment confirmation error:', err);
+    res.status(500).json({ 
+      error: 'Failed to confirm payment',
+      details: err.message
+    });
+  }
+});
+
+// POST /api/bookings/payment/:paymentId/fail
+router.post('/payment/:paymentId/fail', async (req, res) => {
+  const { paymentId } = req.params;
+
+  try {
+    // Get payment and booking details
+    const [payment] = await db.execute(`
+      SELECT p.id, p.booking_id, p.status, b.id as booking_id, b.status as booking_status
+      FROM payment p
+      JOIN booking b ON p.booking_id = b.id
+      WHERE p.id = ?
+    `, [paymentId]);
+
+    if (payment.length === 0) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    if (payment[0].status !== 'unpaid') {
+      return res.status(400).json({ error: 'Payment is not in unpaid status' });
+    }
+
+    const bookingId = payment[0].booking_id;
+
+    // Update payment status to 'failed'
+    await db.execute(
+      'UPDATE payment SET status = ? WHERE id = ?',
+      ['failed', paymentId]
+    );
+
+    // Update booking status to 'failed'
+    await db.execute(
+      'UPDATE booking SET status = ? WHERE id = ?',
+      ['failed', bookingId]
+    );
+
+    // Unmark slots as booked
+    await db.execute(`
+      UPDATE field_slot 
+      SET is_booked = 0 
+      WHERE id IN (
+        SELECT slot_id FROM booking_slot WHERE booking_id = ?
+      )
+    `, [bookingId]);
+
+    res.json({
+      paymentId,
+      bookingId,
+      status: 'failed',
+      bookingStatus: 'failed',
+      message: 'Payment marked as failed'
+    });
+
+  } catch (err) {
+    console.error('Payment failure mark error:', err);
+    res.status(500).json({ 
+      error: 'Failed to mark payment as failed',
+      details: err.message
+    });
+  }
+});
+
+
 // GET /api/bookings/:bookingId
 router.get('/:bookingId', async (req, res) => {
   const { bookingId } = req.params;

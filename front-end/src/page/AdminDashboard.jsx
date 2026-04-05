@@ -1,19 +1,21 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
 import { FiBarChart2, FiCalendar, FiGrid, FiTrendingUp } from 'react-icons/fi'
 import LoadingOverlay from '../components/LoadingOverlay'
+import Notification from '../components/Notification'
 import Sidebar from '../components/Sidebar'
 import SuccessMessage from '../components/SuccessMessage'
 
 const revenueColors = [
-  'rgba(0, 153, 102, 0.92)',
-  'rgba(0, 153, 102, 0.78)',
-  'rgba(0, 153, 102, 0.64)',
-  'rgba(0, 153, 102, 0.50)',
-  'rgba(0, 153, 102, 0.38)',
-  'rgba(0, 153, 102, 0.28)',
-  'rgba(0, 153, 102, 0.18)',
+  'rgba(0, 110, 70, 0.95)',
+  'rgba(0, 128, 76, 0.92)',
+  'rgba(0, 145, 84, 0.88)',
+  'rgba(0, 160, 92, 0.84)',
+  'rgba(18, 175, 104, 0.80)',
+  'rgba(60, 190, 120, 0.76)',
+  'rgba(102, 205, 140, 0.72)',
+  'rgba(150, 220, 170, 0.68)',
 ]
 
 const pieViewBoxSize = 260
@@ -91,6 +93,10 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const notificationRef = useRef(null)
+  const pendingBookings = bookings.filter((booking) => booking.status === 'pending')
+  const hasNotifications = pendingBookings.length > 0
 
   // Check admin session on mount
   useEffect(() => {
@@ -123,6 +129,17 @@ const AdminDashboard = () => {
       fetchRevenueSummary()
     }
   }, [adminId])
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const fetchFields = async () => {
     try {
@@ -230,7 +247,7 @@ const AdminDashboard = () => {
     .reduce((slices, venue, index) => {
       const revenueValue = Number(venue.revenue) || 0
       const sliceAngle = totalRevenue > 0 ? (revenueValue / totalRevenue) * 360 : 0
-      const startAngle = slices.length === 0 ? -90 : slices[slices.length - 1].endAngle
+      const startAngle = slices.length === 0 ? 0 : slices[slices.length - 1].endAngle
       const endAngle = startAngle + sliceAngle
 
       slices.push({
@@ -262,6 +279,11 @@ const AdminDashboard = () => {
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
   ]
 
+  const handleNotificationClick = (bookingId) => {
+    setShowNotifications(false)
+    navigate(`/booking#booking-${bookingId}`)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 flex">
       <SuccessMessage
@@ -288,9 +310,50 @@ const AdminDashboard = () => {
 
           {/* DASHBOARD CONTENT */}
           <div className="space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-8 tracking-tight">Dashboard</h1>
-              <div className="grid gap-6 lg:grid-cols-3">
+            <div className="relative mb-8">
+              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+
+              <div className="absolute right-0 top-0" ref={notificationRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowNotifications((prev) => !prev)}
+                  className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-transparent text-primary transition hover:bg-gray-100"
+                  aria-label="Notifications"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-6 w-6"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9 17a3 3 0 0 0 6 0"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {hasNotifications && (
+                    <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+                  )}
+                </button>
+
+                <Notification
+                  isOpen={showNotifications}
+                  pendingBookings={pendingBookings}
+                  onNotificationClick={handleNotificationClick}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-3">
                 <div className="rounded-2xl bg-white px-6 py-8 shadow-sm border border-gray-100 hover:shadow-md transition">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -353,13 +416,12 @@ const AdminDashboard = () => {
                   <p className="text-xs text-gray-400 mt-2">Completed bookings</p>
                 </div>
               </div>
-            </div>
 
             {/* Additional Dashboard Sections */}
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Performance Overview */}
               <div className="rounded-2xl bg-white p-6 border border-gray-100 shadow-sm min-h-128 flex flex-col">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-4 mb-4">
                   <FiBarChart2 className="text-primary" />
                   <h3 className="text-lg font-bold text-gray-900">Performance</h3>
                 </div>
@@ -367,8 +429,8 @@ const AdminDashboard = () => {
                   <div className="mb-4">
                     <span className="text-xs text-gray-400">Booked Slots This Week</span>
                   </div>
-                  <div className="flex-1 min-h-0 rounded-xl bg-gray-50 border border-gray-100 p-4">
-                    <div className="grid h-full min-h-0 grid-cols-[2.5rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto]">
+                  <div className="flex-1 min-h-0 rounded-xl border border-gray-50 p-4">
+                    <div className="grid h-full min-h-0 grid-cols-[2.5rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_auto] pt-3">
                       <div className="relative min-h-0">
                         <div className="absolute top-0 bottom-2 right-0 w-px bg-gray-300" />
                         <span className="absolute top-0 right-2 text-[10px] text-gray-400 font-semibold -translate-y-1/2">{chartMax}</span>
@@ -385,7 +447,7 @@ const AdminDashboard = () => {
                             return (
                               <div key={dayLabels[index]} className="h-full flex items-end">
                                 <div
-                                  className="w-full rounded-md bg-primary transition-all"
+                                  className="w-6 sm:w-13 mx-auto rounded-md bg-primary transition-all"
                                   style={{ height: `${barHeight}%` }}
                                   aria-label={`${dayLabels[index]} bookings ${count}`}
                                 />
@@ -414,7 +476,7 @@ const AdminDashboard = () => {
 
               {/* Revenue Overview */}
               <div className="rounded-2xl bg-white p-6 border border-gray-100 shadow-sm min-h-128 flex flex-col">
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-4 mb-4">
                   <FiTrendingUp className="text-primary" />
                   <h3 className="text-lg font-bold text-gray-900">Revenue</h3>
                 </div>
@@ -485,7 +547,7 @@ const AdminDashboard = () => {
                           return (
                             <div
                               key={venue.id}
-                              className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2"
+                              className="flex items-center gap-3 rounded-xl border border-gray-100 px-3 py-2"
                             >
                               <span
                                 className="h-3.5 w-3.5 rounded-sm shrink-0"
@@ -509,7 +571,7 @@ const AdminDashboard = () => {
                       )}
                     </div>
 
-                    <div className="mt-6 rounded-xl border border-gray-100 bg-white px-4 py-4">
+                    <div className="mt-6 rounded-xl bg-white px-4 py-4">
                       <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Total Revenue</p>
                       <p className="mt-2 text-2xl font-bold text-primary">{formatCurrency(totalRevenue)}</p>
                     </div>
@@ -526,7 +588,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="space-y-2">
                   {fields.slice(0, 3).map((field) => (
-                    <div key={field.id} className="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
+                    <div key={field.id} className="flex justify-between items-center p-3 rounded-lg border border-gray-100">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-14 w-14 shrink-0 bg-linear-to-br from-gray-200 to-gray-300 overflow-hidden rounded-lg">
                           {field.image_url ? (
@@ -540,7 +602,7 @@ const AdminDashboard = () => {
                         <div className="min-w-0">
                           <p className="font-medium text-gray-900 text-sm truncate">{field.name}</p>
                           <div className="flex flex-wrap items-center gap-2 mt-2">
-                            <span className="inline-block bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-[11px] font-medium">
+                            <span className="bg-white/95 px-2.5 py-1 rounded-md text-[10px] font-black uppercase text-primary shadow-sm">
                               {field.category || 'Uncategorized'}
                             </span>
                           </div>

@@ -41,22 +41,18 @@ const BookingSummaryModal = ({
       setError('');
       setIsProcessing(true);
 
-      // Get userId from session/auth - try both user_session and admin_session
-      let userCookie = Cookies.get('user_session');
-      if (!userCookie) {
-        userCookie = Cookies.get('admin_session');
-      }
-      
+      const userCookie = Cookies.get('user_session');
       let userId;
 
       if (userCookie) {
         const userData = JSON.parse(userCookie);
-        // The property is 'id', not 'userId' or 'adminId'
-        userId = userData.id || userData.adminId;
+        userId = userData.id;
       }
 
       if (!userId) {
-        setError('User not authenticated. Please log in again.');
+        setIsProcessing(false);
+        onClose();
+        navigate('/login');
         return;
       }
 
@@ -78,8 +74,15 @@ const BookingSummaryModal = ({
 
       const bookingData = await bookingResponse.json();
       
-      // Store booking details for reference (stays in pending status)
+      console.log('Booking response:', bookingData);
+      
+      if (!bookingData.paymentId) {
+        throw new Error('Payment ID not received from server');
+      }
+      
+      // Store booking details for reference
       sessionStorage.setItem('pendingBooking', JSON.stringify({
+        paymentId: bookingData.paymentId,
         bookingId: bookingData.id,
         totalAmount: bookingData.totalAmount,
         serviceFee: serviceFee,
@@ -87,9 +90,9 @@ const BookingSummaryModal = ({
       }));
 
       setStep(2);
-      // Auto-navigate to payment after confirmation
       setTimeout(() => {
-        navigate('/payment', { state: { bookingId: bookingData.id } });
+        console.log('Navigating to payment page with ID:', bookingData.paymentId);
+        navigate(`/payment/${bookingData.paymentId}`);
       }, 2000);
 
     } catch (err) {
@@ -99,7 +102,6 @@ const BookingSummaryModal = ({
     }
   };
 
-  // --- RENDERING STEP 2 (CONFIRMATION) ---
   if (step === 2) {
     return (
       <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -130,11 +132,10 @@ const BookingSummaryModal = ({
     );
   }
 
-  // --- RENDERING STEP 1 (SUMMARY) ---
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b border-gray-300">
           <h2 className="text-xl font-bold text-gray-800">Booking Summary</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
             <FaTimes size={20} />
@@ -150,7 +151,7 @@ const BookingSummaryModal = ({
 
           <div>
             <p className="text-sm font-bold text-gray-800 mb-4">Field & Date</p>
-            <div className="bg-gray-50 rounded-2xl p-4">
+            <div className="bg-gray-100 rounded-2xl p-4">
               <p className="text-sm font-bold text-gray-800">{field.name}</p>
               <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
                 <FaCalendarAlt size={12} /> {selectedDate}
@@ -175,7 +176,7 @@ const BookingSummaryModal = ({
                   });
 
                   return (
-                    <div key={slot.id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                    <div key={slot.id} className="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
                       <div className="flex gap-2 items-center flex-1">
                         <FaClock size={12} className="text-gray-400" />
                         <span className="text-sm font-medium text-gray-800">
@@ -202,7 +203,7 @@ const BookingSummaryModal = ({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-dashed space-y-2">
+          <div className="pt-4 border-t border-dashed border-gray-400 space-y-2">
             <div className="flex justify-between text-sm font-medium text-gray-400">
               <span>Slots Total</span>
               <span className="text-gray-800">Rp {totalPrice.toLocaleString()}</span>
@@ -211,7 +212,7 @@ const BookingSummaryModal = ({
               <span>Service Fee</span>
               <span className="text-gray-800">Rp {serviceFee.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center pt-2 border-t">
+            <div className="flex justify-between items-center pt-2 border-t border-gray-300">
               <span className="font-bold text-gray-800">Total Payment</span>
               <span className="text-xl font-black text-primary">Rp {totalPayment.toLocaleString()}</span>
             </div>

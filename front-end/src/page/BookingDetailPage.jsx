@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 import {
   FaMapMarkerAlt,
   FaChevronLeft,
   FaWhatsapp
 } from 'react-icons/fa';
+import LoadingOverlay from '../components/LoadingOverlay';
 import BookingSummaryModal from './BookingSummaryModal';
 
 const BookingDetailPage = () => {
@@ -21,8 +23,15 @@ const BookingDetailPage = () => {
   useEffect(() => {
     const today = new Date();
     setSelectedDate(today.toISOString().split('T')[0]);
-    fetchFieldDetails();
-    fetchCourts();
+    const loadVenueData = async () => {
+      try {
+        await Promise.all([fetchFieldDetails(), fetchCourts()]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadVenueData();
   }, [id]);
 
   const fetchFieldDetails = async () => {
@@ -54,13 +63,11 @@ const BookingDetailPage = () => {
       }
     } catch (err) {
       console.error('Failed to fetch courts:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="p-10 text-center font-bold">Loading...</div>;
+    return <LoadingOverlay show={loading} />;
   }
 
   if (!field) {
@@ -157,6 +164,16 @@ Total: Rp ${totalPrice.toLocaleString()}`;
     window.open(`https://wa.me/6289794383499?text=${encodeURIComponent(msg)}`);
   };
 
+  const handleBookClick = () => {
+    const userSession = Cookies.get('user_session');
+    if (!userSession) {
+      navigate('/login');
+      return;
+    }
+
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 mb-20">
       <button
@@ -169,7 +186,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
       <div className="grid lg:grid-cols-3 gap-10">
         {/* LEFT SECTION */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="rounded-3xl overflow-hidden aspect-video shadow-xl bg-gray-200">
+          <div className="relative rounded-3xl overflow-hidden aspect-video shadow-xl bg-gray-200">
             {field.image_url ? (
               <img src={field.image_url} className="w-full h-full object-cover" alt={field.name} />
             ) : (
@@ -186,22 +203,19 @@ Total: Rp ${totalPrice.toLocaleString()}`;
               className="mt-2 flex w-full items-start gap-2 text-left text-primary hover:underline"
             >
               <FaMapMarkerAlt className="mt-0.5 shrink-0" />
-              <span className="min-w-0 wrap-anywhere">{field.address}</span>
+              <span className="min-w-0 flex-1 wrap-anywhere">{field.address}</span>
             </button>
 
             <div className="mt-3 flex flex-wrap gap-2">
-              <div className="px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-700 font-semibold">
-                {field.category}
-              </div>
               {field.city && (
-                <div className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 font-semibold">
+                <div className="px-3 py-1 text-xs rounded-full bg-gray-50 text-primary font-bold">
                   {field.city}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl" style={{backgroundColor: '#f2f2f2'}}>
+          <div className="p-6 rounded-2xl" style={{backgroundColor: '#f6f6f6'}}>
             <p className="text-sm text-gray-500 whitespace-pre-wrap wrap-break-word">
               {field.description || "No description available."}
             </p>
@@ -236,7 +250,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
                 className="grid gap-2 p-6 rounded-2xl"
                 style={{
                   gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`,
-                  backgroundColor: '#f2f2f2'
+                  backgroundColor: '#f6f6f6'
                 }}
               >
 
@@ -359,16 +373,16 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             </div>
           
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleBookClick}
               disabled={selectedDateSlots.length === 0 || selectedSlotIds.length === 0}
-              className="w-full py-4 bg-primary text-white rounded-2xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary/90 transition"
+              className="w-full py-4 bg-primary text-white rounded-2xl font-bold disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500 hover:bg-primary/90 transition"
             >
               Book • Rp {totalPrice.toLocaleString()}
             </button>
 
             <button
               onClick={contactWhatsApp}
-              className="w-full py-3 bg-green-500 text-white rounded-2xl flex items-center justify-center gap-2 font-semibold hover:bg-green-600 transition"
+              className="w-full py-3 bg-[#22c35d] text-white rounded-2xl flex items-center justify-center gap-2 font-semibold hover:bg-green-600 transition"
             >
               <FaWhatsapp /> Ask via WhatsApp
             </button>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { FiBarChart2, FiBriefcase, FiGrid, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar } from 'react-icons/fi'
 import Cookies from 'js-cookie'
 import LoadingOverlay from '../components/LoadingOverlay'
@@ -9,6 +9,7 @@ import SuccessMessage from '../components/SuccessMessage'
 
 const AdminBooking = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [adminId, setAdminId] = useState(null)
   const [adminName, setAdminName] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
@@ -49,6 +50,17 @@ const AdminBooking = () => {
       fetchBookings()
     }
   }, [adminId])
+
+  useEffect(() => {
+    if (loading || !location.hash) return
+
+    const targetId = location.hash.slice(1)
+    const targetElement = document.getElementById(targetId)
+
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [loading, location.hash, bookings])
 
   const fetchBookings = async () => {
     try {
@@ -180,6 +192,7 @@ const AdminBooking = () => {
                 {bookings.map((booking) => (
                   <div
                     key={booking.id}
+                    id={`booking-${booking.id}`}
                     className={`bg-white rounded-2xl shadow-sm border transition hover:shadow-md overflow-hidden ${
                       booking.status === 'pending' ? 'border-yellow-100' :
                       'border-gray-200'

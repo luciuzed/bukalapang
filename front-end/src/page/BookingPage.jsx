@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 const ITEMS_PER_PAGE = 12;
 
@@ -48,11 +49,7 @@ const BookingPage = () => {
   const currentItems = filteredFields.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
   if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto py-6 bg-white min-h-screen pb-16">
-        <div className="text-center py-8">Loading venues...</div>
-      </div>
-    )
+    return <LoadingOverlay show={loading} />
   }
 
   return (
@@ -123,7 +120,6 @@ const BookingPage = () => {
               <div className={`px-0.5 ${item.is_active === 0 ? 'opacity-50' : ''}`}>
                 <div className="flex justify-between items-start">
                   <h3 className="font-bold text-[13px] text-gray-900 truncate pr-2 group-hover:text-primary transition-colors">{item.name}</h3>
-                  <span className="text-[10px] font-bold flex items-center gap-0.5 shrink-0"><FaStar className="text-yellow-400" /> {item.rating || '4.5'}</span>
                 </div>
                 <p className="text-gray-400 text-[10px] flex items-center gap-1 mt-0.5"><FaMapMarkerAlt className="text-primary/60 scale-75" /> {item.city || 'Location'}</p>
                 <div className="mt-2 flex items-baseline gap-1">

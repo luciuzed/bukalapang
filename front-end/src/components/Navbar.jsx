@@ -67,7 +67,7 @@ const Navbar = () => {
             {({ isActive }) => (
               <>
                 Home
-                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-1 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
+                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-2 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
               </>
             )}
           </NavLink>
@@ -77,7 +77,7 @@ const Navbar = () => {
             {({ isActive }) => (
               <>
                 Venue
-                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-1 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
+                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-2 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
               </>
             )}
           </NavLink>
@@ -87,7 +87,7 @@ const Navbar = () => {
             {({ isActive }) => (
               <>
                 Contact
-                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-1 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
+                <span className={`absolute left-1/2 -translate-x-1/2 -bottom-2 h-[2px] bg-[#009966] transition-all duration-300 ${isActive ? 'w-3/4' : 'w-0'}`} />
               </>
             )}
           </NavLink>
@@ -109,10 +109,10 @@ const Navbar = () => {
 
             {/* Dropdown in Navbar.jsx */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl py-3 z-50 border border-gray-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl py-3 z-50 border border-gray-200 animate-in fade-in slide-in-from-top-2">
                 
                 {/* Profile Info Header */}
-                <div className="px-5 py-3 border-b border-gray-50">
+                <div className="px-5 py-3 border-b border-gray-200">
                   <p className="text-sm font-black text-gray-800 truncate">{admin ? admin.adminName : user?.name || "User"}</p>
                   <p className="text-xs text-gray-400 truncate">{admin ? admin.email : user?.email || "user@example.com"}</p>
                 </div>

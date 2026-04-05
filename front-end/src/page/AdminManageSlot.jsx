@@ -331,7 +331,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
             {/* COURTS LIST VIEW */}
             {slotSetupScreen === 'court-list' && (
               <div className="space-y-4">
-                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                <div className="rounded-2xl p-6 border border-gray-100">
                   <p className="text-sm font-bold mb-4 text-gray-800">Add New Court</p>
                   <div className="flex gap-3">
                     <input
@@ -640,7 +640,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                     style={{
                       display: 'grid',
                       gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`,
-                      backgroundColor: '#f2f2f2'
+                      backgroundColor: '#f6f6f6'
                     }}
                   >
                     <div></div>
