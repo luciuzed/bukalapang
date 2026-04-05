@@ -1,29 +1,26 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const otpStore = {};
 
 const generateOtp = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 const sendOtpEmail = async (recipient, otpCode) => {
-  const smtpPort = Number(process.env.SMTP_PORT || 587);
+  const apiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.RESEND_FROM;
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    requireTLS: smtpPort === 587,
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 15000,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is required to send OTP emails.');
+  }
 
-  const info = await transporter.sendMail({
-    from: `"MainYuk Support" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-    to: recipient,
+  if (!fromEmail) {
+    throw new Error('RESEND_FROM is required to send OTP emails.');
+  }
+
+  const resend = new Resend(apiKey);
+
+  const { data, error } = await resend.emails.send({
+    from: `MainYuk Support <${fromEmail}>`,
+    to: [recipient],
     subject: `Your Verification Code: ${otpCode}`,
     html: `
       <div style="font-family: Poppins,sans-serif; min-width:1000px; overflow:auto; line-height:2">
@@ -47,8 +44,12 @@ const sendOtpEmail = async (recipient, otpCode) => {
     `,
   });
 
-  console.log('OTP email sent:', info.messageId);
-  return info;
+  if (error) {
+    throw new Error(`Failed to send OTP email via Resend: ${error.message}`);
+  }
+
+  console.log('OTP email sent via Resend:', data?.id || 'no-id-returned');
+  return data;
 };
 
 module.exports = {

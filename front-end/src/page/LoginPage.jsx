@@ -9,7 +9,7 @@ import IMAGE_TENNIS from '../assets/tennis.jpg'
 import { apiUrl } from '../config/api'
 
 import Cookies from 'js-cookie';
-import { FaUser, FaLock, FaPhoneAlt, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaUser, FaLock, FaPhoneAlt, FaEye, FaEyeSlash, FaChevronLeft } from "react-icons/fa";
 
 const PasswordInput = ({ placeholder, showPassword, setShowPassword, error, ...props }) => {
   return (
@@ -52,7 +52,9 @@ const LoginPage = () => {
   const [pendingRegisterData, setPendingRegisterData] = useState(null)
   const [pendingLoginRoute, setPendingLoginRoute] = useState(null)
   const [pendingOtpInfo, setPendingOtpInfo] = useState(null)
+  const [otpStatus, setOtpStatus] = useState('')
   const otpRefs = useRef([])
+  const otpVerifyInFlight = useRef(false)
   const [showPassword, setShowPassword] = useState(false)
   const prevShowOtp = useRef(showOtpUI)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -72,6 +74,7 @@ const LoginPage = () => {
   useEffect(() => {
     if (prevShowOtp.current && !showOtpUI) {
       setError('')
+      setOtpStatus('')
     }
     prevShowOtp.current = showOtpUI
   }, [showOtpUI])
@@ -243,6 +246,7 @@ const LoginPage = () => {
   const handleOtpBackToAuth = () => {
     setShowOtpUI(false)
     setError('')
+    setOtpStatus('')
     setPendingOtpInfo(null)
     setOtpRemaining(60)
   }
@@ -250,9 +254,11 @@ const LoginPage = () => {
   const handleResendOtp = async () => {
     if (!pendingOtpInfo) {
       setError('No pending OTP information for resend')
+      setOtpStatus('')
       return
     }
 
+    setOtpStatus('')
     setIsLoading(true)
     try {
       const response = await fetch(apiUrl('/resend-otp'), {
@@ -263,13 +269,16 @@ const LoginPage = () => {
 
       const data = await response.json()
       if (response.ok) {
-        setError('OTP resent successfully')
+        setError('')
+        setOtpStatus('OTP resent successfully')
         setOtpCode(['', '', '', ''])
         setOtpTimerCycle((prev) => prev + 1)
       } else {
+        setOtpStatus('')
         setError(data.error || 'Failed to resend OTP')
       }
     } catch (err) {
+      setOtpStatus('')
       setError('Cannot connect to server')
     } finally {
       setIsLoading(false)
@@ -347,24 +356,33 @@ const LoginPage = () => {
   }
 
   const submitOtpVerification = async (pinValue = null) => {
+    if (otpVerifyInFlight.current) {
+      return
+    }
+
     const pin = pinValue || otpCode.join('')
     if (pin.length < 4) {
+      setOtpStatus('')
       setError('Please enter the full 4-digit OTP')
       return
     }
 
+    setOtpStatus('')
     setError('')
 
     if (otpRemaining <= 0) {
+      setOtpStatus('')
       setError('OTP expired. Please request a new code.')
       return
     }
 
     if (!pendingOtpInfo) {
+      setOtpStatus('')
       setError('No pending OTP request. Please login/register again.')
       return
     }
 
+    otpVerifyInFlight.current = true
     setIsLoading(true)
     try {
       const response = await fetch(apiUrl('/verify-otp'), {
@@ -396,14 +414,18 @@ const LoginPage = () => {
         setShowOtpUI(false)
         setOtpCode(['', '', '', ''])
         setPendingOtpInfo(null)
+        setOtpStatus('')
         setError('')
         navigate(data.redirect || pendingOtpInfo.redirect)
       } else {
+        setOtpStatus('')
         setError(data.error || data.message || 'OTP verification failed')
       }
     } catch (err) {
+      setOtpStatus('')
       setError('Cannot connect to server')
     } finally {
+      otpVerifyInFlight.current = false
       setIsLoading(false)
     }
   }
@@ -421,6 +443,13 @@ const LoginPage = () => {
         {showOtpUI ? (
           <div className="w-full flex flex-col pt-5">
             <div className="mx-5 mt-10 mb-8">
+              <button
+                type="button"
+                onClick={handleOtpBackToAuth}
+                className="flex items-center gap-2 text-xs font-bold text-gray-400 mb-6 uppercase hover:text-black"
+              >
+                <FaChevronLeft /> Back
+              </button>
               <h2 className="text-4xl font-semibold text-center">Verify OTP</h2>
               <p className="text-center text-gray-500 mt-2">
                 Enter the 4-digit code sent to your email to continue.
@@ -458,20 +487,16 @@ const LoginPage = () => {
                 type="button"
                 onClick={handleOtpVerify}
                 className="w-3/4 bg-primary text-white py-3 rounded-full font-semibold hover:opacity-90 transition"
-                disabled={otpRemaining <= 0}
+                disabled={otpRemaining <= 0 || isLoading}
               >
                 Verify OTP
               </button>
             </div>
 
-            <div className="w-full flex justify-center mt-6 text-center text-sm text-gray-500">
-              <button
-                type="button"
-                onClick={handleOtpBackToAuth}
-                className="text-primary font-medium hover:underline"
-              >
-                Back to Login / Register
-              </button>
+            <div className="w-full flex justify-center mt-6 text-center text-sm">
+              {otpStatus && (
+                <p className="text-green-600 font-medium">{otpStatus}</p>
+              )}
             </div>
 
             <div className="w-full flex justify-center mt-2 text-center text-sm text-gray-500">
