@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from "react-hook-form"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import LoadingOverlay from '../components/LoadingOverlay'
 import IMAGE_RING from '../assets/ring.jpg'
 import IMAGE_PADEL from '../assets/padel.jpg'
@@ -62,6 +62,7 @@ const LoginPage = () => {
   const images = [IMAGE_RING, IMAGE_PADEL, IMAGE_BILIARD, IMAGE_TENNIS]
 
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -108,6 +109,21 @@ const LoginPage = () => {
     setValue,
     formState: { errors }
   } = useForm()
+
+  useEffect(() => {
+    if (location.state?.initialMode) {
+      const newMode = location.state.initialMode;
+      
+      setMode(newMode);
+      
+      setError("");
+      setRole("User");
+      setShowOtpUI(false);
+      reset(); 
+      
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, reset]);
 
   const handleLogin = async (formData) => {
     setError('');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { NavLink, Link, useLocation } from "react-router-dom"
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom"
 import logo from '../assets/logo.svg'
 import { FaBars, FaTimes, FaUserEdit, FaSignOutAlt } from "react-icons/fa"
 import { MdAccountCircle } from "react-icons/md"
@@ -12,11 +12,13 @@ const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef(null)
   const location = useLocation()
+  const navigate = useNavigate()
 
   // Update user/admin on route change
   useEffect(() => {
     const userSession = Cookies.get('user_session')
     const adminSession = Cookies.get('admin_session')
+    
     
     if (userSession) {
       setUser(JSON.parse(userSession))
@@ -47,6 +49,7 @@ const Navbar = () => {
     setUser(null)
     setAdmin(null)
     setShowDropdown(false)
+    navigate('/')
   }
 
   const navItemClass = ({ isActive }) =>
@@ -61,7 +64,7 @@ const Navbar = () => {
       <img src={logo} alt="Logo" className="h-15" />
 
       {/* Desktop Menu */}
-      <ul className="hidden md:flex items-center gap-15 font-bold">
+      <ul className="hidden md:flex items-center gap-15 font-bold absolute left-1/2 -translate-x-1/2">
         <li className="relative">
           <NavLink to="/" className={navItemClass} end>
             {({ isActive }) => (
@@ -145,11 +148,21 @@ const Navbar = () => {
 
           </div>
         ) : (
-          <Link to="/login">
-            <button className="bg-primary text-white font-semibold px-4 py-2 rounded-full hover:opacity-90 transition">
-              Sign Up
-            </button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/login" state={{ initialMode: "register" }}>
+              <span className="text-primary underline font-semibold cursor-pointer">
+                Sign Up
+              </span>
+            </Link>
+
+            <div className="h-6 w-[1px] bg-gray-400" /> 
+
+            <Link to="/login" state={{ initialMode: "login" }}>
+              <button className="bg-primary text-white font-semibold px-4 py-2 rounded-full hover:opacity-90 transition">
+                Login
+              </button>
+            </Link>
+          </div>
         )}
       </div>
 
