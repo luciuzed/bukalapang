@@ -4,6 +4,8 @@ import Cookies from 'js-cookie';
 import { FaCalendarAlt, FaClock, FaTrashAlt, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { apiUrl } from '../config/api';
 
+const getSlotTime = (dateTimeValue) => String(dateTimeValue || '').slice(11, 16);
+
 const BookingSummaryModal = ({ 
   isOpen, 
   onClose, 
@@ -165,16 +167,8 @@ const BookingSummaryModal = ({
             <div className="max-h-48 overflow-y-auto space-y-2 pr-2">
               {selectedSlots.length > 0 ? (
                 selectedSlots.map((slot) => {
-                  const startTime = new Date(slot.start_time).toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false 
-                  });
-                  const endTime = new Date(slot.end_time).toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: false 
-                  });
+                  const startTime = getSlotTime(slot.start_time);
+                  const endTime = getSlotTime(slot.end_time);
 
                   return (
                     <div key={slot.id} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">

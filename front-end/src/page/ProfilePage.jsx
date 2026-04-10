@@ -13,7 +13,15 @@ const getAccountId = (session) =>
 const formatBookingDate = (value) => {
   if (!value) return '--';
 
-  const date = new Date(value);
+  const raw = String(value).trim();
+  const datePartMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!datePartMatch) return '--';
+
+  const year = Number(datePartMatch[1]);
+  const month = Number(datePartMatch[2]);
+  const day = Number(datePartMatch[3]);
+
+  const date = new Date(year, month - 1, day);
   if (Number.isNaN(date.getTime())) return '--';
 
   return date.toLocaleDateString('en-US', {

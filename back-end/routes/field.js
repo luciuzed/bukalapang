@@ -122,7 +122,17 @@ router.get('/detail/:fieldId', async (req, res) => {
     }
 
     const [slots] = await db.execute(
-      'SELECT * FROM field_slot WHERE field_id = ? ORDER BY start_time ASC',
+      `SELECT
+        id,
+        field_id,
+        court_id,
+        DATE_FORMAT(start_time, '%Y-%m-%d %H:%i:%s') as start_time,
+        DATE_FORMAT(end_time, '%Y-%m-%d %H:%i:%s') as end_time,
+        price,
+        is_booked
+      FROM field_slot
+      WHERE field_id = ?
+      ORDER BY start_time ASC`,
       [fieldId]
     );
 

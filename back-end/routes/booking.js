@@ -313,7 +313,7 @@ router.get('/user/:userId', async (req, res) => {
         b.id,
         MAX(p.id) as payment_id,
         b.user_id,
-        b.booking_date,
+        DATE_FORMAT(b.booking_date, '%Y-%m-%d') as booking_date,
         b.status,
         b.total_amount,
         MAX(f.id) as field_id,
@@ -322,7 +322,15 @@ router.get('/user/:userId', async (req, res) => {
         MAX(f.image_url) as image_url,
         MAX(f.address) as address,
         MAX(f.city) as city,
-        GROUP_CONCAT(CONCAT(fs.start_time, ' - ', fs.end_time) SEPARATOR ', ') as time_slots
+        GROUP_CONCAT(
+          CONCAT(
+            DATE_FORMAT(fs.start_time, '%H:%i'),
+            ' - ',
+            DATE_FORMAT(fs.end_time, '%H:%i')
+          )
+          ORDER BY fs.start_time ASC
+          SEPARATOR ', '
+        ) as time_slots
       FROM booking b
       LEFT JOIN payment p ON p.booking_id = b.id
       JOIN booking_slot bs ON b.id = bs.booking_id

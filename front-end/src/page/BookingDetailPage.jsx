@@ -18,6 +18,17 @@ const resolveImageUrl = (imageUrl) => {
   return `${BACKEND_BASE_URL}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
 };
 
+const getLocalToday = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getSlotDate = (dateTimeValue) => String(dateTimeValue || '').slice(0, 10);
+const getSlotTime = (dateTimeValue) => String(dateTimeValue || '').slice(11, 16);
+
 const BookingDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -30,8 +41,7 @@ const BookingDetailPage = () => {
   const [selectedSlotIds, setSelectedSlotIds] = useState([]);
 
   useEffect(() => {
-    const today = new Date();
-    setSelectedDate(today.toISOString().split('T')[0]);
+    setSelectedDate(getLocalToday());
     const loadVenueData = async () => {
       try {
         await Promise.all([fetchFieldDetails(), fetchCourts()]);
@@ -91,7 +101,7 @@ const BookingDetailPage = () => {
 
   // Filter slots by selected date
   const selectedDateSlots = slots.filter(slot => {
-    const slotDate = new Date(slot.start_time).toISOString().split('T')[0];
+    const slotDate = getSlotDate(slot.start_time);
     return slotDate === selectedDate;
   });
 
@@ -107,10 +117,7 @@ const BookingDetailPage = () => {
   const timeSlots = Array.from(
     new Set(
       selectedDateSlots.map(slot => {
-        const date = new Date(slot.start_time);
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
+        return getSlotTime(slot.start_time);
       })
     )
   ).sort();
@@ -132,10 +139,7 @@ const BookingDetailPage = () => {
   const toggleSlot = (courtId, time) => {
     // Find the slot matching this court and time
     const slot = selectedDateSlots.find(s => {
-      const slotDate = new Date(s.start_time);
-      const slotHours = String(slotDate.getHours()).padStart(2, '0');
-      const slotMinutes = String(slotDate.getMinutes()).padStart(2, '0');
-      const slotTime = `${slotHours}:${slotMinutes}`;
+      const slotTime = getSlotTime(s.start_time);
       
       // Match by time and court_id
       return slotTime === time && s.court_id === courtId;
@@ -155,10 +159,7 @@ const BookingDetailPage = () => {
     return selectedDateSlots.some(slot => {
       if (!selectedSlotIds.includes(slot.id)) return false;
       
-      const slotDate = new Date(slot.start_time);
-      const slotHours = String(slotDate.getHours()).padStart(2, '0');
-      const slotMinutes = String(slotDate.getMinutes()).padStart(2, '0');
-      const slotTime = `${slotHours}:${slotMinutes}`;
+      const slotTime = getSlotTime(slot.start_time);
       
       return slotTime === time && slot.court_id === courtId;
     });
@@ -292,10 +293,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
 
                       // Find the slot for this court at this specific time
                       const slot = selectedDateSlots.find(s => {
-                        const slotDate = new Date(s.start_time);
-                        const slotHours = String(slotDate.getHours()).padStart(2, '0');
-                        const slotMinutes = String(slotDate.getMinutes()).padStart(2, '0');
-                        const slotTime = `${slotHours}:${slotMinutes}`;
+                        const slotTime = getSlotTime(s.start_time);
                         return slotTime === time && s.court_id === court.id;
                       });
 
