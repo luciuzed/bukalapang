@@ -103,7 +103,7 @@ function App() {
   const wrapperClass = isFullWidth ? "min-h-screen" : "container mx-auto px-10"
 
   return (
-    <div className={wrapperClass}>
+    <div className={isDashboard ? "min-h-screen" : "min-h-screen flex flex-col"}>
       {showNavbar && <Navbar />}
 
       <Routes>
