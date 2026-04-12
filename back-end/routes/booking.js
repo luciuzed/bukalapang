@@ -4,6 +4,18 @@ const db = require('../config/database');
 const router = express.Router();
 
 const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
+
+const getTodayInAppTimezone = () => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
+  return formatter.format(new Date());
+};
 
 const formatDateLocal = (date) => {
   const year = date.getFullYear();
@@ -48,12 +60,16 @@ router.post('/', async (req, res) => {
   try {
     // Start transaction
     await connection.beginTransaction();
+    const todayInAppTimezone = getTodayInAppTimezone();
 
     // Get slot details and prices
     const placeholders = selectedSlotIds.map(() => '?').join(',');
     const [slots] = await connection.execute(
-      `SELECT id, price, is_booked FROM field_slot WHERE id IN (${placeholders}) AND field_id = ?`,
-      [...selectedSlotIds, fieldId]
+      `SELECT id, price, is_booked, DATE(start_time) < ? AS is_past_date
+       FROM field_slot
+       WHERE id IN (${placeholders})
+         AND field_id = ?`,
+      [todayInAppTimezone, ...selectedSlotIds, fieldId]
     );
 
     // Check if all requested slots exist and belong to the field
@@ -63,6 +79,15 @@ router.post('/', async (req, res) => {
         error: 'One or more selected slots do not exist or do not belong to this field',
         requested: selectedSlotIds.length,
         found: slots.length
+      });
+    }
+
+    // Block any slot that is from a date before today.
+    const hasPastDateSlot = slots.some((slot) => Number(slot.is_past_date) === 1);
+    if (hasPastDateSlot) {
+      await connection.rollback();
+      return res.status(400).json({
+        error: 'Cannot book slots from a past date'
       });
     }
 
