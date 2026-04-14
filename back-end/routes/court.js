@@ -3,6 +3,29 @@ const db = require('../config/database');
 
 const router = express.Router();
 
+const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
+
+const getTodayInAppTimezone = () => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
+  return formatter.format(new Date());
+};
+
+const formatDateTimeToLocalSql = (dateValue) => {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+  const day = String(dateValue.getDate()).padStart(2, '0');
+  const hour = String(dateValue.getHours()).padStart(2, '0');
+  const minute = String(dateValue.getMinutes()).padStart(2, '0');
+  const second = String(dateValue.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+};
+
 // Get all courts for a field
 router.get('/:fieldId', async (req, res) => {
   const { fieldId } = req.params;
@@ -84,6 +107,11 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const todayInAppTimezone = getTodayInAppTimezone();
+  if (startDate < todayInAppTimezone) {
+    return res.status(400).json({ error: 'startDate must be today or a future date' });
+  }
+
   try {
     // Verify field belongs to admin
     const [field] = await db.execute('SELECT id FROM field WHERE id = ? AND admin_id = ?', [fieldId, adminId]);
@@ -118,6 +146,9 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
 
     // For each date, create hourly slots
     let slotsCreated = 0;
+    let duplicatesSkipped = 0;
+    const attemptedStarts = new Set();
+
     for (const date of datesForSlots) {
       const currentTime = new Date(date);
       currentTime.setHours(openHour, openMin, 0, 0);
@@ -130,25 +161,38 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
         const endTime = new Date(currentTime);
         endTime.setHours(endTime.getHours() + 1);
 
-        // Check if slot already exists
+        const startTimeSql = formatDateTimeToLocalSql(startTime);
+        const endTimeSql = formatDateTimeToLocalSql(endTime);
+        const uniqueSlotKey = `${fieldId}:${courtId}:${startTimeSql}`;
+
+        if (attemptedStarts.has(uniqueSlotKey)) {
+          duplicatesSkipped++;
+          currentTime.setHours(currentTime.getHours() + 1);
+          continue;
+        }
+        attemptedStarts.add(uniqueSlotKey);
+
+        // Prevent duplicate slots for same field, court, date, and time regardless of price.
         const [existing] = await db.execute(
-          'SELECT id FROM field_slot WHERE field_id = ? AND court_id = ? AND start_time = ? AND end_time = ?',
-          [fieldId, courtId, startTime, endTime]
+          'SELECT id FROM field_slot WHERE field_id = ? AND court_id = ? AND start_time = ? LIMIT 1',
+          [fieldId, courtId, startTimeSql]
         );
 
         if (existing.length === 0) {
           await db.execute(
             'INSERT INTO field_slot (field_id, court_id, start_time, end_time, price, is_booked) VALUES (?, ?, ?, ?, ?, 0)',
-            [fieldId, courtId, startTime, endTime, price]
+            [fieldId, courtId, startTimeSql, endTimeSql, price]
           );
           slotsCreated++;
+        } else {
+          duplicatesSkipped++;
         }
 
         currentTime.setHours(currentTime.getHours() + 1);
       }
     }
 
-    res.json({ message: 'Slots generated', count: slotsCreated });
+    res.json({ message: 'Slots generated', count: slotsCreated, duplicatesSkipped });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to generate slots' });

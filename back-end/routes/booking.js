@@ -1,9 +1,22 @@
 const express = require('express');
 const db = require('../config/database');
+const { sendBookingStatusEmail } = require('../utils/otp');
 
 const router = express.Router();
 
 const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
+
+const getTodayInAppTimezone = () => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
+  return formatter.format(new Date());
+};
 
 const formatDateLocal = (date) => {
   const year = date.getFullYear();
@@ -48,12 +61,16 @@ router.post('/', async (req, res) => {
   try {
     // Start transaction
     await connection.beginTransaction();
+    const todayInAppTimezone = getTodayInAppTimezone();
 
     // Get slot details and prices
     const placeholders = selectedSlotIds.map(() => '?').join(',');
     const [slots] = await connection.execute(
-      `SELECT id, price, is_booked FROM field_slot WHERE id IN (${placeholders}) AND field_id = ?`,
-      [...selectedSlotIds, fieldId]
+      `SELECT id, price, is_booked, DATE(start_time) < ? AS is_past_date
+       FROM field_slot
+       WHERE id IN (${placeholders})
+         AND field_id = ?`,
+      [todayInAppTimezone, ...selectedSlotIds, fieldId]
     );
 
     // Check if all requested slots exist and belong to the field
@@ -63,6 +80,15 @@ router.post('/', async (req, res) => {
         error: 'One or more selected slots do not exist or do not belong to this field',
         requested: selectedSlotIds.length,
         found: slots.length
+      });
+    }
+
+    // Block any slot that is from a date before today.
+    const hasPastDateSlot = slots.some((slot) => Number(slot.is_past_date) === 1);
+    if (hasPastDateSlot) {
+      await connection.rollback();
+      return res.status(400).json({
+        error: 'Cannot book slots from a past date'
       });
     }
 
@@ -152,7 +178,16 @@ router.post('/:bookingId/confirm', async (req, res) => {
   try {
     // Verify booking exists and is pending
     const [booking] = await db.execute(
-      'SELECT id, status FROM booking WHERE id = ?',
+      `
+      SELECT b.id, b.status, u.email AS user_email, u.name AS user_name, MAX(f.name) AS field_name
+      FROM booking b
+      JOIN user u ON b.user_id = u.id
+      JOIN booking_slot bs ON b.id = bs.booking_id
+      JOIN field_slot fs ON bs.slot_id = fs.id
+      JOIN field f ON fs.field_id = f.id
+      WHERE b.id = ?
+      GROUP BY b.id, b.status, u.email, u.name
+      `,
       [bookingId]
     );
 
@@ -169,6 +204,20 @@ router.post('/:bookingId/confirm', async (req, res) => {
       'UPDATE booking SET status = ? WHERE id = ?',
       ['confirmed', bookingId]
     );
+
+    if (booking[0].user_email) {
+      try {
+        await sendBookingStatusEmail({
+          recipient: booking[0].user_email,
+          userName: booking[0].user_name,
+          bookingId,
+          fieldName: booking[0].field_name,
+          status: 'confirmed'
+        });
+      } catch (emailErr) {
+        console.error(`Booking ${bookingId} confirmed but email failed:`, emailErr.message);
+      }
+    }
 
     res.json({
       id: bookingId,
@@ -261,7 +310,16 @@ router.post('/:bookingId/cancel', async (req, res) => {
   try {
     // Verify booking exists
     const [booking] = await db.execute(
-      'SELECT id, status FROM booking WHERE id = ?',
+      `
+      SELECT b.id, b.status, u.email AS user_email, u.name AS user_name, MAX(f.name) AS field_name
+      FROM booking b
+      JOIN user u ON b.user_id = u.id
+      JOIN booking_slot bs ON b.id = bs.booking_id
+      JOIN field_slot fs ON bs.slot_id = fs.id
+      JOIN field f ON fs.field_id = f.id
+      WHERE b.id = ?
+      GROUP BY b.id, b.status, u.email, u.name
+      `,
       [bookingId]
     );
 
@@ -287,6 +345,20 @@ router.post('/:bookingId/cancel', async (req, res) => {
         SELECT slot_id FROM booking_slot WHERE booking_id = ?
       )
     `, [bookingId]);
+
+    if (booking[0].user_email && booking[0].status === 'pending') {
+      try {
+        await sendBookingStatusEmail({
+          recipient: booking[0].user_email,
+          userName: booking[0].user_name,
+          bookingId,
+          fieldName: booking[0].field_name,
+          status: 'rejected'
+        });
+      } catch (emailErr) {
+        console.error(`Booking ${bookingId} cancelled but email failed:`, emailErr.message);
+      }
+    }
 
     res.json({
       id: bookingId,

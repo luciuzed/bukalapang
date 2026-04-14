@@ -3,8 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaClock, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Navbar from '../components/Navbar';
-import qrImg from '../assets/qr.png';
-import { apiUrl } from '../config/api';
+import { API_BASE_URL, apiUrl } from '../config/api';
+
+const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+
+const resolveImageUrl = (imageUrl) => {
+  if (!imageUrl) return '';
+  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+  return `${BACKEND_BASE_URL}${imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`}`;
+};
 
 const Payment = () => {
   const { paymentId } = useParams();
@@ -17,6 +24,7 @@ const Payment = () => {
   const [pendingBookingMeta, setPendingBookingMeta] = useState({});
   const [pollCount, setPollCount] = useState(0);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(null);
+  const [paymentQrImageUrl, setPaymentQrImageUrl] = useState('');
 
   const getTimeLeftSeconds = (transactionTime) => {
     if (!transactionTime) return null;
@@ -59,6 +67,16 @@ const Payment = () => {
         setPayment(data);
         setPaymentStatus(data.status);
         setTimeLeftSeconds(getTimeLeftSeconds(data.transaction_time));
+
+        try {
+          const qrResponse = await fetch(apiUrl(`/payment-qr/by-payment/${paymentId}`));
+          if (qrResponse.ok) {
+            const qrData = await qrResponse.json();
+            setPaymentQrImageUrl(qrData.imageUrl || '');
+          }
+        } catch (qrErr) {
+          console.error('Failed to fetch payment QR:', qrErr);
+        }
         
         const stored = window.sessionStorage.getItem('pendingBooking');
         if (stored) {
@@ -305,11 +323,15 @@ const Payment = () => {
           <div className="bg-white rounded-3xl p-5 shadow-2xl border border-gray-100 flex flex-col">
             <p className="text-sm font-bold text-gray-700 mb-3 text-center uppercase tracking-wide">QRIS</p>
             <div className="rounded-2xl border border-gray-100 p-3 flex-1 flex items-center justify-center">
-              <img
-                src={qrImg}
-                alt="QRIS code"
-                className="w-full max-w-60 object-contain"
-              />
+              {paymentQrImageUrl ? (
+                <img
+                  src={resolveImageUrl(paymentQrImageUrl)}
+                  alt="QRIS code"
+                  className="w-full max-w-60 object-contain"
+                />
+              ) : (
+                <p className="text-center text-sm text-gray-500 px-3">QR is not available for this venue yet. Please contact the venue admin.</p>
+              )}
             </div>
             <p className="text-xs text-gray-500 text-center mt-3">Scan to pay, then press Confirm Payment.</p>
           </div>

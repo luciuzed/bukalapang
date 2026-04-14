@@ -7,7 +7,38 @@ const router = express.Router();
 
 const MAX_DESCRIPTION_LENGTH = 160;
 const MAX_ADDRESS_LENGTH = 150;
+const MAX_GENERATE_DURATION_DAYS = 120;
+const CLEAR_SLOT_PROTECTED_DAYS = 7;
 const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../dev-storage/uploads');
+const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
+
+const formatDateToLocalYmd = (dateValue) => {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+  const day = String(dateValue.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayInAppTimezone = () => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
+  return formatter.format(new Date());
+};
+
+const formatDateTimeToLocalSql = (dateValue) => {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+  const day = String(dateValue.getDate()).padStart(2, '0');
+  const hour = String(dateValue.getHours()).padStart(2, '0');
+  const minute = String(dateValue.getMinutes()).padStart(2, '0');
+  const second = String(dateValue.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+};
 
 const normalizeImageUrl = (rawImageUrl) => {
   if (rawImageUrl === undefined || rawImageUrl === null) {
@@ -99,8 +130,26 @@ router.get('/:adminId', async (req, res) => {
 // Get all fields including inactive ones (for users to browse - active ones prioritized)
 router.get('/', async (req, res) => {
   try {
+    const todayInAppTimezone = getTodayInAppTimezone();
     const [fields] = await db.execute(
-      'SELECT f.id, f.admin_id, f.name, f.category, f.description, f.address, f.city, f.image_url, f.is_active, f.rating, MIN(fs.price) as min_price, MAX(fs.price) as max_price FROM field f LEFT JOIN field_slot fs ON f.id = fs.field_id GROUP BY f.id ORDER BY f.is_active DESC, f.created_at DESC'
+      `SELECT
+        f.id,
+        f.admin_id,
+        f.name,
+        f.category,
+        f.description,
+        f.address,
+        f.city,
+        f.image_url,
+        f.is_active,
+        f.rating,
+        MIN(CASE WHEN DATE(fs.start_time) >= ? THEN fs.price END) AS min_price,
+        MAX(CASE WHEN DATE(fs.start_time) >= ? THEN fs.price END) AS max_price
+      FROM field f
+      LEFT JOIN field_slot fs ON f.id = fs.field_id
+      GROUP BY f.id
+      ORDER BY f.is_active DESC, f.created_at DESC`,
+      [todayInAppTimezone, todayInAppTimezone]
     );
     res.json(fields);
   } catch (err) {
@@ -468,9 +517,23 @@ router.get('/:fieldId/slots', async (req, res) => {
 router.post('/:fieldId/generate-slots', async (req, res) => {
   const { fieldId } = req.params;
   const { adminId, courtId, courtName, openingTime, closingTime, price, startDate, duration, durationType, daysOfWeek } = req.body;
+  const parsedDuration = parseInt(duration, 10);
 
   if (!courtId || !openingTime || !closingTime || !price || !startDate) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  if (!Number.isInteger(parsedDuration) || parsedDuration < 1 || parsedDuration > MAX_GENERATE_DURATION_DAYS) {
+    return res.status(400).json({ error: `Duration must be between 1 and ${MAX_GENERATE_DURATION_DAYS} days` });
+  }
+
+  if (durationType === 'weekly' && (!Array.isArray(daysOfWeek) || daysOfWeek.length === 0)) {
+    return res.status(400).json({ error: 'daysOfWeek is required for weekly pattern' });
+  }
+
+  const todayInAppTimezone = getTodayInAppTimezone();
+  if (startDate < todayInAppTimezone) {
+    return res.status(400).json({ error: 'startDate must be today or a future date' });
   }
 
   try {
@@ -496,7 +559,7 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
       datesForSlots.push(new Date(baseDate));
     } else if (durationType === 'weekly') {
       // Repeat for N days, only on selected days of week
-      endDate.setDate(baseDate.getDate() + duration);
+      endDate.setDate(baseDate.getDate() + parsedDuration);
       
       for (let d = new Date(baseDate); d < endDate; d.setDate(d.getDate() + 1)) {
         if (daysOfWeek.includes(d.getDay())) {
@@ -507,6 +570,9 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
 
     // For each date, create hourly slots
     let slotsCreated = 0;
+    let duplicatesSkipped = 0;
+    const attemptedStarts = new Set();
+
     for (const date of datesForSlots) {
       const currentTime = new Date(date);
       currentTime.setHours(openHour, openMin, 0, 0);
@@ -519,28 +585,112 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
         const endTime = new Date(currentTime);
         endTime.setHours(endTime.getHours() + 1);
 
-        // Check if slot already exists
+        const startTimeSql = formatDateTimeToLocalSql(startTime);
+        const endTimeSql = formatDateTimeToLocalSql(endTime);
+        const uniqueSlotKey = `${fieldId}:${courtId}:${startTimeSql}`;
+
+        if (attemptedStarts.has(uniqueSlotKey)) {
+          duplicatesSkipped++;
+          currentTime.setHours(currentTime.getHours() + 1);
+          continue;
+        }
+        attemptedStarts.add(uniqueSlotKey);
+
+        // Prevent duplicate slots for same field, court, date, and time regardless of price.
         const [existing] = await db.execute(
-          'SELECT id FROM field_slot WHERE field_id = ? AND court_id = ? AND start_time = ? AND end_time = ?',
-          [fieldId, courtId, startTime, endTime]
+          'SELECT id FROM field_slot WHERE field_id = ? AND court_id = ? AND start_time = ? LIMIT 1',
+          [fieldId, courtId, startTimeSql]
         );
 
         if (existing.length === 0) {
           await db.execute(
             'INSERT INTO field_slot (field_id, court_id, start_time, end_time, price, is_booked) VALUES (?, ?, ?, ?, ?, 0)',
-            [fieldId, courtId, startTime, endTime, price]
+            [fieldId, courtId, startTimeSql, endTimeSql, price]
           );
           slotsCreated++;
+        } else {
+          duplicatesSkipped++;
         }
 
         currentTime.setHours(currentTime.getHours() + 1);
       }
     }
 
-    res.status(201).json({ message: `${slotsCreated} slots created` });
+    res.status(201).json({
+      message: `${slotsCreated} slots created`,
+      slotsCreated,
+      duplicatesSkipped
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to generate slots' });
+  }
+});
+
+// Clear slots by date range (deletes only unbooked slots)
+router.patch('/:fieldId/slots/clear-range', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId, startDate, endDate } = req.body;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: 'startDate and endDate are required' });
+  }
+
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
+    return res.status(400).json({ error: 'Dates must use YYYY-MM-DD format' });
+  }
+
+  if (endDate < startDate) {
+    return res.status(400).json({ error: 'endDate must be on or after startDate' });
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const protectedWindowEnd = new Date(today);
+  protectedWindowEnd.setDate(protectedWindowEnd.getDate() + CLEAR_SLOT_PROTECTED_DAYS);
+
+  const protectedStartDate = formatDateToLocalYmd(today);
+  const protectedEndDate = formatDateToLocalYmd(protectedWindowEnd);
+  const overlapsProtectedWindow = !(endDate < protectedStartDate || startDate > protectedEndDate);
+
+  if (overlapsProtectedWindow) {
+    return res.status(400).json({
+      error: `Cannot clear slots within ${CLEAR_SLOT_PROTECTED_DAYS} days from today (${protectedStartDate} to ${protectedEndDate})`
+    });
+  }
+
+  try {
+    const [field] = await db.execute('SELECT id FROM field WHERE id = ? AND admin_id = ?', [fieldId, adminId]);
+    if (field.length === 0) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const [bookedCountRows] = await db.execute(
+      `SELECT COUNT(*) AS bookedCount
+       FROM field_slot
+       WHERE field_id = ?
+         AND DATE(start_time) BETWEEN ? AND ?
+         AND is_booked = 1`,
+      [fieldId, startDate, endDate]
+    );
+
+    const [deleteResult] = await db.execute(
+      `DELETE FROM field_slot
+       WHERE field_id = ?
+         AND DATE(start_time) BETWEEN ? AND ?
+         AND is_booked = 0`,
+      [fieldId, startDate, endDate]
+    );
+
+    res.json({
+      message: 'Slots cleared successfully',
+      deletedCount: deleteResult.affectedRows,
+      keptBookedCount: bookedCountRows[0]?.bookedCount || 0
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to clear slots' });
   }
 });
 
@@ -572,6 +722,102 @@ router.post('/:fieldId/slots/override', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update slot' });
+  }
+});
+
+// Disable selected slots for a field (marks them as unavailable)
+router.patch('/:fieldId/slots/update-price', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId, slotIds, newPrice } = req.body;
+  const parsedPrice = Number(newPrice);
+
+  if (!Array.isArray(slotIds) || slotIds.length === 0) {
+    return res.status(400).json({ error: 'slotIds must be a non-empty array' });
+  }
+
+  if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+    return res.status(400).json({ error: 'newPrice must be a positive number' });
+  }
+
+  try {
+    const [field] = await db.execute('SELECT id FROM field WHERE id = ? AND admin_id = ?', [fieldId, adminId]);
+    if (field.length === 0) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const placeholders = slotIds.map(() => '?').join(',');
+    const [slots] = await db.execute(
+      `SELECT id, is_booked FROM field_slot WHERE field_id = ? AND id IN (${placeholders})`,
+      [fieldId, ...slotIds]
+    );
+
+    if (slots.length !== slotIds.length) {
+      return res.status(404).json({ error: 'One or more slots were not found in this field' });
+    }
+
+    const [result] = await db.execute(
+      `UPDATE field_slot
+       SET price = ?
+       WHERE field_id = ?
+         AND id IN (${placeholders})
+         AND is_booked = 0`,
+      [parsedPrice, fieldId, ...slotIds]
+    );
+
+    const bookedCount = slots.filter((slot) => slot.is_booked === 1).length;
+
+    res.json({
+      message: 'Slot prices updated successfully',
+      updatedCount: result.affectedRows,
+      skippedBookedCount: bookedCount
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update slot prices' });
+  }
+});
+
+// Disable selected slots for a field (marks them as unavailable)
+router.patch('/:fieldId/slots/disable', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId, slotIds } = req.body;
+
+  if (!Array.isArray(slotIds) || slotIds.length === 0) {
+    return res.status(400).json({ error: 'slotIds must be a non-empty array' });
+  }
+
+  try {
+    const [field] = await db.execute('SELECT id FROM field WHERE id = ? AND admin_id = ?', [fieldId, adminId]);
+    if (field.length === 0) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const placeholders = slotIds.map(() => '?').join(',');
+    const [slots] = await db.execute(
+      `SELECT id FROM field_slot WHERE field_id = ? AND id IN (${placeholders})`,
+      [fieldId, ...slotIds]
+    );
+
+    if (slots.length !== slotIds.length) {
+      return res.status(404).json({ error: 'One or more slots were not found in this field' });
+    }
+
+    const [result] = await db.execute(
+      `UPDATE field_slot
+       SET is_booked = 1
+       WHERE field_id = ?
+         AND id IN (${placeholders})
+         AND is_booked = 0`,
+      [fieldId, ...slotIds]
+    );
+
+    res.json({
+      message: 'Slots disabled successfully',
+      updatedCount: result.affectedRows
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to disable slots' });
   }
 });
 
