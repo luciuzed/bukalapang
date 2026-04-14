@@ -7,7 +7,16 @@ const router = express.Router();
 
 const MAX_DESCRIPTION_LENGTH = 160;
 const MAX_ADDRESS_LENGTH = 150;
+const MAX_GENERATE_DURATION_DAYS = 120;
+const CLEAR_SLOT_PROTECTED_DAYS = 7;
 const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../dev-storage/uploads');
+
+const formatDateToLocalYmd = (dateValue) => {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+  const day = String(dateValue.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const normalizeImageUrl = (rawImageUrl) => {
   if (rawImageUrl === undefined || rawImageUrl === null) {
@@ -468,9 +477,18 @@ router.get('/:fieldId/slots', async (req, res) => {
 router.post('/:fieldId/generate-slots', async (req, res) => {
   const { fieldId } = req.params;
   const { adminId, courtId, courtName, openingTime, closingTime, price, startDate, duration, durationType, daysOfWeek } = req.body;
+  const parsedDuration = parseInt(duration, 10);
 
   if (!courtId || !openingTime || !closingTime || !price || !startDate) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  if (!Number.isInteger(parsedDuration) || parsedDuration < 1 || parsedDuration > MAX_GENERATE_DURATION_DAYS) {
+    return res.status(400).json({ error: `Duration must be between 1 and ${MAX_GENERATE_DURATION_DAYS} days` });
+  }
+
+  if (durationType === 'weekly' && (!Array.isArray(daysOfWeek) || daysOfWeek.length === 0)) {
+    return res.status(400).json({ error: 'daysOfWeek is required for weekly pattern' });
   }
 
   try {
@@ -496,7 +514,7 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
       datesForSlots.push(new Date(baseDate));
     } else if (durationType === 'weekly') {
       // Repeat for N days, only on selected days of week
-      endDate.setDate(baseDate.getDate() + duration);
+      endDate.setDate(baseDate.getDate() + parsedDuration);
       
       for (let d = new Date(baseDate); d < endDate; d.setDate(d.getDate() + 1)) {
         if (daysOfWeek.includes(d.getDay())) {
@@ -544,6 +562,73 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
   }
 });
 
+// Clear slots by date range (deletes only unbooked slots)
+router.patch('/:fieldId/slots/clear-range', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId, startDate, endDate } = req.body;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: 'startDate and endDate are required' });
+  }
+
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
+    return res.status(400).json({ error: 'Dates must use YYYY-MM-DD format' });
+  }
+
+  if (endDate < startDate) {
+    return res.status(400).json({ error: 'endDate must be on or after startDate' });
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const protectedWindowEnd = new Date(today);
+  protectedWindowEnd.setDate(protectedWindowEnd.getDate() + CLEAR_SLOT_PROTECTED_DAYS);
+
+  const protectedStartDate = formatDateToLocalYmd(today);
+  const protectedEndDate = formatDateToLocalYmd(protectedWindowEnd);
+  const overlapsProtectedWindow = !(endDate < protectedStartDate || startDate > protectedEndDate);
+
+  if (overlapsProtectedWindow) {
+    return res.status(400).json({
+      error: `Cannot clear slots within ${CLEAR_SLOT_PROTECTED_DAYS} days from today (${protectedStartDate} to ${protectedEndDate})`
+    });
+  }
+
+  try {
+    const [field] = await db.execute('SELECT id FROM field WHERE id = ? AND admin_id = ?', [fieldId, adminId]);
+    if (field.length === 0) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const [bookedCountRows] = await db.execute(
+      `SELECT COUNT(*) AS bookedCount
+       FROM field_slot
+       WHERE field_id = ?
+         AND DATE(start_time) BETWEEN ? AND ?
+         AND is_booked = 1`,
+      [fieldId, startDate, endDate]
+    );
+
+    const [deleteResult] = await db.execute(
+      `DELETE FROM field_slot
+       WHERE field_id = ?
+         AND DATE(start_time) BETWEEN ? AND ?
+         AND is_booked = 0`,
+      [fieldId, startDate, endDate]
+    );
+
+    res.json({
+      message: 'Slots cleared successfully',
+      deletedCount: deleteResult.affectedRows,
+      keptBookedCount: bookedCountRows[0]?.bookedCount || 0
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to clear slots' });
+  }
+});
+
 // Slot override endpoint
 router.post('/:fieldId/slots/override', async (req, res) => {
   const { fieldId } = req.params;
@@ -572,6 +657,58 @@ router.post('/:fieldId/slots/override', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update slot' });
+  }
+});
+
+// Disable selected slots for a field (marks them as unavailable)
+router.patch('/:fieldId/slots/update-price', async (req, res) => {
+  const { fieldId } = req.params;
+  const { adminId, slotIds, newPrice } = req.body;
+  const parsedPrice = Number(newPrice);
+
+  if (!Array.isArray(slotIds) || slotIds.length === 0) {
+    return res.status(400).json({ error: 'slotIds must be a non-empty array' });
+  }
+
+  if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+    return res.status(400).json({ error: 'newPrice must be a positive number' });
+  }
+
+  try {
+    const [field] = await db.execute('SELECT id FROM field WHERE id = ? AND admin_id = ?', [fieldId, adminId]);
+    if (field.length === 0) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const placeholders = slotIds.map(() => '?').join(',');
+    const [slots] = await db.execute(
+      `SELECT id, is_booked FROM field_slot WHERE field_id = ? AND id IN (${placeholders})`,
+      [fieldId, ...slotIds]
+    );
+
+    if (slots.length !== slotIds.length) {
+      return res.status(404).json({ error: 'One or more slots were not found in this field' });
+    }
+
+    const [result] = await db.execute(
+      `UPDATE field_slot
+       SET price = ?
+       WHERE field_id = ?
+         AND id IN (${placeholders})
+         AND is_booked = 0`,
+      [parsedPrice, fieldId, ...slotIds]
+    );
+
+    const bookedCount = slots.filter((slot) => slot.is_booked === 1).length;
+
+    res.json({
+      message: 'Slot prices updated successfully',
+      updatedCount: result.affectedRows,
+      skippedBookedCount: bookedCount
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update slot prices' });
   }
 });
 

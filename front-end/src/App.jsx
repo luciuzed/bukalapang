@@ -8,6 +8,7 @@ import BookingPage from "./page/BookingPage"
 import BookingDetailPage from "./page/BookingDetailPage"
 import AdminDashboard from "./page/AdminDashboard"
 import AdminManageField from "./page/AdminManageField"
+import AdminManageSlot from "./page/AdminManageSlot"
 import AdminBooking from "./page/AdminBooking"
 import ProfilePage from "./page/ProfilePage"
 import Payment from "./page/Payment"
@@ -100,8 +101,9 @@ function App() {
   const location = useLocation()
   const fullWidthPages = ["/dashboard", "/profile", "/field", "/booking"]
   const paymentPages = location.pathname.match(/^\/payment\//)
-  const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages
-  const isFullWidth = fullWidthPages.includes(location.pathname)
+  const fieldManagePages = location.pathname.match(/^\/field\/manage\/[^/]+$/)
+  const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages && !fieldManagePages
+  const isFullWidth = fullWidthPages.includes(location.pathname) || Boolean(fieldManagePages)
   const wrapperClass = isFullWidth ? "min-h-screen" : "container mx-auto px-10"
 
   return (
@@ -139,6 +141,14 @@ function App() {
               <AdminManageField />
             </ProtectedRoute>
           } 
+        />
+        <Route
+          path="/field/manage/:fieldId"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminManageSlot />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/booking" 

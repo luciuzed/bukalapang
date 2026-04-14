@@ -5,7 +5,6 @@ import { FiBarChart2, FiBriefcase, FiGrid, FiEdit2, FiTrash2, FiX, FiCheck, FiTr
 import Cookies from 'js-cookie'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Sidebar from '../components/Sidebar'
-import AdminManageSlot from './AdminManageSlot'
 import ConfirmationModal from './ConfirmationModal'
 import SuccessMessage from '../components/SuccessMessage'
 import { API_BASE_URL, apiUrl } from '../config/api'
@@ -30,8 +29,6 @@ const AdminManageField = () => {
   const [editingField, setEditingField] = useState(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
-  const [showSlotsModal, setShowSlotsModal] = useState(false)
-  const [selectedFieldForSlots, setSelectedFieldForSlots] = useState(null)
   const [fieldToDelete, setFieldToDelete] = useState(null)
   const [isDeleteProcessing, setIsDeleteProcessing] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -290,10 +287,9 @@ const AdminManageField = () => {
     }
   }
 
-  const openSlotsModal = (field) => {
+  const openSlotManagementPage = (field) => {
     setError('')
-    setSelectedFieldForSlots(field)
-    setShowSlotsModal(true)
+    navigate(`/field/manage/${field.id}`)
   }
 
   const handleLogout = () => {
@@ -440,7 +436,7 @@ const AdminManageField = () => {
 
                       <div className="flex gap-2 pr-4 shrink-0">
                         <button
-                          onClick={() => openSlotsModal(field)}
+                          onClick={() => openSlotManagementPage(field)}
                           className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition font-medium"
                           title="Manage time slots"
                         >
@@ -468,15 +464,6 @@ const AdminManageField = () => {
             )}
           </div>
         </main>
-
-      {/* TIME SLOTS MANAGEMENT MODAL */}
-      {showSlotsModal && selectedFieldForSlots && (
-        <AdminManageSlot
-          field={selectedFieldForSlots}
-          adminId={adminId}
-          onClose={() => setShowSlotsModal(false)}
-        />
-      )}
 
       {/* FIELD FORM MODAL */}
       {showFieldForm && (

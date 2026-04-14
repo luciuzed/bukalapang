@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { FiX, FiCheck, FiPlus, FiTrash2 } from 'react-icons/fi'
+import { useNavigate, useParams } from 'react-router-dom'
+import Cookies from 'js-cookie'
+import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar } from 'react-icons/fi'
+import { FaChevronLeft } from 'react-icons/fa'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ConfirmationModal from './ConfirmationModal'
+import DisableSlotsModal from './DisableSlotsModal'
 import SuccessMessage from '../components/SuccessMessage'
+import Sidebar from '../components/Sidebar'
 import { apiUrl } from '../config/api'
 
 const getLocalToday = () => {
@@ -13,10 +18,22 @@ const getLocalToday = () => {
   return `${year}-${month}-${day}`
 }
 
+const addDaysToLocalDateString = (dateString, daysToAdd) => {
+  const date = new Date(`${dateString}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return ''
+
+  date.setDate(date.getDate() + daysToAdd)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const getSlotDate = (dateTimeValue) => String(dateTimeValue || '').slice(0, 10)
 const getSlotTime = (dateTimeValue) => String(dateTimeValue || '').slice(11, 16)
 
-const AdminManageSlot = ({ field, adminId, onClose }) => {
+const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) => {
+  const maxGenerateDays = 120
   const [courts, setCourts] = useState([])
   const [newCourtName, setNewCourtName] = useState('')
   const [courtsLoading, setCourtsLoading] = useState(false)
@@ -41,10 +58,17 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
   const [isDisablingSlots, setIsDisablingSlots] = useState(false)
   const [selectedSlotIds, setSelectedSlotIds] = useState([])
   const [slotsToDisable, setSlotsToDisable] = useState(null)
+  const [slotsToEditPrice, setSlotsToEditPrice] = useState(null)
+  const [editPriceValue, setEditPriceValue] = useState('')
+  const [isEditingSlotPrice, setIsEditingSlotPrice] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
   const [courtToDelete, setCourtToDelete] = useState(null)
   const [isDeleteProcessing, setIsDeleteProcessing] = useState(false)
+  const [isClearSlotsModalOpen, setIsClearSlotsModalOpen] = useState(false)
+  const [clearStartDate, setClearStartDate] = useState('')
+  const [clearEndDate, setClearEndDate] = useState('')
+  const [isClearingSlots, setIsClearingSlots] = useState(false)
 
   const showSuccessMessage = (message) => {
     setSuccess({ id: Date.now(), message })
@@ -208,8 +232,8 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
       return
     }
 
-    if (recurringDuration > 365) {
-      showErrorMessage('Duration cannot be more than 365 days')
+    if (recurringDuration > maxGenerateDays) {
+      showErrorMessage(`Duration cannot be more than ${maxGenerateDays} days`)
       return
     }
 
@@ -266,6 +290,63 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
       showErrorMessage('Cannot connect to server')
     } finally {
       setSlotsLoading(false)
+    }
+  }
+
+  const openClearSlotsModal = () => {
+    const minAllowedDate = addDaysToLocalDateString(getLocalToday(), 8)
+    setClearStartDate(minAllowedDate)
+    setClearEndDate(minAllowedDate)
+    setIsClearSlotsModalOpen(true)
+  }
+
+  const closeClearSlotsModal = () => {
+    if (isClearingSlots) return
+    setIsClearSlotsModalOpen(false)
+  }
+
+  const handleConfirmClearSlots = async () => {
+    if (!clearStartDate || !clearEndDate) {
+      showErrorMessage('Please select both start and end dates')
+      return
+    }
+
+    if (clearEndDate < clearStartDate) {
+      showErrorMessage('End date must be on or after start date')
+      return
+    }
+
+    const minAllowedDate = addDaysToLocalDateString(getLocalToday(), 8)
+    if (clearStartDate < minAllowedDate || clearEndDate < minAllowedDate) {
+      showErrorMessage(`Clear slots can only be done from ${minAllowedDate} onward`)
+      return
+    }
+
+    try {
+      setIsClearingSlots(true)
+      const response = await fetch(apiUrl(`/field/${field.id}/slots/clear-range`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId,
+          startDate: clearStartDate,
+          endDate: clearEndDate
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        showSuccessMessage(`Cleared ${result.deletedCount || 0} slot${result.deletedCount === 1 ? '' : 's'} (${result.keptBookedCount || 0} booked kept)`)
+        setIsClearSlotsModalOpen(false)
+        await fetchSlotsOnly()
+      } else {
+        const errorData = await response.json()
+        showErrorMessage(errorData.error || 'Failed to clear slots')
+      }
+    } catch (err) {
+      showErrorMessage('Cannot connect to server')
+    } finally {
+      setIsClearingSlots(false)
     }
   }
 
@@ -352,6 +433,61 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
     setSlotsToDisable(selectedSlotIds)
   }
 
+  const handleOpenEditPriceModal = () => {
+    if (selectedSlotIds.length === 0) return
+
+    const firstSelectedSlot = viewSlots.find((slot) => slot.id === selectedSlotIds[0])
+    const initialPrice = firstSelectedSlot?.price !== undefined ? String(parseInt(firstSelectedSlot.price, 10)) : ''
+
+    setEditPriceValue(initialPrice)
+    setSlotsToEditPrice(selectedSlotIds)
+  }
+
+  const closeEditPriceModal = () => {
+    if (isEditingSlotPrice) return
+    setSlotsToEditPrice(null)
+    setEditPriceValue('')
+  }
+
+  const handleConfirmEditPrice = async () => {
+    if (!slotsToEditPrice || slotsToEditPrice.length === 0) return
+
+    const parsedPrice = parseFloat(editPriceValue)
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      showErrorMessage('Please enter a valid price')
+      return
+    }
+
+    try {
+      setIsEditingSlotPrice(true)
+      const response = await fetch(apiUrl(`/field/${field.id}/slots/update-price`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminId,
+          slotIds: slotsToEditPrice,
+          newPrice: parsedPrice
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        showSuccessMessage(`Updated price for ${result.updatedCount || 0} slot${result.updatedCount === 1 ? '' : 's'}`)
+        setSelectedSlotIds([])
+        setSlotsToEditPrice(null)
+        setEditPriceValue('')
+        await fetchSlotsOnly()
+      } else {
+        const errorData = await response.json()
+        showErrorMessage(errorData.error || 'Failed to update slot prices')
+      }
+    } catch (err) {
+      showErrorMessage('Cannot connect to server')
+    } finally {
+      setIsEditingSlotPrice(false)
+    }
+  }
+
   const closeDisableConfirmModal = () => {
     if (isDisablingSlots) return
     setSlotsToDisable(null)
@@ -388,30 +524,46 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
   }
 
   const hasValidStartDate = Boolean(recurringStartDate)
-  const hasValidDuration = Number.isInteger(recurringDuration) && recurringDuration > 0 && recurringDuration <= 365
+  const hasValidDuration = Number.isInteger(recurringDuration) && recurringDuration > 0 && recurringDuration <= maxGenerateDays
   const canGenerateSlots = hasValidStartDate && hasValidDuration
   const selectedDateSlots = viewSlots.filter((slot) => getSlotDate(slot.start_time) === viewDate)
   const timeSlots = Array.from(new Set(selectedDateSlots.map((slot) => getSlotTime(slot.start_time)))).sort()
   const selectableSlotCount = selectedDateSlots.filter((slot) => slot.is_booked !== 1).length
   const hasSelectedSlots = selectedSlotIds.length > 0
 
+  if (!field) return null
+
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className={embedded ? 'w-full' : 'fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50'}>
       <SuccessMessage
         message={success?.message}
         triggerKey={success?.id}
         onClose={() => setSuccess(null)}
       />
-      <div className="bg-white rounded-2xl shadow-lg p-8 max-w-[96vw] w-full mx-4 min-h-[75vh] max-h-[92vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Manage Courts: {field.name}</h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition"
-          >
-            <FiX className="h-6 w-6 text-gray-500" />
-          </button>
-        </div>
+      <div className={embedded ? 'w-full min-h-[75vh] overflow-y-auto' : 'bg-white rounded-2xl shadow-lg p-8 max-w-[96vw] w-full mx-4 min-h-[75vh] max-h-[92vh] overflow-y-auto'}>
+        {embedded ? (
+          <div className="mb-6">
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 text-xs font-bold text-gray-400 mb-6 uppercase hover:text-black"
+            >
+              <FaChevronLeft /> Back
+            </button>
+            <h2 className="text-2xl font-bold">Manage Courts: {field.name}</h2>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Manage Courts: {field.name}</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition"
+            >
+              <FiX className="h-6 w-6 text-gray-500" />
+            </button>
+          </div>
+        )}
+
+        <div className={embedded ? 'bg-white rounded-2xl shadow-lg p-8 min-h-[75vh] overflow-y-auto' : ''}>
 
         {/* Alerts */}
         {error && (
@@ -425,20 +577,26 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
             {/* COURTS LIST VIEW */}
             {slotSetupScreen === 'court-list' && (
               <div className="space-y-4">
-                <div className="rounded-2xl p-6 border border-gray-100">
+                <div className="rounded-2xl p-6 border border-gray-200 bg-white">
                   <p className="text-sm font-bold mb-4 text-gray-800">Add New Court</p>
                   <div className="flex gap-3">
                     <input
                       placeholder="e.g., Court A, Lapangan 1"
                       value={newCourtName}
                       onChange={(e) => setNewCourtName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleAddCourt()
+                        }
+                      }}
                       className="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
                     />
                     <button
                       onClick={handleAddCourt}
-                      className="px-6 py-3 bg-primary text-white rounded-full hover:opacity-90 transition flex items-center gap-2 font-semibold text-sm shrink-0"
+                      className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full hover:opacity-90 transition font-semibold text-sm shrink-0"
                     >
-                      <FiPlus className="h-4 w-4" /> Add
+                      <span className="text-white font-black text-base leading-none">+</span> Add
                     </button>
                   </div>
                 </div>
@@ -566,7 +724,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                             }`}
                           />
                         </span>
-                        <span>Generate once starting from:</span>
+                        <span>Generate once:</span>
                       </label>
                       {recurrenceType === 'specific' && (
                         <input
@@ -644,7 +802,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                               <input
                                 type="number"
                                 min="1"
-                                max="365"
+                                max={maxGenerateDays}
                                 value={Number.isNaN(recurringDuration) ? '' : recurringDuration}
                                 onChange={(e) => {
                                   const value = e.target.value
@@ -659,7 +817,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                                     return
                                   }
 
-                                  setRecurringDuration(Math.min(365, Math.max(1, parsedValue)))
+                                  setRecurringDuration(Math.min(maxGenerateDays, Math.max(1, parsedValue)))
                                 }}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
                               />
@@ -709,12 +867,21 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
           <div className="xl:col-span-7 space-y-4">
             <div>
               <label className="block text-sm font-semibold mb-2 text-gray-700">Select Date to View</label>
-              <input
-                type="date"
-                value={viewDate}
-                onChange={(e) => setViewDate(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
-              />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="date"
+                  value={viewDate}
+                  onChange={(e) => setViewDate(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={openClearSlotsModal}
+                  className="px-5 py-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition font-semibold text-sm whitespace-nowrap"
+                >
+                  Clear Slots
+                </button>
+              </div>
             </div>
 
             <div>
@@ -748,8 +915,8 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                       <>
                         <button
                           type="button"
-                          onClick={() => {}}
-                          className="h-10 w-10 rounded-lg bg-primary text-white flex items-center justify-center hover:opacity-90 transition"
+                          onClick={handleOpenEditPriceModal}
+                          className="h-10 w-10 rounded-lg bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition"
                           title="Edit selected slots"
                           aria-label="Edit selected slots"
                         >
@@ -780,7 +947,7 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                           onClick={handleDisableSelectedSlots}
                           disabled={isDisablingSlots}
                           className={`h-10 w-10 rounded-lg text-white flex items-center justify-center transition ${
-                            isDisablingSlots ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'
+                            isDisablingSlots ? 'bg-primary/40 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
                           }`}
                           title="Disable selected slots"
                           aria-label="Disable selected slots"
@@ -804,13 +971,12 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                     )}
                   </div>
 
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto rounded-2xl shadow-md border border-gray-200">
                   <div
-                    className="gap-2 p-6 rounded-2xl"
+                    className="gap-2 p-6 rounded-2xl bg-white"
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`,
-                      backgroundColor: '#f6f6f6'
+                      gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`
                     }}
                   >
                     <div></div>
@@ -867,9 +1033,6 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
                                     <span className="text-[9px] sm:text-[10px] font-bold text-primary">
                                       Rp {parseInt(slot.price, 10).toLocaleString()}
                                     </span>
-                                    <span className="text-[8px] sm:text-[9px] text-green-700 font-semibold">
-                                      Available
-                                    </span>
                                   </>
                                 )}
                               </button>
@@ -885,6 +1048,8 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
           </div>
         </div>
 
+        </div>
+
       </div>
 
       {/* LOADING OVERLAY FOR SLOT GENERATION */}
@@ -898,13 +1063,228 @@ const AdminManageSlot = ({ field, adminId, onClose }) => {
         isProcessing={isDeleteProcessing}
       />
 
-      <ConfirmationModal
+      <DisableSlotsModal
         isOpen={slotsToDisable !== null}
         onClose={closeDisableConfirmModal}
         onConfirm={handleConfirmDisableSlots}
-        actionText={`disable ${slotsToDisable?.length || 0} slot${slotsToDisable?.length !== 1 ? 's' : ''}`}
+        slotCount={slotsToDisable?.length || 0}
         isProcessing={isDisablingSlots}
       />
+
+      {slotsToEditPrice !== null && (
+        <div className="fixed inset-0 z-60 bg-black/45 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
+            <h3 className="text-lg font-bold text-gray-900">Edit Slot Price</h3>
+            <p className="mt-2 text-sm text-gray-600">Set one price for {slotsToEditPrice.length} selected slot{slotsToEditPrice.length !== 1 ? 's' : ''}.</p>
+
+            <div className="mt-5">
+              <label className="block text-sm font-semibold mb-2 text-gray-700">New price</label>
+              <div className="w-full flex items-center gap-2">
+                <span className="font-bold text-gray-700">Rp</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={editPriceValue}
+                  onChange={(e) => setEditPriceValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleConfirmEditPrice()
+                    }
+                  }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeEditPriceModal}
+                disabled={isEditingSlotPrice}
+                className="px-4 py-2.5 rounded-full border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmEditPrice}
+                disabled={isEditingSlotPrice}
+                className="px-4 py-2.5 rounded-full bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition disabled:opacity-60"
+              >
+                {isEditingSlotPrice ? 'Updating...' : 'Update Price'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isClearSlotsModalOpen && (
+        <div className="fixed inset-0 z-60 bg-black/45 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
+            <h3 className="text-lg font-bold text-gray-900">Clear Slots by Date Range</h3>
+            <p className="mt-2 text-sm text-gray-600">This removes only unbooked slots and keeps booked slots on schedule.</p>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-700">Start date</label>
+                <input
+                  type="date"
+                  value={clearStartDate}
+                  min={addDaysToLocalDateString(getLocalToday(), 8)}
+                  onChange={(e) => setClearStartDate(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-gray-700">End date</label>
+                <input
+                  type="date"
+                  value={clearEndDate}
+                  min={clearStartDate || addDaysToLocalDateString(getLocalToday(), 8)}
+                  onChange={(e) => setClearEndDate(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
+                />
+              </div>
+
+              <p className="text-xs text-gray-500">Clear slots is blocked for dates in the next 7 days, including today.</p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeClearSlotsModal}
+                disabled={isClearingSlots}
+                className="px-4 py-2.5 rounded-full border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmClearSlots}
+                disabled={isClearingSlots}
+                className="px-4 py-2.5 rounded-full bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition disabled:opacity-60"
+              >
+                {isClearingSlots ? 'Clearing...' : 'Clear Slots'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
+  const hasDirectProps = Boolean(field && adminId)
+  const navigate = useNavigate()
+  const { fieldId } = useParams()
+
+  const [routeAdminId, setRouteAdminId] = useState(null)
+  const [adminName, setAdminName] = useState('')
+  const [adminEmail, setAdminEmail] = useState('')
+  const [routeField, setRouteField] = useState(null)
+  const [routeLoading, setRouteLoading] = useState(true)
+  const [routeError, setRouteError] = useState('')
+
+  useEffect(() => {
+    if (hasDirectProps) return
+
+    const adminCookie = Cookies.get('admin_session')
+    const adminSession = JSON.parse(localStorage.getItem('adminId') || 'null')
+
+    if (!adminSession && !adminCookie) {
+      navigate('/login')
+      return
+    }
+
+    if (adminCookie) {
+      const sessionData = JSON.parse(adminCookie)
+      setRouteAdminId(sessionData.adminId)
+      setAdminName(sessionData.adminName)
+      setAdminEmail(sessionData.email)
+      localStorage.setItem('adminId', sessionData.adminId)
+    } else if (adminSession) {
+      setRouteAdminId(adminSession)
+    }
+  }, [hasDirectProps, navigate])
+
+  useEffect(() => {
+    if (hasDirectProps || !routeAdminId || !fieldId) return
+
+    const fetchField = async () => {
+      try {
+        setRouteLoading(true)
+        const response = await fetch(apiUrl(`/fields/${routeAdminId}`))
+
+        if (!response.ok) {
+          setRouteError('Failed to fetch field')
+          return
+        }
+
+        const fields = await response.json()
+        const matchedField = fields.find((item) => String(item.id) === String(fieldId))
+
+        if (!matchedField) {
+          setRouteError('Field not found')
+          return
+        }
+
+        setRouteField(matchedField)
+        setRouteError('')
+      } catch (err) {
+        setRouteError('Cannot connect to server')
+      } finally {
+        setRouteLoading(false)
+      }
+    }
+
+    fetchField()
+  }, [hasDirectProps, routeAdminId, fieldId])
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminId')
+    Cookies.remove('admin_session')
+    navigate('/login')
+  }
+
+  const tabItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
+    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
+    { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
+  ]
+
+  if (hasDirectProps) {
+    return <AdminManageSlotContent field={field} adminId={adminId} onClose={onClose} embedded={embedded} />
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 text-slate-900 flex">
+      <Sidebar
+        activeTabId="fields"
+        adminName={adminName}
+        adminEmail={adminEmail}
+        handleLogout={handleLogout}
+        tabItems={tabItems}
+      />
+
+      <main className="flex-1 p-8 md:p-10 overflow-y-auto">
+        {routeLoading ? (
+          <div className="text-center py-12 text-gray-500">Loading slot management...</div>
+        ) : routeError ? (
+          <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
+            {routeError}
+          </div>
+        ) : (
+          <AdminManageSlotContent
+            field={routeField}
+            adminId={routeAdminId}
+            onClose={() => navigate('/field')}
+            embedded
+          />
+        )}
+      </main>
     </div>
   )
 }
