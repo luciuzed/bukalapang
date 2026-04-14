@@ -35,7 +35,7 @@ const Sidebar = ({ activeTabId, adminName, adminEmail, handleLogout, tabItems })
             <FiUser className="h-5 w-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-white uppercase tracking-wide">{adminName}</p>
+            <p className="text-xs font-bold text-white tracking-wide">{adminName}</p>
             <p className="text-xs text-white/70 truncate">{adminEmail}</p>
           </div>
         </div>

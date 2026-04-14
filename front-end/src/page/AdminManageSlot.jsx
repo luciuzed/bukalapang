@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi'
 import { FaChevronLeft } from 'react-icons/fa'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ConfirmationModal from './ConfirmationModal'
@@ -1263,6 +1263,7 @@ const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
     { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
+    { id: 'security-info', label: 'Security & Info', icon: FiUser, path: '/admin/security-info' },
   ]
 
   if (hasDirectProps) {

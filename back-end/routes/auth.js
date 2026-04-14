@@ -313,4 +313,84 @@ router.post('/verify-otp', async (req, res) => {
   });
 });
 
+router.post('/admin/change-password', async (req, res) => {
+  const { adminId, currentPassword, newPassword } = req.body;
+
+  if (!adminId || !currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'adminId, currentPassword, and newPassword are required' });
+  }
+
+  if (String(newPassword).length < 6) {
+    return res.status(400).json({ error: 'New password must be at least 6 characters' });
+  }
+
+  try {
+    const [rows] = await db.execute('SELECT id, password FROM admin WHERE id = ?', [adminId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Admin account not found' });
+    }
+
+    const admin = rows[0];
+    const storedHash = typeof admin.password === 'string' ? admin.password : '';
+
+    if (!storedHash) {
+      return res.status(500).json({ error: 'Server error' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, storedHash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect', field: 'currentPassword' });
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.execute('UPDATE admin SET password = ? WHERE id = ?', [newHashedPassword, adminId]);
+
+    return res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('[ADMIN][CHANGE_PASSWORD] Error:', err);
+    return res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
+router.post('/user/change-password', async (req, res) => {
+  const { userId, currentPassword, newPassword } = req.body;
+
+  if (!userId || !currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'userId, currentPassword, and newPassword are required' });
+  }
+
+  if (String(newPassword).length < 6) {
+    return res.status(400).json({ error: 'New password must be at least 6 characters' });
+  }
+
+  try {
+    const [rows] = await db.execute('SELECT id, password FROM user WHERE id = ?', [userId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    const user = rows[0];
+    const storedHash = typeof user.password === 'string' ? user.password : '';
+
+    if (!storedHash) {
+      return res.status(500).json({ error: 'Server error' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, storedHash);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect', field: 'currentPassword' });
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    await db.execute('UPDATE user SET password = ? WHERE id = ?', [newHashedPassword, userId]);
+
+    return res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('[USER][CHANGE_PASSWORD] Error:', err);
+    return res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
 module.exports = router;

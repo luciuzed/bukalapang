@@ -5,7 +5,8 @@ import { FiCheck } from 'react-icons/fi';
 import Cookies from 'js-cookie';
 import LoadingOverlay from '../components/LoadingOverlay';
 import ProfileSidebar from '../components/ProfileSidebar';
-import { API_BASE_URL } from '../config/api';
+import SuccessMessage from '../components/SuccessMessage';
+import { API_BASE_URL, apiUrl } from '../config/api';
 
 const getAccountId = (session) =>
   session?.id ?? session?.userId ?? session?.user_id ?? session?.accountId ?? null;
@@ -442,6 +443,13 @@ const BookingCard = ({ variant, booking, displayName, statusInfo, navigate, empt
 // --- SUB-COMPONENT: SECURITY ---
 
 const SecuritySection = ({ user }) => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [currentPasswordError, setCurrentPasswordError] = useState('');
+  const [generalError, setGeneralError] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [success, setSuccess] = useState(null);
+
   // Logic to mask the email (e.g., gemini@gmail.com -> ge***@gmail.com)
   const maskEmail = (email) => {
     if (!email || !email.includes('@')) return '***@***.com';
@@ -449,8 +457,73 @@ const SecuritySection = ({ user }) => {
     return `${name.substring(0, 2)}***@${domain}`;
   };
 
+  const handlePasswordUpdate = async () => {
+    setCurrentPasswordError('');
+    setGeneralError('');
+
+    if (!currentPassword || !newPassword) {
+      setGeneralError('Please fill in current and new password');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setGeneralError('New password must be at least 6 characters');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setGeneralError('New password must be different from current password');
+      return;
+    }
+
+    const userId = getAccountId(user);
+    if (!userId) {
+      setGeneralError('User session not found. Please login again');
+      return;
+    }
+
+    try {
+      setIsUpdatingPassword(true);
+      const response = await fetch(apiUrl('/user/change-password'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401 && data?.field === 'currentPassword') {
+          setCurrentPasswordError(data.error || 'Current password is incorrect');
+          return;
+        }
+
+        setGeneralError(data?.error || 'Failed to update password');
+        return;
+      }
+
+      setCurrentPassword('');
+      setNewPassword('');
+      setSuccess({ id: Date.now(), message: data?.message || 'Password updated successfully' });
+    } catch (error) {
+      setGeneralError('Cannot connect to server');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
+      <SuccessMessage
+        message={success?.message}
+        triggerKey={success?.id}
+        onClose={() => setSuccess(null)}
+      />
+
       <h1 className="text-2xl font-black text-gray-800 mb-8">Security & Information</h1>
       
       <div className="space-y-6">
@@ -501,15 +574,37 @@ const SecuritySection = ({ user }) => {
             <input 
               type="password" 
               placeholder="Current Password" 
-              className="w-full bg-gray-50 border border-transparent focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none" 
+              value={currentPassword}
+              onChange={(event) => {
+                setCurrentPassword(event.target.value)
+                if (currentPasswordError) setCurrentPasswordError('')
+              }}
+              className={`w-full bg-gray-50 border focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none ${
+                currentPasswordError ? 'border-red-500' : 'border-transparent'
+              }`} 
             />
+            {currentPasswordError && (
+              <p className="text-red-500 text-sm -mt-2 ml-1">{currentPasswordError}</p>
+            )}
             <input 
               type="password" 
               placeholder="New Password" 
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
               className="w-full bg-gray-50 border border-transparent focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none" 
             />
-            <button className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold mt-2 hover:bg-black transition-all active:scale-[0.98]">
-              Update Password
+            {generalError && (
+              <p className="text-red-500 text-sm -mt-2 ml-1">{generalError}</p>
+            )}
+            <button
+              type="button"
+              onClick={handlePasswordUpdate}
+              disabled={isUpdatingPassword}
+              className={`w-full py-4 text-white rounded-2xl font-bold mt-2 transition-all active:scale-[0.98] ${
+                isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-gray-900 hover:bg-black'
+              }`}
+            >
+              {isUpdatingPassword ? 'Updating...' : 'Update Password'}
             </button>
           </div>
         </div>
