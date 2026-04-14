@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar } from 'react-icons/fi'
+import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar, FiCreditCard } from 'react-icons/fi'
 import { FaChevronLeft } from 'react-icons/fa'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ConfirmationModal from './ConfirmationModal'
@@ -227,6 +227,8 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
   }
 
   const handleGenerateSlots = async () => {
+    const today = getLocalToday()
+
     if (!Number.isInteger(recurringDuration) || recurringDuration < 1) {
       showErrorMessage('Please fill a valid duration')
       return
@@ -239,6 +241,11 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
 
     if (!recurringStartDate) {
       showErrorMessage('Please select start date')
+      return
+    }
+
+    if (recurringStartDate < today) {
+      showErrorMessage('Start date must be today or later')
       return
     }
 
@@ -730,6 +737,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                         <input
                           type="date"
                           value={recurringStartDate}
+                          min={getLocalToday()}
                           onChange={(e) => setRecurringStartDate(e.target.value)}
                           className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
                         />
@@ -827,6 +835,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                               <input
                                 type="date"
                                 value={recurringStartDate}
+                                min={getLocalToday()}
                                 onChange={(e) => setRecurringStartDate(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
                               />
@@ -1253,6 +1262,7 @@ const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
     { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
+    { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
   ]
 
   if (hasDirectProps) {

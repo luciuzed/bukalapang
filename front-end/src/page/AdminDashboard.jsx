@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiBarChart2, FiCalendar, FiGrid, FiTrendingUp } from 'react-icons/fi'
+import { FiBarChart2, FiCalendar, FiGrid, FiTrendingUp, FiCreditCard } from 'react-icons/fi'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Notification from '../components/Notification'
 import Sidebar from '../components/Sidebar'
@@ -278,6 +278,7 @@ const AdminDashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
+    { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
   ]
 
   const handleNotificationClick = (bookingId) => {

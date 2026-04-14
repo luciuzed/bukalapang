@@ -10,12 +10,34 @@ const MAX_ADDRESS_LENGTH = 150;
 const MAX_GENERATE_DURATION_DAYS = 120;
 const CLEAR_SLOT_PROTECTED_DAYS = 7;
 const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../dev-storage/uploads');
+const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
 
 const formatDateToLocalYmd = (dateValue) => {
   const year = dateValue.getFullYear();
   const month = String(dateValue.getMonth() + 1).padStart(2, '0');
   const day = String(dateValue.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+const getTodayInAppTimezone = () => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+
+  return formatter.format(new Date());
+};
+
+const formatDateTimeToLocalSql = (dateValue) => {
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+  const day = String(dateValue.getDate()).padStart(2, '0');
+  const hour = String(dateValue.getHours()).padStart(2, '0');
+  const minute = String(dateValue.getMinutes()).padStart(2, '0');
+  const second = String(dateValue.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 };
 
 const normalizeImageUrl = (rawImageUrl) => {
@@ -108,8 +130,26 @@ router.get('/:adminId', async (req, res) => {
 // Get all fields including inactive ones (for users to browse - active ones prioritized)
 router.get('/', async (req, res) => {
   try {
+    const todayInAppTimezone = getTodayInAppTimezone();
     const [fields] = await db.execute(
-      'SELECT f.id, f.admin_id, f.name, f.category, f.description, f.address, f.city, f.image_url, f.is_active, f.rating, MIN(fs.price) as min_price, MAX(fs.price) as max_price FROM field f LEFT JOIN field_slot fs ON f.id = fs.field_id GROUP BY f.id ORDER BY f.is_active DESC, f.created_at DESC'
+      `SELECT
+        f.id,
+        f.admin_id,
+        f.name,
+        f.category,
+        f.description,
+        f.address,
+        f.city,
+        f.image_url,
+        f.is_active,
+        f.rating,
+        MIN(CASE WHEN DATE(fs.start_time) >= ? THEN fs.price END) AS min_price,
+        MAX(CASE WHEN DATE(fs.start_time) >= ? THEN fs.price END) AS max_price
+      FROM field f
+      LEFT JOIN field_slot fs ON f.id = fs.field_id
+      GROUP BY f.id
+      ORDER BY f.is_active DESC, f.created_at DESC`,
+      [todayInAppTimezone, todayInAppTimezone]
     );
     res.json(fields);
   } catch (err) {
@@ -491,6 +531,11 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
     return res.status(400).json({ error: 'daysOfWeek is required for weekly pattern' });
   }
 
+  const todayInAppTimezone = getTodayInAppTimezone();
+  if (startDate < todayInAppTimezone) {
+    return res.status(400).json({ error: 'startDate must be today or a future date' });
+  }
+
   try {
     // Verify field belongs to admin
     const [field] = await db.execute('SELECT id FROM field WHERE id = ? AND admin_id = ?', [fieldId, adminId]);
@@ -525,6 +570,9 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
 
     // For each date, create hourly slots
     let slotsCreated = 0;
+    let duplicatesSkipped = 0;
+    const attemptedStarts = new Set();
+
     for (const date of datesForSlots) {
       const currentTime = new Date(date);
       currentTime.setHours(openHour, openMin, 0, 0);
@@ -537,25 +585,42 @@ router.post('/:fieldId/generate-slots', async (req, res) => {
         const endTime = new Date(currentTime);
         endTime.setHours(endTime.getHours() + 1);
 
-        // Check if slot already exists
+        const startTimeSql = formatDateTimeToLocalSql(startTime);
+        const endTimeSql = formatDateTimeToLocalSql(endTime);
+        const uniqueSlotKey = `${fieldId}:${courtId}:${startTimeSql}`;
+
+        if (attemptedStarts.has(uniqueSlotKey)) {
+          duplicatesSkipped++;
+          currentTime.setHours(currentTime.getHours() + 1);
+          continue;
+        }
+        attemptedStarts.add(uniqueSlotKey);
+
+        // Prevent duplicate slots for same field, court, date, and time regardless of price.
         const [existing] = await db.execute(
-          'SELECT id FROM field_slot WHERE field_id = ? AND court_id = ? AND start_time = ? AND end_time = ?',
-          [fieldId, courtId, startTime, endTime]
+          'SELECT id FROM field_slot WHERE field_id = ? AND court_id = ? AND start_time = ? LIMIT 1',
+          [fieldId, courtId, startTimeSql]
         );
 
         if (existing.length === 0) {
           await db.execute(
             'INSERT INTO field_slot (field_id, court_id, start_time, end_time, price, is_booked) VALUES (?, ?, ?, ?, ?, 0)',
-            [fieldId, courtId, startTime, endTime, price]
+            [fieldId, courtId, startTimeSql, endTimeSql, price]
           );
           slotsCreated++;
+        } else {
+          duplicatesSkipped++;
         }
 
         currentTime.setHours(currentTime.getHours() + 1);
       }
     }
 
-    res.status(201).json({ message: `${slotsCreated} slots created` });
+    res.status(201).json({
+      message: `${slotsCreated} slots created`,
+      slotsCreated,
+      duplicatesSkipped
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to generate slots' });

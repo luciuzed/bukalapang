@@ -12,7 +12,9 @@ if (fs.existsSync(envPath)) {
 }
 
 const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../dev-storage/uploads');
+const paymentQrDir = process.env.PAYMENT_QR_DIR || path.resolve(__dirname, '../dev-storage/qr');
 fs.mkdirSync(uploadsDir, { recursive: true });
+fs.mkdirSync(paymentQrDir, { recursive: true });
 
 const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
 
@@ -33,6 +35,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use('/uploads', express.static(uploadsDir));
+app.use('/qr', express.static(paymentQrDir));
 
 // routes
 const authRoutes = require('./routes/auth');
