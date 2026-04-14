@@ -6,12 +6,12 @@ const About = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <div className="flex-1 max-w-[1100px] mx-auto w-full px-6 pt-10 pb-20">
+      <div className="flex-1 max-w-275 mx-auto w-full px-6 pt-10 pb-20">
 
         <div className="mb-12 text-center">
           <p className="text-[13px] font-semibold text-[#00A859] uppercase tracking-widest mb-3">Tentang Kami</p>
           <h1 className="text-[32px] sm:text-[40px] font-extrabold text-gray-900 mb-4">Tentang MAIN YUK!</h1>
-          <p className="text-[16px] text-gray-500 max-w-[600px] mx-auto leading-relaxed">
+          <p className="text-[16px] text-gray-500 max-w-150 mx-auto leading-relaxed">
             Platform pemesanan venue olahraga terdepan yang menghubungkan para pecinta olahraga dengan venue terbaik di Indonesia.
           </p>
         </div>
@@ -29,7 +29,7 @@ const About = () => {
           ))}
         </div>
 
-        <div className="max-w-[760px] mx-auto space-y-6 mb-16">
+        <div className="max-w-190 mx-auto space-y-6 mb-16">
           <p className="text-[15px] text-gray-600 leading-relaxed">
             MAIN YUK! adalah platform inovatif yang didedikasikan untuk memudahkan masyarakat dalam mencari dan memesan venue olahraga. Kami hadir sebagai solusi modern untuk para pecinta olahraga yang ingin menikmati aktivitas fisik tanpa harus repot mencari tempat.
           </p>
@@ -43,7 +43,7 @@ const About = () => {
           <h2 className="text-[24px] font-extrabold text-gray-900 mb-8">Dibuat Oleh</h2>
           <div className="flex justify-center gap-6 flex-wrap">
             {["Vincent", "Alvaro Caesar", "Edbert Luciuz"].map(name => (
-              <div key={name} className="flex flex-col items-center gap-3 p-6 bg-gray-50 rounded-2xl min-w-[160px]">
+              <div key={name} className="flex flex-col items-center gap-3 p-6 bg-gray-50 rounded-2xl min-w-40">
                 <div className="w-14 h-14 bg-[#00A859] rounded-full flex items-center justify-center text-white text-[20px] font-extrabold">
                   {name[0]}
                 </div>
