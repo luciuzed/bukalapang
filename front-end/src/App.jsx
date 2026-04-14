@@ -1,7 +1,7 @@
 import { Routes, Route, useLocation, Navigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import Cookies from "js-cookie"
-import Navbar from "./components/Navbar"
+import Navbar from "./components/navbar"
 
 import LoginPage from "./page/LoginPage"
 import BookingPage from "./page/BookingPage"

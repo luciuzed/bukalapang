@@ -1,11 +1,13 @@
 import React from "react";
-import Footer from "./Footer";
+import Footer from "../components/Footer";
+import Navbar from "../components/navbar";
 
 const SPORTS = ["Futsal","Badminton","Basket","Sepakbola","Tenis","Voli","Golf","Renang","Yoga","Biliar","Bowling","Boxing"];
 
 const Home = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <Navbar />
 
       {/* HERO */}
       <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-24 bg-white">

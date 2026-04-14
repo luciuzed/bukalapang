@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import Footer from "./Footer";
+import Footer from "../components/Footer";
 
 const About = () => {
   useEffect(() => { window.scrollTo(0, 0); }, []);
