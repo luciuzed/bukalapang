@@ -7,6 +7,7 @@ import { API_BASE_URL, apiUrl } from '../config/api';
 
 const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 const LOCAL_QR_IMAGE_PATTERN = /^\/qr\/.+\.(jpe?g|png)$/i;
+const PAYMENT_ID_PATTERN = /^[a-zA-Z0-9]{12}$/;
 
 const resolveImageUrl = (imageUrl) => {
   if (typeof imageUrl !== 'string') return '';
@@ -17,6 +18,7 @@ const resolveImageUrl = (imageUrl) => {
 
 const Payment = () => {
   const { paymentId } = useParams();
+  const normalizedPaymentId = String(paymentId || '').trim();
   const navigate = useNavigate();
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,8 +56,12 @@ const Payment = () => {
   useEffect(() => {
     const fetchPayment = async () => {
       try {
-        console.log('Fetching payment with ID:', paymentId);
-        const response = await fetch(apiUrl(`/bookings/payment/${paymentId}`));
+        if (!PAYMENT_ID_PATTERN.test(normalizedPaymentId)) {
+          throw new Error('Invalid payment ID format');
+        }
+
+        console.log('Fetching payment with ID:', normalizedPaymentId);
+        const response = await fetch(apiUrl(`/bookings/payment/${encodeURIComponent(normalizedPaymentId)}`));
         console.log('Response status:', response.status);
         
         if (!response.ok) {
@@ -71,7 +77,7 @@ const Payment = () => {
         setTimeLeftSeconds(getTimeLeftSeconds(data.transaction_time));
 
         try {
-          const qrResponse = await fetch(apiUrl(`/payment-qr/by-payment/${paymentId}`));
+          const qrResponse = await fetch(apiUrl(`/payment-qr/by-payment/${encodeURIComponent(normalizedPaymentId)}`));
           if (qrResponse.ok) {
             const qrData = await qrResponse.json();
             setPaymentQrImageUrl(qrData.imageUrl || '');
@@ -93,7 +99,7 @@ const Payment = () => {
     };
 
     fetchPayment();
-  }, [paymentId]);
+  }, [normalizedPaymentId]);
 
   useEffect(() => {
     if (paymentStatus !== 'unpaid' || !payment?.transaction_time) {
@@ -122,7 +128,7 @@ const Payment = () => {
 
         const fetchPaymentStatus = async () => {
           try {
-            const response = await fetch(apiUrl(`/bookings/payment/${paymentId}`));
+            const response = await fetch(apiUrl(`/bookings/payment/${encodeURIComponent(normalizedPaymentId)}`));
             if (response.ok) {
               const data = await response.json();
               setPayment(data);
@@ -141,14 +147,14 @@ const Payment = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [pollCount, paymentStatus, paymentId]);
+  }, [pollCount, paymentStatus, normalizedPaymentId]);
 
   const handleConfirmPayment = async () => {
     try {
       setError('');
       setProcessing(true);
 
-      const response = await fetch(apiUrl(`/bookings/payment/${paymentId}/confirm`), {
+      const response = await fetch(apiUrl(`/bookings/payment/${encodeURIComponent(normalizedPaymentId)}/confirm`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });

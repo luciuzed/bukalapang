@@ -30,6 +30,11 @@ const getLocalToday = () => {
 
 const getSlotDate = (dateTimeValue) => String(dateTimeValue || '').slice(0, 10);
 const getSlotTime = (dateTimeValue) => String(dateTimeValue || '').slice(11, 16);
+const normalizeWhatsAppNumber = (rawNumber) => {
+  const cleaned = String(rawNumber || '').trim().replace(/[\s()-]/g, '');
+  if (!cleaned) return '';
+  return cleaned.replace(/^\+/, '');
+};
 
 const BookingDetailPage = () => {
   const { id } = useParams();
@@ -177,12 +182,18 @@ const BookingDetailPage = () => {
   };
 
   const contactWhatsApp = () => {
+    const phoneNumber = normalizeWhatsAppNumber(field.admin_phone);
+    if (!phoneNumber) {
+      window.alert('WhatsApp number is not available for this field owner.');
+      return;
+    }
+
     const msg = `Halo Admin,
 Venue: ${field.name}
 Tanggal: ${selectedDate}
 Total: Rp ${totalPrice.toLocaleString()}`;
 
-    window.open(`https://wa.me/6289794383499?text=${encodeURIComponent(msg)}`);
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`);
   };
 
   const handleBookClick = () => {

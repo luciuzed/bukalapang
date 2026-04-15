@@ -6,6 +6,20 @@ const router = express.Router();
 
 const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
+const PAYMENT_ID_LENGTH = 12;
+const PAYMENT_ID_MAX_ATTEMPTS = 5;
+const PAYMENT_ID_PATTERN = /^[a-zA-Z0-9]{12}$/;
+
+const generateRandomPaymentId = (length = PAYMENT_ID_LENGTH) => {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let output = '';
+
+  for (let i = 0; i < length; i += 1) {
+    output += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return output;
+};
 
 const getTodayInAppTimezone = () => {
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -113,13 +127,30 @@ router.post('/', async (req, res) => {
     const bookingId = bookingResult.insertId;
     console.log('Booking created with ID:', bookingId);
 
-    // Step 2: Create payment record for this booking
-    const [paymentResult] = await connection.execute(
-      'INSERT INTO payment (booking_id, amount, status) VALUES (?, ?, ?)',
-      [bookingId, totalAmount, 'unpaid']
-    );
+    // Step 2: Create payment record for this booking with randomized public ID
+    let paymentId = '';
 
-    const paymentId = paymentResult.insertId;
+    for (let attempt = 0; attempt < PAYMENT_ID_MAX_ATTEMPTS; attempt += 1) {
+      const candidatePaymentId = generateRandomPaymentId();
+
+      try {
+        await connection.execute(
+          'INSERT INTO payment (id, booking_id, amount, status) VALUES (?, ?, ?, ?)',
+          [candidatePaymentId, bookingId, totalAmount, 'unpaid']
+        );
+        paymentId = candidatePaymentId;
+        break;
+      } catch (insertErr) {
+        if (insertErr?.code !== 'ER_DUP_ENTRY') {
+          throw insertErr;
+        }
+      }
+    }
+
+    if (!paymentId) {
+      throw new Error('Failed to generate unique payment ID');
+    }
+
     console.log('Payment created with ID:', paymentId);
 
     // Step 3: Insert entries into booking_slot for each slot
@@ -144,7 +175,7 @@ router.post('/', async (req, res) => {
     // Return successful response with payment_id
     res.status(201).json({
       id: bookingId,
-      paymentId: parseInt(paymentId),
+      paymentId,
       userId,
       fieldId,
       status: 'unpaid',
@@ -571,15 +602,19 @@ router.get('/admin/:adminId', async (req, res) => {
 
 // GET /api/bookings/payment/:paymentId
 router.get('/payment/:paymentId', async (req, res) => {
-  const { paymentId } = req.params;
+  const normalizedPaymentId = String(req.params.paymentId || '').trim();
+
+  if (!PAYMENT_ID_PATTERN.test(normalizedPaymentId)) {
+    return res.status(400).json({ error: 'Invalid payment ID format' });
+  }
 
   try {
-    console.log('Fetching payment with ID:', paymentId);
+    console.log('Fetching payment with ID:', normalizedPaymentId);
     
     // First check if payment exists
     const [payment] = await db.execute(
       'SELECT id, booking_id, amount, status, transaction_time FROM payment WHERE id = ?',
-      [paymentId]
+      [normalizedPaymentId]
     );
 
     console.log('Payment query result:', payment);
@@ -622,7 +657,11 @@ router.get('/payment/:paymentId', async (req, res) => {
 
 // POST /api/bookings/payment/:paymentId/confirm
 router.post('/payment/:paymentId/confirm', async (req, res) => {
-  const { paymentId } = req.params;
+  const normalizedPaymentId = String(req.params.paymentId || '').trim();
+
+  if (!PAYMENT_ID_PATTERN.test(normalizedPaymentId)) {
+    return res.status(400).json({ error: 'Invalid payment ID format' });
+  }
 
   try {
     // Get payment and booking details
@@ -631,7 +670,7 @@ router.post('/payment/:paymentId/confirm', async (req, res) => {
       FROM payment p
       JOIN booking b ON p.booking_id = b.id
       WHERE p.id = ?
-    `, [paymentId]);
+    `, [normalizedPaymentId]);
 
     if (payment.length === 0) {
       return res.status(404).json({ error: 'Payment not found' });
@@ -646,7 +685,7 @@ router.post('/payment/:paymentId/confirm', async (req, res) => {
     // Update payment status to 'paid'
     await db.execute(
       'UPDATE payment SET status = ? WHERE id = ?',
-      ['paid', paymentId]
+      ['paid', normalizedPaymentId]
     );
 
     // Update booking status to 'pending'
@@ -656,7 +695,7 @@ router.post('/payment/:paymentId/confirm', async (req, res) => {
     );
 
     res.json({
-      paymentId,
+      paymentId: normalizedPaymentId,
       bookingId,
       status: 'paid',
       bookingStatus: 'pending',
@@ -674,7 +713,11 @@ router.post('/payment/:paymentId/confirm', async (req, res) => {
 
 // POST /api/bookings/payment/:paymentId/fail
 router.post('/payment/:paymentId/fail', async (req, res) => {
-  const { paymentId } = req.params;
+  const normalizedPaymentId = String(req.params.paymentId || '').trim();
+
+  if (!PAYMENT_ID_PATTERN.test(normalizedPaymentId)) {
+    return res.status(400).json({ error: 'Invalid payment ID format' });
+  }
 
   try {
     // Get payment and booking details
@@ -683,7 +726,7 @@ router.post('/payment/:paymentId/fail', async (req, res) => {
       FROM payment p
       JOIN booking b ON p.booking_id = b.id
       WHERE p.id = ?
-    `, [paymentId]);
+    `, [normalizedPaymentId]);
 
     if (payment.length === 0) {
       return res.status(404).json({ error: 'Payment not found' });
@@ -698,7 +741,7 @@ router.post('/payment/:paymentId/fail', async (req, res) => {
     // Update payment status to 'failed'
     await db.execute(
       'UPDATE payment SET status = ? WHERE id = ?',
-      ['failed', paymentId]
+      ['failed', normalizedPaymentId]
     );
 
     // Update booking status to 'failed'
@@ -717,7 +760,7 @@ router.post('/payment/:paymentId/fail', async (req, res) => {
     `, [bookingId]);
 
     res.json({
-      paymentId,
+      paymentId: normalizedPaymentId,
       bookingId,
       status: 'failed',
       bookingStatus: 'failed',

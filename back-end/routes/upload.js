@@ -275,9 +275,10 @@ router.delete('/payment-qr/admin/:adminId', async (req, res) => {
 
 router.get('/payment-qr/by-payment/:paymentId', async (req, res) => {
   const { paymentId } = req.params
-  const parsedPaymentId = Number(paymentId)
+  const normalizedPaymentId = String(paymentId || '').trim()
+  const PAYMENT_ID_PATTERN = /^[a-zA-Z0-9]{12}$/
 
-  if (!Number.isInteger(parsedPaymentId) || parsedPaymentId < 1) {
+  if (!PAYMENT_ID_PATTERN.test(normalizedPaymentId)) {
     return res.status(400).json({ error: 'Invalid paymentId' })
   }
 
@@ -291,7 +292,7 @@ router.get('/payment-qr/by-payment/:paymentId', async (req, res) => {
        JOIN field f ON f.id = fs.field_id
        WHERE p.id = ?
        LIMIT 1`,
-      [parsedPaymentId]
+      [normalizedPaymentId]
     )
 
     if (!rows.length) {

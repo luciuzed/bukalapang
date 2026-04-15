@@ -163,7 +163,12 @@ router.get('/detail/:fieldId', async (req, res) => {
   const { fieldId } = req.params;
   try {
     const [field] = await db.execute(
-      'SELECT * FROM field WHERE id = ?',
+      `SELECT
+        f.*,
+        a.number AS admin_phone
+      FROM field f
+      LEFT JOIN admin a ON a.id = f.admin_id
+      WHERE f.id = ?`,
       [fieldId]
     );
     if (field.length === 0) {
