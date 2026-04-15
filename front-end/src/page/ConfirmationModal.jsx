@@ -39,7 +39,7 @@ const ConfirmationModal = ({
       >
         <div className="mb-5 flex justify-center">
           {icon || (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-500">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-600">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -80,7 +80,7 @@ const ConfirmationModal = ({
             type="button"
             onClick={onConfirm}
             disabled={isProcessing}
-            className="flex-1 rounded-xl border-2 border-red-500 bg-red-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 rounded-xl border-2 border-red-600 bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-600/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isProcessing ? 'Processing...' : confirmLabel}
           </button>

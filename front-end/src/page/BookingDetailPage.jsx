@@ -8,6 +8,7 @@ import {
 } from 'react-icons/fa';
 import LoadingOverlay from '../components/LoadingOverlay';
 import BookingSummaryModal from './BookingSummaryModal';
+import BookingLimitModal from './BookingLimitModal';
 import { API_BASE_URL, apiUrl } from '../config/api';
 
 const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
@@ -44,6 +45,8 @@ const BookingDetailPage = () => {
   const [courts, setCourts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [isCheckingBookingLimit, setIsCheckingBookingLimit] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlotIds, setSelectedSlotIds] = useState([]);
 
@@ -196,14 +199,58 @@ Total: Rp ${totalPrice.toLocaleString()}`;
     window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(msg)}`);
   };
 
-  const handleBookClick = () => {
+  const handleFinishNow = () => {
+    setIsLimitModalOpen(false);
+    navigate('/profile?tab=bookings&status=unpaid');
+  };
+
+  const checkBookingLimit = async () => {
     const userSession = Cookies.get('user_session');
+
     if (!userSession) {
       navigate('/login');
-      return;
+      return false;
     }
 
-    setIsModalOpen(true);
+    try {
+      setIsCheckingBookingLimit(true);
+      const userData = JSON.parse(userSession);
+      const userId = userData?.id;
+
+      if (!userId) {
+        navigate('/login');
+        return false;
+      }
+
+      const response = await fetch(apiUrl(`/bookings/user/${encodeURIComponent(userId)}/booking-eligibility`));
+      if (!response.ok) {
+        throw new Error('Failed to check booking limit');
+      }
+
+      const data = await response.json();
+      if (!data.canBook) {
+        setIsLimitModalOpen(true);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Failed to check booking limit:', err);
+      return true;
+    } finally {
+      setIsCheckingBookingLimit(false);
+    }
+  };
+
+  const handleBookClick = () => {
+    const openBookingSummary = async () => {
+      const canContinue = await checkBookingLimit();
+      if (canContinue) {
+        setIsModalOpen(true);
+      }
+    };
+
+    openBookingSummary();
   };
 
   return (
@@ -403,10 +450,10 @@ Total: Rp ${totalPrice.toLocaleString()}`;
           
             <button
               onClick={handleBookClick}
-              disabled={selectedDateSlots.length === 0 || selectedSlotIds.length === 0}
+              disabled={selectedDateSlots.length === 0 || selectedSlotIds.length === 0 || isCheckingBookingLimit}
               className="w-full py-4 bg-primary text-white rounded-2xl font-bold disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500 hover:bg-primary/90 transition"
             >
-              Book • Rp {totalPrice.toLocaleString()}
+              {isCheckingBookingLimit ? 'Checking...' : `Book • Rp ${totalPrice.toLocaleString()}`}
             </button>
 
             <button
@@ -432,6 +479,12 @@ Total: Rp ${totalPrice.toLocaleString()}`;
         onContinue={() => {
           setIsModalOpen(false);
         }}
+      />
+
+      <BookingLimitModal
+        isOpen={isLimitModalOpen}
+        onClose={() => setIsLimitModalOpen(false)}
+        onFinishNow={handleFinishNow}
       />
     </div>
   );

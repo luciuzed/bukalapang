@@ -414,7 +414,7 @@ const AdminManageField = () => {
                         <div className="flex items-center gap-6 mb-2">
                           <h3 className="text-lg font-bold">{field.name}</h3>
                           <span
-                            className={`inline-flex items-center gap-1.5 font-bold px-3 py-1.5 text-[10px] rounded-full uppercase tracking-widest ${field.is_active === 1 ? 'text-white bg-primary' : 'bg-red-500 text-white'}`}
+                            className={`inline-flex items-center gap-1.5 font-bold px-3 py-1.5 text-[10px] rounded-full uppercase tracking-widest ${field.is_active === 1 ? 'text-white bg-primary' : 'bg-red-600 text-white'}`}
                           >
                             {field.is_active === 1 ? (
                               <span className="inline-flex items-center gap-1">

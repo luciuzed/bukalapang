@@ -212,7 +212,7 @@ const AdminBooking = () => {
                         <span className={`inline-flex items-center gap-2 font-bold px-4 py-1.5 text-[10px] rounded-full shrink-0 uppercase tracking-widest ${
                           booking.status === 'confirmed' ? 'bg-primary text-white' :
                           booking.status === 'pending' ? 'bg-[#ff8904] text-white' :
-                          'bg-red-500 text-white'}`}> 
+                          'bg-red-600 text-white'}`}> 
 
                           {booking.status === 'confirmed' && (
                             <span className="inline-flex items-center gap-2">
@@ -317,7 +317,7 @@ const AdminBooking = () => {
                       <div className="flex gap-3 justify-end mt-6 pt-6 border-t border-gray-200">
                         <button
                           onClick={() => openCancelModal(booking.id)}
-                          className="px-4 py-2 text-sm font-bold text-white bg-red-500 rounded-xl hover:bg-red-700 transition inline-flex items-center gap-2"
+                          className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition inline-flex items-center gap-2"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

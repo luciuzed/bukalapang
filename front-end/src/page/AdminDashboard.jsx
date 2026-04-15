@@ -355,7 +355,7 @@ const AdminDashboard = () => {
                     />
                   </svg>
                   {hasNotifications && (
-                    <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+                    <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-white animate-pulse" />
                   )}
                 </button>
 
@@ -640,7 +640,7 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <span className={`inline-flex items-center gap-1.5 font-bold px-3 py-1.5 text-[10px] rounded-full uppercase tracking-widest ${field.is_active === 1 ? 'text-white bg-primary' : 'bg-red-500 text-white'}`}>
+                      <span className={`inline-flex items-center gap-1.5 font-bold px-3 py-1.5 text-[10px] rounded-full uppercase tracking-widest ${field.is_active === 1 ? 'text-white bg-primary' : 'bg-red-600 text-white'}`}>
                         {field.is_active === 1 ? (
                           <span className="inline-flex items-center gap-1">
                             <svg

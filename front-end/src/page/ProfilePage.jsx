@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaUserEdit, FaKey } from 'react-icons/fa';
 import { FiCheck, FiX } from 'react-icons/fi';
 import Cookies from 'js-cookie';
@@ -96,13 +96,13 @@ const formatBookingStatus = (status) => {
     case 'cancelled':
       return {
         label: 'Cancelled',
-        badgeClass: 'bg-red-700',
+        badgeClass: 'bg-red-600',
         icon: 'x',
       };
     case 'failed':
       return {
         label: 'Failed',
-        badgeClass: 'bg-slate-500',
+        badgeClass: 'bg-red-600',
         icon: 'x',
       };
     case 'unpaid':
@@ -217,6 +217,7 @@ const StatusBadgeContent = ({ label, icon }) => {
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('bookings');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [user, setUser] = useState({ name: 'Guest', email: 'guest@example.com' });
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
@@ -225,11 +226,26 @@ const ProfilePage = () => {
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     Cookies.remove('user_session')
     navigate('/login')
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const requestedTab = params.get('tab');
+    const requestedStatus = params.get('status');
+
+    if (requestedTab === 'bookings') {
+      setActiveTab('bookings');
+    }
+
+    if (requestedStatus === 'all' || requestedStatus === 'unpaid' || requestedStatus === 'pending' || requestedStatus === 'confirmed' || requestedStatus === 'cancelled' || requestedStatus === 'failed') {
+      setStatusFilter(requestedStatus);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const session = Cookies.get('user_session');
@@ -370,6 +386,8 @@ const ProfilePage = () => {
               loadingBookings={loadingBookings}
               navigate={navigate}
               onRequestCancel={openCancelModal}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
             />
           ) : (
             <SecuritySection user={user} />
@@ -386,7 +404,7 @@ const ProfilePage = () => {
         returnLabel="Return"
         isProcessing={isCancelProcessing}
         icon={(
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-500">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-red-600">
             <FiX className="h-10 w-10 text-white" aria-hidden="true" />
           </div>
         )}
@@ -396,9 +414,8 @@ const ProfilePage = () => {
 };
 
 // --- SUB-COMPONENT: BOOKINGS LIST ---
-const BookingsList = ({ user, bookings, loadingBookings, navigate, onRequestCancel }) => {
+const BookingsList = ({ user, bookings, loadingBookings, navigate, onRequestCancel, statusFilter, setStatusFilter }) => {
   const [bookingIdQuery, setBookingIdQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const displayName = (user.name || 'Guest').toUpperCase();
 
   if (loadingBookings) {
@@ -525,7 +542,7 @@ const BookingCard = ({ variant, booking, displayName, statusInfo, navigate, onRe
               <button
                 type="button"
                 onClick={() => onRequestCancel(booking.id)}
-                className="px-4 py-2 text-sm font-bold text-white bg-red-500 rounded-xl cursor-pointer hover:opacity-90 transition inline-flex items-center gap-2"
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl cursor-pointer hover:opacity-90 transition inline-flex items-center gap-2"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -662,7 +679,7 @@ const SecuritySection = ({ user }) => {
 
           <div className="grid grid-cols-1 gap-8">
             {/* Display Name */}
-            <div className="flex justify-between items-center border-b border-black-50 pb-4">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Full Name</p>
                 <p className="text-sm font-bold text-gray-700">{user.name}</p>
@@ -670,12 +687,12 @@ const SecuritySection = ({ user }) => {
             </div>
 
             {/* Email Address */}
-            <div className="flex justify-between items-center border-b border-black-50 pb-4">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4">
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Primary Email</p>
                 <p className="text-sm font-bold text-gray-700">{maskEmail(user.email)}</p>
               </div>
-              <span className="text-[10px] bg-green-100 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-tighter">
+              <span className="text-[10px] bg-green-100 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-widest">
                 Verified
               </span>
             </div>
@@ -685,7 +702,7 @@ const SecuritySection = ({ user }) => {
         {/* PASSWORD SECTION - KEEP INPUTS HERE AS THEY ARE EDITABLE */}
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4 mb-6">
-            <div className="bg-gray-100 p-3 rounded-2xl text-gray-600"><FaKey size={20} /></div>
+            <div className="bg-primary/10 p-3 rounded-2xl text-primary"><FaKey size={20} /></div>
             <div>
               <h3 className="font-bold text-gray-800">Credentials</h3>
               <p className="text-xs text-gray-400">Update your account password</p>
@@ -722,7 +739,7 @@ const SecuritySection = ({ user }) => {
               onClick={handlePasswordUpdate}
               disabled={isUpdatingPassword}
               className={`w-full py-4 text-white rounded-2xl font-bold mt-2 transition-all active:scale-[0.98] ${
-                isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-gray-900 hover:bg-black'
+                isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
               }`}
             >
               {isUpdatingPassword ? 'Updating...' : 'Update Password'}

@@ -237,7 +237,7 @@ const Payment = () => {
             </p>
             <button
               onClick={() => navigate('/venue')}
-              className="w-full bg-red-500 text-white py-2.5 rounded-2xl font-bold hover:bg-red-600 transition-colors"
+              className="w-full bg-red-600 text-white py-2.5 rounded-2xl font-bold hover:bg-red-700 transition-colors"
             >
               Return to Venues
             </button>

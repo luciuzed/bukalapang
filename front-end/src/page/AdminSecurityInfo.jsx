@@ -150,19 +150,19 @@ const AdminSecurityInfo = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-8">
-                <div className="flex justify-between items-center border-b border-black-50 pb-4">
+                <div className="flex justify-between items-center border-b border-gray-200 pb-4">
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Admin Name</p>
                     <p className="text-sm font-bold text-gray-700">{adminName || 'Admin'}</p>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center border-b border-black-50 pb-4">
+                <div className="flex justify-between items-center border-b border-gray-200 pb-4">
                   <div>
                     <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Primary Email</p>
                     <p className="text-sm font-bold text-gray-700">{maskEmail(adminEmail)}</p>
                   </div>
-                  <span className="text-[10px] bg-green-100 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-tighter">
+                  <span className="text-[10px] bg-green-100 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-widest">
                     Verified
                   </span>
                 </div>
@@ -171,7 +171,7 @@ const AdminSecurityInfo = () => {
 
             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
               <div className="flex items-center gap-4 mb-6">
-                <div className="bg-gray-100 p-3 rounded-2xl text-gray-600">
+                <div className="bg-primary/10 p-3 rounded-2xl text-primary">
                   <FaKey size={20} />
                 </div>
                 <div>
@@ -211,7 +211,7 @@ const AdminSecurityInfo = () => {
                   onClick={handlePasswordUpdate}
                   disabled={isUpdatingPassword}
                   className={`w-full py-4 text-white rounded-2xl font-bold mt-2 transition-all active:scale-[0.98] ${
-                    isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-gray-900 hover:bg-black'
+                    isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
                   }`}
                 >
                   {isUpdatingPassword ? 'Updating...' : 'Update Password'}

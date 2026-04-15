@@ -58,6 +58,15 @@ const getConfirmedRevenueForField = async (fieldId) => {
   return Number(rows[0]?.revenue) || 0;
 };
 
+const getUnpaidBookingCount = async (connection, userId) => {
+  const [rows] = await connection.execute(
+    'SELECT COUNT(*) AS unpaid_count FROM booking WHERE user_id = ? AND status = ?',
+    [userId, 'unpaid']
+  );
+
+  return Number(rows[0]?.unpaid_count) || 0;
+};
+
 
 // POST /api/bookings
 router.post('/', async (req, res) => {
@@ -75,6 +84,17 @@ router.post('/', async (req, res) => {
   try {
     // Start transaction
     await connection.beginTransaction();
+
+    const unpaidBookingCount = await getUnpaidBookingCount(connection, userId);
+    if (unpaidBookingCount >= 2) {
+      await connection.rollback();
+      return res.status(409).json({
+        error: 'Cannot book at the moment. You should finish the two previous bookings first.',
+        unpaidBookingCount,
+        limit: 2
+      });
+    }
+
     const todayInAppTimezone = getTodayInAppTimezone();
 
     // Get slot details and prices
@@ -406,6 +426,27 @@ router.post('/:bookingId/cancel', async (req, res) => {
     console.error('Booking cancellation error:', err);
     res.status(500).json({ 
       error: 'Failed to cancel booking',
+      details: err.message
+    });
+  }
+});
+
+// GET /api/bookings/user/:userId/booking-eligibility
+router.get('/user/:userId/booking-eligibility', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const unpaidBookingCount = await getUnpaidBookingCount(db, userId);
+
+    res.json({
+      unpaidBookingCount,
+      limit: 2,
+      canBook: unpaidBookingCount < 2
+    });
+  } catch (err) {
+    console.error('Fetch booking eligibility error:', err);
+    res.status(500).json({
+      error: 'Failed to fetch booking eligibility',
       details: err.message
     });
   }
