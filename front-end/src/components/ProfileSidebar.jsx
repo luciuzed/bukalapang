@@ -28,7 +28,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
         <div className="px-6 pt-8 pb-6">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-[10px] font-bold text-white/60 mb-6 uppercase hover:text-white transition-colors"
+            className="flex items-center gap-2 text-[10px] font-bold text-white/60 mb-6 uppercase cursor-pointer hover:text-white transition-colors"
           >
             <FaChevronLeft size={8} /> Back
           </button>
@@ -39,7 +39,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
         <nav className="px-3 pb-8 space-y-1 flex-1 overflow-y-auto">
           <button
             onClick={() => { setActiveTab('bookings'); setIsOpen(false); }}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition ${
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition cursor-pointer ${
               activeTab === 'bookings' 
                 ? 'bg-white/20 text-white' 
                 : 'text-white/90 hover:bg-white/15'
@@ -51,7 +51,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
           
           <button
             onClick={() => { setActiveTab('security'); setIsOpen(false); }}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition ${
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition cursor-pointer ${
               activeTab === 'security' 
                 ? 'bg-white/20 text-white' 
                 : 'text-white/90 hover:bg-white/15'
@@ -80,7 +80,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
 
           <button
             onClick={handleLogout}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/20 hover:text-white active:scale-[0.98]"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg cursor-pointer bg-white/15 px-4 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/20 hover:text-white active:scale-[0.98]"
           >
             <FiLogOut className="h-4 w-4" />
             Log out

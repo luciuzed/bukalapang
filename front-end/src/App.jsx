@@ -16,6 +16,8 @@ import ProfilePage from "./page/ProfilePage"
 import Payment from "./page/Payment"
 import Home from "./page/Home"
 import About from "./page/About"
+import Contact from "./page/Contact"
+
 
 // Protected route wrapper to redirect users based on role
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -101,23 +103,28 @@ const LoginGuard = ({ children }) => {
 
 function App() {
   const location = useLocation()
-  const fullWidthPages = ["/dashboard", "/profile", "/field", "/booking", "/admin/payment-qr", "/admin/security-info"]
+  const fullWidthPages = ["/dashboard", "/profile", "/field", "/booking", "/admin/payment-qr", "/admin/security-info", "/"]
   const paymentPages = location.pathname.match(/^\/payment\//)
   const fieldManagePages = location.pathname.match(/^\/field\/manage\/[^/]+$/)
   const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages && !fieldManagePages
+  const isHome = location.pathname === "/"
+  const finalShowNavbar = showNavbar || isHome
   const isFullWidth = fullWidthPages.includes(location.pathname) || Boolean(fieldManagePages)
   const wrapperClass = isFullWidth ? "min-h-screen" : "container mx-auto px-10"
 
   return (
     <div className={wrapperClass}>
-      {showNavbar && <Navbar />}
-
+      {finalShowNavbar && (
+        <div className={isFullWidth ? "container mx-auto px-10" : ""}>
+            <Navbar />
+        </div>
+      )}   
+      
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route 
-          path="/venue" 
-          element={<BookingPage />} 
+        {/* <Route path="/about" element={<About />} /> */}
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/venue" element={<BookingPage />} 
         />
         <Route 
           path="/venues" 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom"
 import logo from '../assets/logo.svg'
 import { FaBars, FaTimes, FaUserEdit, FaSignOutAlt } from "react-icons/fa"
-import { MdAccountCircle } from "react-icons/md"
+import { MdAccountCircle, MdLineStyle } from "react-icons/md"
 import Cookies from 'js-cookie'
 
 const Navbar = () => {
@@ -85,7 +85,7 @@ const Navbar = () => {
             )}
           </NavLink>
         </li>
-        <li className="relative">
+        {/* <li className="relative">
           <NavLink to="/about" className={navItemClass}>
             {({ isActive }) => (
               <>
@@ -94,7 +94,7 @@ const Navbar = () => {
               </>
             )}
           </NavLink>
-        </li>
+        </li> */}
         <li className="relative">
           <NavLink to="/contact" className={navItemClass}>
             {({ isActive }) => (
@@ -189,26 +189,18 @@ const Navbar = () => {
 
           <NavLink to="/" onClick={() => setIsOpen(false)}>Home</NavLink>
           <NavLink to="/venue" onClick={() => setIsOpen(false)}>Venue</NavLink>
-          <NavLink to="/about" onClick={() => setIsOpen(false)}>About</NavLink>
+          {/* <NavLink to="/about" onClick={() => setIsOpen(false)}>About</NavLink> */}
           <NavLink to="/contact" onClick={() => setIsOpen(false)}>Contact</NavLink>
+
 
           {user ? (
             <>
-              <div className="flex items-center gap-2">
-                <MdAccountCircle size={28} className="text-primary" />
+              <Link to="/profile" onClick={() => setIsOpen(false)}>
+                <div className="flex items-center gap-2">
+                  <MdAccountCircle size={28} className="text-primary" />
                 <span>{user.name}</span>
               </div>
-
-              <Link to="/profile" onClick={() => setIsOpen(false)}>
-                Profile
               </Link>
-
-              <button
-                onClick={handleLogout}
-                className="text-red-500 font-semibold"
-              >
-                Logout
-              </button>
             </>
           ) : admin ? (
             <>

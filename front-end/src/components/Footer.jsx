@@ -1,58 +1,76 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import logo from '../assets/logo.svg';
+import { FaInstagram, FaEnvelope } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-20 px-6 mt-20">
-      <div className="max-w-[1100px] mx-auto">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          <div>
-            <h3 className="text-[28px] font-bold text-[#00A859] mb-3">MAINYUK!</h3>
-            <p className="text-gray-300 text-[14px] leading-relaxed">Platform pemesanan venue olahraga terdepan di Indonesia</p>
+    <footer className="bg-[#e6f7ef] border-t border-gray-100 pt-16 pb-8 px-6 mt-20 relative left-1/2 right-1/2 w-screen -translate-x-1/2">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 pb-12 border-b border-primary/20">
+          
+          {/* Brand Section */}
+          <div className="space-y-6">
+            <img src={logo} alt="MainYuk Logo" className="h-20 w-auto" />
+            <p className="text-gray-500 text-[13px] leading-relaxed max-w-xs">
+              Platform pemesanan venue olahraga terbaik di Indonesia. Cari, klik, dan main sepuasnya tanpa ribet.
+            </p>
           </div>
           
+          {/* Quick Links */}
           <div>
-            <h4 className="text-[18px] font-bold text-white mb-4">Produk</h4>
-            <ul className="space-y-2">
-              <li><a href="#" className="text-gray-300 hover:text-[#00A859] text-[14px] transition-colors">Cari Venue</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-[#00A859] text-[14px] transition-colors">Booking Lapangan</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-[#00A859] text-[14px] transition-colors">Daftar Sebagai Penyedia</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-[#00A859] text-[14px] transition-colors">Blog & Tips</a></li>
+            <h4 className="font-bold text-gray-900 text-sm mb-5 uppercase tracking-wider">Quick Links</h4>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/venue" className="text-gray-500 text-sm hover:text-primary transition-colors">
+                  Semua Venue
+                </Link>
+              </li>
             </ul>
           </div>
-          
+
+          {/* Support */}
           <div>
-            <h4 className="text-[18px] font-bold text-white mb-4">Kontak Kami</h4>
-            <p className="text-gray-300 text-[13px] mb-3">📧 info@mainyuk.com</p>
-            <p className="text-gray-300 text-[13px] mb-3">📞 +62 812 3456 7890</p>
-            <p className="text-gray-300 text-[13px]">📍 Jl. Olahraga No. 123, Medan, Indonesia</p>
+            <h4 className="font-bold text-gray-900 text-sm mb-5 uppercase tracking-wider">Support</h4>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/contact" className="text-gray-500 text-sm hover:text-primary transition-colors">
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
           </div>
-          
+
+          {/* Socials & Contact */}
           <div>
-            <h4 className="text-[18px] font-bold text-white mb-4">Ikuti Kami</h4>
-            <div className="flex gap-4 mb-6">
-              <a href="#" className="w-10 h-10 bg-[#00A859]/20 hover:bg-[#00A859] rounded-full flex items-center justify-center transition-colors text-[#00A859] hover:text-white">f</a>
-              <a href="#" className="w-10 h-10 bg-[#00A859]/20 hover:bg-[#00A859] rounded-full flex items-center justify-center transition-colors text-[#00A859] hover:text-white">📷</a>
-              <a href="#" className="w-10 h-10 bg-[#00A859]/20 hover:bg-[#00A859] rounded-full flex items-center justify-center transition-colors text-[#00A859] hover:text-white">𝕏</a>
+            <h4 className="font-bold text-gray-900 text-sm mb-5 uppercase tracking-wider">Connect</h4>
+            <div className="flex flex-col gap-4">
+              
+              {/* Instagram Row */}
+              <div className="flex items-center gap-3 text-gray-500">
+                <div className="w-9 h-9 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                  <FaInstagram size={18} className="text-gray-400" />
+                </div>
+                <span className="text-sm font-medium">MainYuk.id</span>
+              </div>
+              
+              {/* Email Row (Styled like Instagram) */}
+              <div className="flex items-center gap-3 text-gray-500">
+                <div className="w-9 h-9 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                  <FaEnvelope size={16} className="text-gray-400" />
+                </div>
+                <span className="text-sm font-medium">mainyukapp@gmail.com</span>
+              </div>
+
             </div>
-            <p className="text-gray-400 text-[12px]">Subscribe untuk update terbaru</p>
           </div>
         </div>
 
-        {/* Legal Links */}
-        <div className="border-t border-gray-700 pt-8 mb-8">
-          <ul className="flex flex-wrap gap-6 justify-center">
-            <li><a href="#" className="text-gray-400 hover:text-[#00A859] text-[13px] transition-colors">Kebijakan Privasi</a></li>
-            <li><a href="#" className="text-gray-400 hover:text-[#00A859] text-[13px] transition-colors">Syarat & Ketentuan</a></li>
-            <li><a href="#" className="text-gray-400 hover:text-[#00A859] text-[13px] transition-colors">FAQ</a></li>
-            <li><a href="#" className="text-gray-400 hover:text-[#00A859] text-[13px] transition-colors">Hubungi Kami</a></li>
-          </ul>
-        </div>
-
-        {/* Copyright */}
-        <div className="border-t border-gray-700 pt-8 text-center">
-          <p className="text-gray-400 text-[13px] mb-2">&copy; 2026 MAINYUK!. All rights reserved.</p>
-          <p className="text-gray-500 text-[12px]">Dibuat oleh Vincent, Alvaro Caesar, Edbert Luciuz</p>
+        {/* Bottom Bar - Centered */}
+        <div className="pt-8 flex justify-center items-center">
+          <p className="text-primary text-[11px] font-medium tracking-[0.15em] uppercase text-center">
+            &copy; 2026 MAINYUK INDONESIA.
+          </p>
         </div>
       </div>
     </footer>

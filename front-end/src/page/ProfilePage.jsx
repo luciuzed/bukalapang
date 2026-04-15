@@ -423,16 +423,26 @@ const BookingCard = ({ variant, booking, displayName, statusInfo, navigate, empt
               <button className="text-red-600 font-black text-sm hover:underline">Pay Now</button>
             </>
           )}
+          
+          {cardView.showPayNow && ( 
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => handleCancelBooking(booking.id)}
+                className="px-6 py-2 text-sm font-bold text-red-600 border border-red-100 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition"
+              >
+                Cancel
+              </button>
 
-          {cardView.showPayNow && (
-            <button
-              type="button"
-              onClick={() => navigate(`/payment/${booking.payment_id}`)}
-              className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary transition flex items-center gap-2"
-            >
-              <FiCheck size={16} />
-              Confirm Payment
-            </button>
+              <button
+                type="button"
+                onClick={() => navigate(`/payment/${booking.payment_id}`)}
+                className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl cursor-pointer hover:opacity-90 transition flex items-center gap-2"
+              >
+                <FiCheck size={16} />
+                Confirm Payment
+              </button>
+            </div>
           )}
         </div>
       )}
