@@ -59,14 +59,14 @@ const BookingLimitModal = ({ isOpen, onClose, onFinishNow }) => {
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-2xl border-2 border-gray-300 bg-white px-5 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50"
+            className="flex-1 rounded-2xl border-2 border-gray-300 bg-white px-5 py-3 text-sm font-bold text-gray-700 transition cursor-pointer hover:bg-gray-50"
           >
             Return
           </button>
           <button
             type="button"
             onClick={onFinishNow}
-            className="flex-1 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white transition hover:opacity-90"
+            className="flex-1 rounded-2xl bg-primary px-5 py-3 text-sm font-bold text-white transition cursor-pointer hover:opacity-90"
           >
             Finish Now
           </button>

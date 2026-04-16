@@ -191,7 +191,7 @@ const BookingSummaryModal = ({
                         <button 
                           onClick={() => onRemove(slot.id)}
                           disabled = {isProcessing}
-                          className={`text-gray-300 ${isProcessing ? 'pointer-events-none' : 'hover:text-red-500'} transition`}
+                          className={`text-gray-300 cursor-pointer ${isProcessing ? 'pointer-events-none' : 'hover:text-red-500'} transition`}
                         >
                           <FaTrashAlt size={14} />
                         </button>

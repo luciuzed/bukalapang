@@ -807,7 +807,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                                   }
                                   setRecurringDays(newDays.sort())
                                 }}
-                                className={`px-2 py-2 rounded-lg text-xs font-semibold transition ${
+                                className={`px-2 py-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
                                   recurringDays.includes(value)
                                     ? 'bg-primary text-white'
                                     : 'bg-gray-100 text-gray-700 border border-gray-200'
@@ -866,7 +866,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                       setSlotSetupScreen('court-list')
                       setSelectedCourt(null)
                     }}
-                    className="px-6 py-2.5 border border-gray-300 rounded-full hover:bg-gray-50 transition font-semibold text-sm text-gray-700"
+                    className="px-6 py-2.5 border border-gray-300 rounded-full hover:bg-gray-50 transition cursor-pointer font-semibold text-sm text-gray-700"
                   >
                     Back
                   </button>
@@ -875,7 +875,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                     disabled={!canGenerateSlots}
                     className={`px-6 py-2.5 rounded-full transition font-semibold text-sm flex items-center gap-2 ${
                       canGenerateSlots
-                        ? 'bg-primary text-white hover:opacity-90'
+                        ? 'bg-primary text-white cursor-pointer hover:opacity-90'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                   >
@@ -899,7 +899,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                 <button
                   type="button"
                   onClick={openClearSlotsModal}
-                  className="px-5 py-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition font-semibold text-sm whitespace-nowrap"
+                  className="px-5 py-3 rounded-full bg-red-600 text-white hover:bg-red-700 transition cursor-pointer font-semibold text-sm whitespace-nowrap"
                 >
                   Clear Slots
                 </button>
@@ -924,8 +924,8 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                         selectableSlotCount === 0
                           ? 'text-gray-400 border-gray-300 cursor-not-allowed'
                           : selectedSlotIds.length === selectableSlotCount && selectableSlotCount > 0
-                          ? 'bg-primary text-white border-primary hover:bg-primary/90'
-                          : 'border-primary bg-white text-primary hover:bg-primary/5'
+                          ? 'bg-primary text-white border-primary cursor-pointer hover:bg-primary/90'
+                          : 'border-primary bg-white text-primary cursor-pointer hover:bg-primary/5'
                       }`}
                       title="Select all slots"
                       aria-label="Select all slots"
@@ -938,7 +938,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                         <button
                           type="button"
                           onClick={handleOpenEditPriceModal}
-                          className="h-10 w-10 rounded-lg bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition"
+                          className="h-10 w-10 rounded-lg bg-primary text-white flex items-center justify-center cursor-pointer hover:bg-primary/90 transition"
                           title="Edit selected slots"
                           aria-label="Edit selected slots"
                         >
@@ -968,7 +968,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                           type="button"
                           onClick={handleDisableSelectedSlots}
                           disabled={isDisablingSlots}
-                          className={`h-10 w-10 rounded-lg text-white flex items-center justify-center transition ${
+                          className={`h-10 w-10 rounded-lg text-white flex items-center justify-center transition cursor-pointer ${
                             isDisablingSlots ? 'bg-primary/40 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
                           }`}
                           title="Disable selected slots"
@@ -1042,8 +1042,8 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                                   isBooked
                                     ? 'bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed'
                                     : isSelected
-                                    ? 'bg-primary text-white border-primary'
-                                    : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
+                                    ? 'bg-primary text-white border-primary cursor-pointer'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:border-primary cursor-pointer'
                                 }`}
                               >
                                 {isBooked ? (

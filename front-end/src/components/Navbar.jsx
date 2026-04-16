@@ -316,7 +316,7 @@ const Navbar = () => {
 
       {/* Mobile Button */}
       <div className="md:hidden">
-        <button onClick={() => setIsOpen(!isOpen)}>
+        <button onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
           {isOpen ? <FaTimes size={22} /> : <FaBars size={22} />}
         </button>
       </div>

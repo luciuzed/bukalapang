@@ -216,7 +216,7 @@ const AdminPaymentQr = () => {
                     onClick={handleUploadButtonClick}
                     disabled={isUploading}
                     className={`w-full px-4 py-3 rounded-full text-[13px] font-semibold text-white transition ${
-                      isUploading ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/80'
+                      isUploading ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary cursor-pointer hover:bg-primary/80'
                     }`}
                   >
                     {isUploading ? 'Uploading...' : 'Upload QR'}

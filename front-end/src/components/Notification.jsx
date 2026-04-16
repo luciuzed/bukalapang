@@ -18,7 +18,7 @@ const Notification = ({ isOpen, pendingBookings, onNotificationClick }) => {
               key={booking.id}
               type="button"
               onClick={() => onNotificationClick(booking.id)}
-              className="w-full text-left px-4 py-3 hover:bg-gray-50 transition"
+              className="w-full text-left px-4 py-3 hover:bg-gray-50 transition cursor-pointer"
             >
               <p className="text-sm font-bold text-gray-900 truncate">Pending booking #{booking.id}</p>
               <p className="text-xs text-gray-500 truncate mt-0.5">{booking.field_name || 'Venue booking requires action'}</p>

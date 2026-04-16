@@ -216,7 +216,7 @@ const AdminSecurityInfo = () => {
                     onClick={handlePasswordUpdate}
                     disabled={isUpdatingPassword}
                     className={`w-full py-4 text-white rounded-2xl font-bold mt-2 transition-all active:scale-[0.98] ${
-                      isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
+                      isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary cursor-pointer hover:bg-primary/90'
                     }`}
                   >
                     {isUpdatingPassword ? 'Updating...' : 'Update Password'}

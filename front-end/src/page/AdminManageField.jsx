@@ -478,21 +478,21 @@ const AdminManageField = () => {
                       <div className="flex gap-2 pr-4 shrink-0">
                         <button
                           onClick={() => openSlotManagementPage(field)}
-                          className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition font-medium"
+                          className="p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition cursor-pointer font-medium"
                           title="Manage time slots"
                         >
                           <FiCalendar className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => handleEditField(field)}
-                          className="p-2.5 text-primary hover:bg-primary/10 rounded-lg transition font-medium"
+                          className="p-2.5 text-primary hover:bg-primary/10 rounded-lg transition cursor-pointer font-medium"
                           title="Edit field"
                         >
                           <FiEdit2 className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => openDeleteFieldModal(field.id)}
-                          className="p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
+                          className="p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer font-medium"
                           title="Delete field"
                         >
                           <FiTrash2 className="h-5 w-5" />
@@ -517,7 +517,7 @@ const AdminManageField = () => {
               </h2>
               <button
                 onClick={handleCloseForm}
-                className="p-2 hover:bg-gray-100 rounded-lg transition"
+                className="p-2 hover:bg-gray-100 rounded-lg transition cursor-pointer"
               >
                 <FiX className="h-6 w-6 text-gray-500" />
               </button>
@@ -727,13 +727,13 @@ const AdminManageField = () => {
                 <button
                   type="button"
                   onClick={handleCloseForm}
-                  className="px-6 py-2.5 border border-gray-300 rounded-full hover:bg-gray-50 transition font-semibold text-[13px] text-gray-700"
+                  className="px-6 py-2.5 border border-gray-300 rounded-full hover:bg-gray-50 transition cursor-pointer font-semibold text-[13px] text-gray-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-primary text-white rounded-full hover:opacity-90 transition flex items-center gap-2 font-semibold text-[13px]"
+                  className="px-6 py-2.5 bg-primary text-white rounded-full hover:opacity-90 transition cursor-pointer flex items-center gap-2 font-semibold text-[13px]"
                 >
                   <FiCheck className="h-4 w-4" /> {editingField ? 'Update' : 'Create'}
                 </button>

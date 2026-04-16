@@ -17,7 +17,7 @@ const Sidebar = ({ activeTabId, adminName, adminEmail, handleLogout, tabItems })
           <button
             key={tab.id}
             onClick={() => navigate(tab.path)}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition ${
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition cursor-pointer ${
               tab.id === activeTabId
                 ? 'bg-white/20 text-white'
                 : 'text-white/90 hover:bg-white/15'
@@ -42,7 +42,7 @@ const Sidebar = ({ activeTabId, adminName, adminEmail, handleLogout, tabItems })
 
         <button
           onClick={handleLogout}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold text-white/90 transition hover:bg-white/20 hover:text-white"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-white/15 px-4 py-3 text-sm font-semibold text-white/90 transition cursor-pointer hover:bg-white/20 hover:text-white"
         >
           <FiLogOut className="h-4 w-4" />
           Log out

@@ -447,7 +447,7 @@ const AdminBooking = () => {
                             <div className="flex gap-3 justify-end mt-6 pt-6 border-t border-gray-200">
                               <button
                                 onClick={() => openCancelModal(booking.id)}
-                                className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition inline-flex items-center gap-2"
+                                className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition cursor-pointer inline-flex items-center gap-2"
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -468,7 +468,7 @@ const AdminBooking = () => {
                               </button>
                               <button
                                 onClick={() => handleConfirmBooking(booking.id)}
-                                className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary transition flex items-center gap-2"
+                                className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary transition cursor-pointer flex items-center gap-2"
                               >
                                 <FiCheck size={16} />
                                 Confirm

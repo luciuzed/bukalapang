@@ -337,7 +337,7 @@ const AdminDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setShowNotifications((prev) => !prev)}
-                  className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-transparent text-primary transition hover:bg-gray-100"
+                  className="relative flex h-12 w-12 items-center justify-center rounded-lg bg-transparent text-primary transition cursor-pointer hover:bg-gray-100"
                   aria-label="Notifications"
                 >
                   <svg

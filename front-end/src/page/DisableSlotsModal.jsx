@@ -65,7 +65,7 @@ const DisableSlotsModal = ({
             type="button"
             onClick={onClose}
             disabled={isProcessing}
-            className="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-bold text-gray-700 transition cursor-pointer hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Return
           </button>
@@ -73,7 +73,7 @@ const DisableSlotsModal = ({
             type="button"
             onClick={onConfirm}
             disabled={isProcessing}
-            className="flex-1 rounded-xl border-2 border-red-600 bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-600/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex-1 rounded-xl border-2 border-red-600 bg-red-600 px-5 py-3 text-sm font-bold text-white transition cursor-pointer hover:bg-red-600/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isProcessing ? 'Processing...' : 'Disable'}
           </button>
