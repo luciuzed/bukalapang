@@ -326,21 +326,21 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             ) : (
               /* GRID FIXED SYSTEM */
               <div
-                className="grid gap-2 p-6 rounded-2xl"
+                className="grid gap-2 p-6 rounded-2xl overflow-x-auto"
                 style={{
-                  gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`,
+                  gridTemplateColumns: `80px repeat(${courts.length}, minmax(110px, 1fr))`,
                   backgroundColor: '#f6f6f6'
                 }}
               >
 
                 {/* EMPTY TOP LEFT */}
-                <div></div>
+                <div className="min-w-[110px]"></div>
 
                 {/* HEADER */}
                 {courts.map(court => (
                   <div
                     key={court.id}
-                    className="h-10 flex items-center justify-center font-bold text-[10px] sm:text-xs"
+                    className="h-10 flex items-center justify-center font-bold text-[10px] sm:text-xs min-w-[110px]"
                   >
                     {court.name}
                   </div>
@@ -368,7 +368,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
 
                       // If no slot exists, render empty div
                       if (!slot) {
-                        return <div key={key}></div>;
+                        return <div key={key} className="min-w-[110px]"></div>;
                       }
 
                       const isBooked = slot.is_booked === 1;
@@ -378,7 +378,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
                           key={key}
                           onClick={() => !isBooked && toggleSlot(court.id, time)}
                           disabled={isBooked}
-                          className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition ${
+                          className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition min-w-[110px] ${
                             isBooked
                               ? "bg-gray-300 text-gray-500 border-gray-300 "
                               : isSelected

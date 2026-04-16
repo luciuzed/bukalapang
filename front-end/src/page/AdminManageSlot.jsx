@@ -621,27 +621,37 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                       {courts.map((court) => (
                         <div
                           key={court.id}
-                          className="flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:shadow-md transition"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            setSelectedCourt(court)
+                            setSlotSetupScreen('set-hours')
+                            setCourtOpenTime('08:00')
+                            setCourtCloseTime('17:00')
+                            setCourtPrice('100000')
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              setSelectedCourt(court)
+                              setSlotSetupScreen('set-hours')
+                              setCourtOpenTime('08:00')
+                              setCourtCloseTime('17:00')
+                              setCourtPrice('100000')
+                            }
+                          }}
+                          className="flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white hover:shadow-md transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40"
                         >
                           <div>
                             <p className="font-semibold text-gray-900">{court.name}</p>
-                            <p className="text-xs text-gray-500 mt-1">Click to set schedule</p>
+                            <p className="text-xs text-gray-500 mt-1">Click the card to set schedule</p>
                           </div>
                           <div className="flex gap-2">
                             <button
-                              onClick={() => {
-                                setSelectedCourt(court)
-                                setSlotSetupScreen('set-hours')
-                                setCourtOpenTime('08:00')
-                                setCourtCloseTime('17:00')
-                                setCourtPrice('100000')
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openDeleteCourtModal(court.id)
                               }}
-                              className="px-4 py-2.5 bg-primary text-white rounded-full hover:opacity-90 transition font-semibold text-sm"
-                            >
-                              Set Schedule
-                            </button>
-                            <button
-                              onClick={() => openDeleteCourtModal(court.id)}
                               className="p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition"
                               title="Delete court"
                             >
@@ -985,7 +995,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                     className="gap-2 p-6 rounded-2xl bg-white"
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: `80px repeat(${courts.length}, 1fr)`
+                      gridTemplateColumns: `80px repeat(${courts.length}, minmax(110px, 1fr))`
                     }}
                   >
                     <div></div>
@@ -993,7 +1003,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                     {courts.map(court => (
                       <div
                         key={court.id}
-                        className="h-10 flex items-center justify-center font-bold text-[10px] sm:text-xs"
+                        className="h-10 flex items-center justify-center font-bold text-[10px] sm:text-xs min-w-27.5"
                       >
                         {court.name}
                       </div>
@@ -1013,7 +1023,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                             })
 
                             if (!slot) {
-                              return <div key={`${court.id}-${time}`}></div>
+                              return <div key={`${court.id}-${time}`} className="min-w-27.5"></div>
                             }
 
                             const isBooked = slot.is_booked === 1
@@ -1025,7 +1035,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                                 key={`slot-${slot.id}`}
                                 onClick={() => handleToggleSlotSelection(slot)}
                                 disabled={isBooked}
-                                className={`h-12 sm:h-14 rounded-xl border flex flex-col items-center justify-center transition p-2 text-center ${
+                                className={`h-12 sm:h-14 rounded-xl border flex flex-col items-center justify-center transition p-2 text-center min-w-27.5 ${
                                   isBooked
                                     ? 'bg-gray-300 text-gray-500 border-gray-300 cursor-not-allowed'
                                     : isSelected

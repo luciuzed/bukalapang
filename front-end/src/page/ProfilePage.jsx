@@ -93,6 +93,12 @@ const formatTimeSlots = (timeSlots) => {
   return formattedSlots.length ? formattedSlots : ['--'];
 };
 
+const formatRupiahAmount = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '--';
+  return numericValue.toLocaleString('id-ID');
+};
+
 const fetchBookingHistory = async (accountId, signal) => {
   const response = await fetch(`${API_BASE_URL}/bookings/user/${encodeURIComponent(accountId)}`, {
     signal,
@@ -159,6 +165,7 @@ const getBookingCardView = ({ booking, displayName, statusInfo, variant, emptyTi
       time: '--',
       venue: '--',
       createdAt: '--',
+      amount: '--',
       showLoadingActions: false,
       showPayNow: false,
       showFooter: false,
@@ -174,6 +181,7 @@ const getBookingCardView = ({ booking, displayName, statusInfo, variant, emptyTi
     time: formatTimeSlots(booking.time_slots),
     venue: formatFieldLabel(booking.field_name),
     createdAt: formatSlotDatesFromTimeSlots(booking.time_slots),
+    amount: formatRupiahAmount(booking.total_amount),
     showLoadingActions: false,
     showPayNow: booking.status === 'unpaid' && Boolean(booking.payment_id),
     showFooter: true,
@@ -567,7 +575,10 @@ const BookingCard = ({ variant, booking, displayName, statusInfo, navigate, onRe
         </div>
         <div className="flex gap-10">
           <span className="text-gray-400 w-24">Time</span>
-          {renderWrappedValue(cardView.time)}
+          <div className="flex-1 min-w-0">
+            {renderWrappedValue(cardView.time)}
+            <div className="mt-4 text-base font-bold text-primary">Rp {cardView.amount}</div>
+          </div>
         </div>
       </div>
 

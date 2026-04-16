@@ -9,6 +9,81 @@ import SuccessMessage from '../components/SuccessMessage'
 import { apiUrl } from '../config/api'
 import pendingIcon from '../assets/pending.svg'
 
+const formatBookingDate = (value) => {
+  if (!value) return '--'
+
+  const raw = String(value).trim()
+  const datePartMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!datePartMatch) return '--'
+
+  const year = Number(datePartMatch[1])
+  const month = Number(datePartMatch[2])
+  const day = Number(datePartMatch[3])
+
+  const date = new Date(year, month - 1, day)
+  if (Number.isNaN(date.getTime())) return '--'
+
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+const formatSlotDatesFromTimeSlots = (timeSlots) => {
+  if (!timeSlots) return ['--']
+
+  const slotParts = String(timeSlots)
+    .split(',')
+    .map((slot) => slot.trim())
+    .filter(Boolean)
+
+  const seen = new Set()
+  const formattedDates = []
+
+  slotParts.forEach((slot) => {
+    const dateMatch = slot.match(/(\d{4}-\d{2}-\d{2})/)
+    if (!dateMatch) return
+
+    const dateToken = dateMatch[1]
+    if (seen.has(dateToken)) return
+
+    const formatted = formatBookingDate(dateToken)
+    if (formatted !== '--') {
+      seen.add(dateToken)
+      formattedDates.push(formatted)
+    }
+  })
+
+  return formattedDates.length ? formattedDates : ['--']
+}
+
+const formatTimeValue = (value) => {
+  if (!value) return '--'
+
+  const timeString = String(value).trim()
+  const timeMatch = timeString.match(/(\d{2}:\d{2})/)
+  return timeMatch ? timeMatch[1] : timeString
+}
+
+const formatTimeSlots = (timeSlots) => {
+  if (!timeSlots) return ['--']
+
+  const formattedSlots = String(timeSlots)
+    .split(',')
+    .map((slot) => slot.trim())
+    .filter(Boolean)
+    .map((slot) => {
+      const [startTime, endTime] = slot.split(' - ')
+      const formattedStart = formatTimeValue(startTime)
+      const formattedEnd = formatTimeValue(endTime)
+
+      return `${formattedStart} - ${formattedEnd}`
+    })
+
+  return formattedSlots.length ? formattedSlots : ['--']
+}
+
 const AdminBooking = () => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -147,6 +222,20 @@ const AdminBooking = () => {
     }
   }
 
+  const renderWrappedValue = (value) => {
+    if (!Array.isArray(value)) {
+      return <span className="font-bold text-gray-700 flex-1 min-w-0">{value || '--'}</span>
+    }
+
+    return (
+      <span className="font-bold text-gray-700 flex-1 min-w-0 flex flex-wrap content-start gap-x-6 gap-y-1">
+        {value.map((item, index) => (
+          <span key={`${item}-${index}`} className="whitespace-nowrap shrink-0">{item}</span>
+        ))}
+      </span>
+    )
+  }
+
   const tabItems = [
     { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
@@ -279,19 +368,16 @@ const AdminBooking = () => {
                           <p className="text-gray-500 text-xs mt-1">{booking.user_phone}</p>
                         )}
                         </div>
-                        <div>
-                          <p className="text-gray-600 font-medium mb-2">Time Slots</p>
-                          <div className="flex flex-wrap gap-2">
-                            {booking.time_slots.split(',').map((slot, index) => (
-                              <span 
-                                key={index} 
-                                className="px-3 py-1 bg-gray-100 text-black text-xs font-mono rounded-full border border-gray-200"
-                              >
-                                {slot.trim()}
-                              </span>
-                            ))}
-                          </div>
+                      <div className="space-y-2">
+                        <div className="flex gap-10">
+                          <span className="text-gray-600 w-24">Date</span>
+                          {renderWrappedValue(formatSlotDatesFromTimeSlots(booking.time_slots))}
                         </div>
+                        <div className="flex gap-10">
+                          <span className="text-gray-600 w-24">Time</span>
+                          {renderWrappedValue(formatTimeSlots(booking.time_slots))}
+                        </div>
+                      </div>
                       <div>
                         <p className="text-gray-600 font-medium">Booking Date</p>
                         <p className="text-gray-900 font-semibold mt-1">

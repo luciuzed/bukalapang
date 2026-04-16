@@ -467,7 +467,7 @@ const AdminDashboard = () => {
                                 onMouseLeave={() => setHoveredWeeklySlotIndex(null)}
                               >
                                 <div
-                                  className="relative flex w-6 sm:w-13 items-end justify-center rounded-md bg-primary transition-all duration-200 group-hover:opacity-95"
+                                  className="relative flex w-6 sm:w-13 items-end justify-center rounded-t-md rounded-b-none bg-primary transition-all duration-200 group-hover:opacity-95"
                                   style={{ height: `${barHeight}%` }}
                                   aria-label={`${dayLabels[index]} bookings ${count}`}
                                 />
@@ -481,7 +481,7 @@ const AdminDashboard = () => {
                           })}
                         </div>
 
-                        <div className="absolute inset-x-0 bottom-2 h-px bg-gray-300" />
+                        <div className="absolute inset-x-0 bottom-1 h-px bg-gray-300" />
                       </div>
 
                       <div />
@@ -505,7 +505,7 @@ const AdminDashboard = () => {
                   <h3 className="text-lg font-bold text-gray-900">Revenue</h3>
                 </div>
 
-                <div className="flex-1 grid gap-6 lg:grid-cols-[3fr_1fr] items-center">
+                <div className="flex-1 grid gap-3 lg:grid-cols-[3fr_1fr] items-center">
                   <div className="relative flex items-center justify-center">
                     <div className="relative w-full max-w-105 aspect-square">
                       {revenueSlices.length > 0 ? (
