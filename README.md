@@ -97,6 +97,9 @@ UPLOADS_DIR=
 RESEND_API_KEY=your_resend_api_key
 RESEND_FROM=verified_sender@yourdomain.com
 
+# Optional contact form receiver (defaults to mainyuk@gmail.com)
+CONTACT_TO=mainyuk@gmail.com
+
 # Frontend
 VITE_API_BASE_URL=http://localhost:5000/api
 ```

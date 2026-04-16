@@ -5,6 +5,7 @@ import { FiBarChart2, FiGrid, FiCalendar, FiCreditCard, FiUser } from 'react-ico
 import { FaUserEdit, FaKey } from 'react-icons/fa'
 import Sidebar from '../components/Sidebar'
 import SuccessMessage from '../components/SuccessMessage'
+import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { apiUrl } from '../config/api'
 
 const maskEmail = (email) => {
@@ -134,88 +135,93 @@ const AdminSecurityInfo = () => {
       />
 
       <main className="flex-1 p-8 md:p-10 overflow-y-auto">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
-          <h1 className="text-2xl font-black text-gray-800 mb-8">Security & Information</h1>
-
-          <div className="space-y-6">
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="bg-primary/10 p-3 rounded-2xl text-primary">
-                  <FaUserEdit size={20} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-800">Account Identity</h3>
-                  <p className="text-xs text-gray-400">Verified identity details</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-8">
-                <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Admin Name</p>
-                    <p className="text-sm font-bold text-gray-700">{adminName || 'Admin'}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Primary Email</p>
-                    <p className="text-sm font-bold text-gray-700">{maskEmail(adminEmail)}</p>
-                  </div>
-                  <span className="text-[10px] bg-green-100 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-widest">
-                    Verified
-                  </span>
-                </div>
-              </div>
+        <div className="max-w-6xl mx-auto">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
+            <div className="mb-3">
+              <AdminSectionBreadcrumb label="Security & Info" />
             </div>
+            <h1 className="text-2xl font-black text-gray-800 mb-8">Security & Information</h1>
 
-            <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="bg-primary/10 p-3 rounded-2xl text-primary">
-                  <FaKey size={20} />
+            <div className="space-y-6">
+              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="bg-primary/10 p-3 rounded-2xl text-primary">
+                    <FaUserEdit size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-800">Account Identity</h3>
+                    <p className="text-xs text-gray-400">Verified identity details</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-800">Credentials</h3>
-                  <p className="text-xs text-gray-400">Update your account password</p>
+
+                <div className="grid grid-cols-1 gap-8">
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Admin Name</p>
+                      <p className="text-sm font-bold text-gray-700">{adminName || 'Admin'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Primary Email</p>
+                      <p className="text-sm font-bold text-gray-700">{maskEmail(adminEmail)}</p>
+                    </div>
+                    <span className="text-[10px] bg-green-100 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-widest">
+                      Verified
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <input
-                  type="password"
-                  placeholder="Current Password"
-                  value={currentPassword}
-                  onChange={(event) => {
-                    setCurrentPassword(event.target.value)
-                    if (currentPasswordError) setCurrentPasswordError('')
-                  }}
-                  className={`w-full bg-gray-50 border focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none ${
-                    currentPasswordError ? 'border-red-500' : 'border-transparent'
-                  }`}
-                />
-                {currentPasswordError && (
-                  <p className="text-red-500 text-sm mt-1 ml-1">{currentPasswordError}</p>
-                )}
-                <input
-                  type="password"
-                  placeholder="New Password"
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                  className="w-full bg-gray-50 border border-transparent focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none"
-                />
-                {generalError && (
-                  <p className="text-red-500 text-sm mt-1 ml-1">{generalError}</p>
-                )}
-                <button
-                  type="button"
-                  onClick={handlePasswordUpdate}
-                  disabled={isUpdatingPassword}
-                  className={`w-full py-4 text-white rounded-2xl font-bold mt-2 transition-all active:scale-[0.98] ${
-                    isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
-                  }`}
-                >
-                  {isUpdatingPassword ? 'Updating...' : 'Update Password'}
-                </button>
+              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="bg-primary/10 p-3 rounded-2xl text-primary">
+                    <FaKey size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-800">Credentials</h3>
+                    <p className="text-xs text-gray-400">Update your account password</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <input
+                    type="password"
+                    placeholder="Current Password"
+                    value={currentPassword}
+                    onChange={(event) => {
+                      setCurrentPassword(event.target.value)
+                      if (currentPasswordError) setCurrentPasswordError('')
+                    }}
+                    className={`w-full bg-gray-50 border focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none ${
+                      currentPasswordError ? 'border-red-500' : 'border-transparent'
+                    }`}
+                  />
+                  {currentPasswordError && (
+                    <p className="text-red-500 text-sm mt-1 ml-1">{currentPasswordError}</p>
+                  )}
+                  <input
+                    type="password"
+                    placeholder="New Password"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    className="w-full bg-gray-50 border border-transparent focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none"
+                  />
+                  {generalError && (
+                    <p className="text-red-500 text-sm mt-1 ml-1">{generalError}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handlePasswordUpdate}
+                    disabled={isUpdatingPassword}
+                    className={`w-full py-4 text-white rounded-2xl font-bold mt-2 transition-all active:scale-[0.98] ${
+                      isUpdatingPassword ? 'bg-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
+                    }`}
+                  >
+                    {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

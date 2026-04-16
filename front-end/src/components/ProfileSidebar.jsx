@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaCalendarCheck, FaShieldAlt, FaChevronLeft } from 'react-icons/fa';
+import { FaCalendarCheck, FaShieldAlt } from 'react-icons/fa';
 import { FiLogOut, FiUser, FiMenu, FiX } from 'react-icons/fi';
 import LOGO from '../assets/header.svg';
 
 const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLogout }) => {
-  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -26,12 +24,6 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
       `}>
         {/* Logo Section */}
         <div className="px-6 pt-8 pb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-[10px] font-bold text-white/60 mb-6 uppercase cursor-pointer hover:text-white transition-colors"
-          >
-            <FaChevronLeft size={8} /> Back
-          </button>
           <img src={LOGO} alt="MainYuk" className="h-10 w-30" />
         </div>
 

@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Cookies from 'js-cookie'
 import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi'
-import { FaChevronLeft } from 'react-icons/fa'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ConfirmationModal from './ConfirmationModal'
 import DisableSlotsModal from './DisableSlotsModal'
 import SuccessMessage from '../components/SuccessMessage'
 import Sidebar from '../components/Sidebar'
+import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { apiUrl } from '../config/api'
 
 const getLocalToday = () => {
@@ -550,12 +550,14 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
       <div className={embedded ? 'w-full min-h-[75vh] overflow-y-auto' : 'bg-white rounded-2xl shadow-lg p-8 max-w-[96vw] w-full mx-4 min-h-[75vh] max-h-[92vh] overflow-y-auto'}>
         {embedded ? (
           <div className="mb-6">
-            <button
-              onClick={onClose}
-              className="flex items-center gap-2 text-xs font-bold text-gray-400 mb-6 uppercase hover:text-black"
-            >
-              <FaChevronLeft /> Back
-            </button>
+            <div className="mb-3">
+              <AdminSectionBreadcrumb
+                items={[
+                  { label: 'Manage Fields', path: '/field' },
+                  { label: 'Manage Courts' },
+                ]}
+              />
+            </div>
             <h2 className="text-2xl font-bold">Manage Courts: {field.name}</h2>
           </div>
         ) : (
@@ -580,7 +582,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
         )}
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-5">
+          <div className="xl:col-span-4">
             {/* COURTS LIST VIEW */}
             {slotSetupScreen === 'court-list' && (
               <div className="space-y-4">
@@ -883,7 +885,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
             )}
           </div>
 
-          <div className="xl:col-span-7 space-y-4">
+          <div className="xl:col-span-8 space-y-4">
             <div>
               <label className="block text-sm font-semibold mb-2 text-gray-700">Select Date to View</label>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -1291,20 +1293,22 @@ const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
       />
 
       <main className="flex-1 p-8 md:p-10 overflow-y-auto">
-        {routeLoading ? (
-          <div className="text-center py-12 text-gray-500">Loading slot management...</div>
-        ) : routeError ? (
-          <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
-            {routeError}
-          </div>
-        ) : (
-          <AdminManageSlotContent
-            field={routeField}
-            adminId={routeAdminId}
-            onClose={() => navigate('/field')}
-            embedded
-          />
-        )}
+        <div className="max-w-6xl mx-auto">
+          {routeLoading ? (
+            <div className="text-center py-12 text-gray-500">Loading slot management...</div>
+          ) : routeError ? (
+            <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
+              {routeError}
+            </div>
+          ) : (
+            <AdminManageSlotContent
+              field={routeField}
+              adminId={routeAdminId}
+              onClose={() => navigate('/field')}
+              embedded
+            />
+          )}
+        </div>
       </main>
     </div>
   )

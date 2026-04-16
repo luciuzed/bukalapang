@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaUserEdit, FaKey } from 'react-icons/fa';
-import { FiCheck, FiX } from 'react-icons/fi';
+import { FiCheck, FiHome, FiX } from 'react-icons/fi';
 import Cookies from 'js-cookie';
 import LoadingOverlay from '../components/LoadingOverlay';
 import ProfileSidebar from '../components/ProfileSidebar';
@@ -130,13 +130,13 @@ const formatBookingStatus = (status) => {
       };
     case 'cancelled':
       return {
-        label: 'Cancelled',
+        label: 'Rejected',
         badgeClass: 'bg-red-600',
         icon: 'x',
       };
     case 'failed':
       return {
-        label: 'Failed',
+        label: 'Cancelled',
         badgeClass: 'bg-red-600',
         icon: 'x',
       };
@@ -251,6 +251,25 @@ const StatusBadgeContent = ({ label, icon }) => {
   }
 
   return <span className="leading-none">{label}</span>;
+};
+
+const SectionBreadcrumb = ({ label }) => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+      <button
+        type="button"
+        onClick={() => navigate('/venue')}
+        className="cursor-pointer hover:opacity-80 transition"
+        aria-label="Go to home"
+      >
+        <FiHome className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <span className="text-primary/60">&gt;</span>
+      <span>{label}</span>
+    </div>
+  );
 };
 
 const ProfilePage = () => {
@@ -453,7 +472,7 @@ const ProfilePage = () => {
 
 // --- SUB-COMPONENT: BOOKINGS LIST ---
 const BookingsList = ({ user, bookings, loadingBookings, navigate, onRequestCancel, statusFilter, setStatusFilter }) => {
-  const [bookingIdQuery, setBookingIdQuery] = useState('');
+  const [venueQuery, setVenueQuery] = useState('');
   const displayName = (user.name || 'Guest').toUpperCase();
 
   if (loadingBookings) {
@@ -461,25 +480,28 @@ const BookingsList = ({ user, bookings, loadingBookings, navigate, onRequestCanc
   }
 
   const filteredBookings = bookings.filter((booking) => {
-    const bookingId = String(booking.id || '');
-    const matchesBookingId = bookingIdQuery.trim()
-      ? bookingId.toLowerCase().includes(bookingIdQuery.trim().toLowerCase())
+    const venueName = String(booking.field_name || booking.venue_name || booking.venue || '');
+    const matchesVenue = venueQuery.trim()
+      ? venueName.toLowerCase().includes(venueQuery.trim().toLowerCase())
       : true;
     const matchesStatus = statusFilter === 'all'
       ? true
       : (booking.status || '').toLowerCase() === statusFilter;
 
-    return matchesBookingId && matchesStatus;
+    return matchesVenue && matchesStatus;
   });
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mb-5">
+        <SectionBreadcrumb label="Booking" />
+      </div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-black text-gray-800">My Bookings</h1>
         <button
           type="button"
           onClick={() => navigate('/venue')}
-          className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full hover:opacity-90 transition font-semibold text-sm"
+          className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full hover:opacity-90 transition font-semibold text-sm cursor-pointer"
         >
           <span className="text-white font-black text-base leading-none">+</span> Add Booking
         </button>
@@ -489,9 +511,9 @@ const BookingsList = ({ user, bookings, loadingBookings, navigate, onRequestCanc
       <div className="flex flex-wrap gap-4 mb-6">
         <input 
           type="text" 
-          placeholder="Search by Booking ID..." 
-          value={bookingIdQuery}
-          onChange={(event) => setBookingIdQuery(event.target.value)}
+          placeholder="Search by Venue..." 
+          value={venueQuery}
+          onChange={(event) => setVenueQuery(event.target.value)}
           className="flex-1 min-w-75 bg-white border border-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <select
@@ -716,7 +738,10 @@ const SecuritySection = ({ user }) => {
         onClose={() => setSuccess(null)}
       />
 
-      <h1 className="text-2xl font-black text-gray-800 mb-8">Security & Information</h1>
+      <div className="mb-5">
+        <SectionBreadcrumb label="Security & Info" />
+      </div>
+      <h1 className="text-3xl font-black text-gray-800 mb-8">Security & Information</h1>
       
       <div className="space-y-6">
         {/* BASIC INFO SECTION - NO INPUT BOXES */}

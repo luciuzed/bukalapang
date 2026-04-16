@@ -5,6 +5,10 @@
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     font-family: 'Poppins', sans-serif;
   }

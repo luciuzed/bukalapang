@@ -6,6 +6,7 @@ import LoadingOverlay from '../components/LoadingOverlay'
 import Notification from '../components/Notification'
 import Sidebar from '../components/Sidebar'
 import SuccessMessage from '../components/SuccessMessage'
+import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { API_BASE_URL, apiUrl } from '../config/api'
 
 const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '')
@@ -315,16 +316,20 @@ const AdminDashboard = () => {
 
         {/* MAIN CONTENT */}
         <main className="flex-1 p-8 md:p-10 overflow-y-auto">
-          {/* Alerts */}
-          {error && (
-            <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
-              {error}
-            </div>
-          )}
+          <div className="max-w-6xl mx-auto">
+            {/* Alerts */}
+            {error && (
+              <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
+                {error}
+              </div>
+            )}
 
-          {/* DASHBOARD CONTENT */}
-          <div className="space-y-8">
+            {/* DASHBOARD CONTENT */}
+            <div className="space-y-8">
             <div className="relative mb-8">
+              <div className="mb-3">
+                <AdminSectionBreadcrumb label="Dashboard" />
+              </div>
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
 
               <div className="absolute right-0 top-0" ref={notificationRef}>
@@ -435,7 +440,7 @@ const AdminDashboard = () => {
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Performance Overview */}
               <div className="rounded-2xl bg-white p-6 border border-gray-100 shadow-sm min-h-128 flex flex-col">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-4 mb-2">
                   <FiBarChart2 className="text-primary" />
                   <h3 className="text-lg font-bold text-gray-900">Performance</h3>
                 </div>
@@ -500,7 +505,7 @@ const AdminDashboard = () => {
 
               {/* Revenue Overview */}
               <div className="rounded-2xl bg-white p-6 border border-gray-100 shadow-sm min-h-128 flex flex-col">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-4 mb-2">
                   <FiTrendingUp className="text-primary" />
                   <h3 className="text-lg font-bold text-gray-900">Revenue</h3>
                 </div>
@@ -603,9 +608,9 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Recent Venues */}
-            {fields.length > 0 && (
-              <div className="rounded-2xl bg-white p-6 border border-gray-100 shadow-sm">
+              {/* Recent Venues */}
+              {fields.length > 0 && (
+                <div className="rounded-2xl bg-white p-6 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <h3 className="text-lg font-bold text-gray-900">Recent Venues</h3>
                 </div>
@@ -686,8 +691,9 @@ const AdminDashboard = () => {
                     })()
                   ))}
                 </div>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </main>
 

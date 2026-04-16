@@ -43,6 +43,7 @@ const fieldRoutes = require('./routes/field');
 const bookingRoutes = require('./routes/booking');
 const courtRoutes = require('./routes/court');
 const uploadRoutes = require('./routes/upload');
+const contactRoutes = require('./routes/contact');
 
 
 app.use('/api', authRoutes);
@@ -52,6 +53,7 @@ app.use('/api/field', fieldRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/courts', courtRoutes);
 app.use('/api', uploadRoutes);
+app.use('/api', contactRoutes);
 
 // Marks all slots with a date before today as unavailable.
 const startPastSlotDisableJob = () => {

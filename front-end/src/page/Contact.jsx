@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Footer from "../components/Footer";
 import { FaPaperPlane, FaPhoneAlt, FaEnvelope } from "react-icons/fa";
+import { apiUrl } from "../config/api";
 
 import img from "../assets/badmin.jpg";
 
@@ -8,18 +9,52 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    subject: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitFeedback, setSubmitFeedback] = useState({ type: "", message: "" });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Terima kasih! Pesan Anda telah terkirim.");
+    setSubmitFeedback({ type: "", message: "" });
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(apiUrl("/contact"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || "Gagal mengirim pesan. Coba lagi.");
+      }
+
+      setSubmitFeedback({
+        type: "success",
+        message: "Terima kasih! Pesan Anda sudah terkirim.",
+      });
+      setFormData({
+        name: "",
+        email: "",
+        message: "",
+      });
+    } catch (error) {
+      setSubmitFeedback({
+        type: "error",
+        message: error.message || "Terjadi kesalahan saat mengirim pesan.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <main className="flex-grow flex flex-col lg:flex-row overflow-x-hidden">
+      <main className="grow flex flex-col lg:flex-row overflow-x-hidden">
         
         {/* LEFT SIDE: Image Section */}
         <div className="lg:w-1/2 relative min-h-[30vh] lg:min-h-screen scale-80">
@@ -29,7 +64,7 @@ const Contact = () => {
             className="absolute inset-0 w-full h-full object-cover rounded-4xl"
             />
           {/* Gradient overlay for text contrast */}
-          <div className="absolute inset-0 bg-primary/50 lg:bg-gradient-to-r from-primary/80 via-black/40 to-transparent rounded-4xl"></div>
+          <div className="absolute inset-0 bg-primary/50 lg:bg-linear-to-r from-primary/80 via-black/40 to-transparent rounded-4xl"></div>
           
           <div className="relative h-full flex flex-col justify-center px-8 lg:px-20 text-white z-10">
             <h2 className="text-4xl lg:text-6xl font-black mb-6 leading-tight">
@@ -71,6 +106,7 @@ const Contact = () => {
                   type="text" 
                   required
                   placeholder="Nama anda"
+                  value={formData.name}
                   className="w-full bg-gray-50 border border-gray-100 focus:border-primary/20 focus:bg-white focus:ring-4 focus:ring-primary/5 p-4 rounded-2xl text-sm transition-all outline-none"
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
@@ -82,6 +118,7 @@ const Contact = () => {
                   type="email" 
                   required
                   placeholder="email@example.com"
+                  value={formData.email}
                   className="w-full bg-gray-50 border border-gray-100 focus:border-primary/20 focus:bg-white focus:ring-4 focus:ring-primary/5 p-4 rounded-2xl text-sm transition-all outline-none"
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
@@ -93,16 +130,24 @@ const Contact = () => {
                   rows="4"
                   required
                   placeholder="Apa yang bisa kami bantu?"
+                  value={formData.message}
                   className="w-full bg-gray-50 border border-gray-100 focus:border-primary/20 focus:bg-white focus:ring-4 focus:ring-primary/5 p-4 rounded-3xl text-sm transition-all outline-none resize-none"
                   onChange={(e) => setFormData({...formData, message: e.target.value})}
                 ></textarea>
               </div>
 
+              {submitFeedback.message && (
+                <p className={`text-sm font-semibold ${submitFeedback.type === "success" ? "text-green-600" : "text-red-600"}`}>
+                  {submitFeedback.message}
+                </p>
+              )}
+
               <button 
                 type="submit" 
-                className="w-full py-5 bg-primary text-white rounded-2xl font-black text-sm cursor-pointer uppercase tracking-widest hover:bg-primary/80 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg shadow-primary/20 active:scale-95 mt-4"
+                disabled={isSubmitting}
+                className="w-full py-5 bg-primary text-white rounded-2xl font-black text-sm cursor-pointer uppercase tracking-widest hover:bg-primary/80 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg shadow-primary/20 active:scale-95 mt-4 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:bg-primary"
               >
-                Send Message <FaPaperPlane className="text-xs" />
+                {isSubmitting ? "Sending..." : "Send Message"} <FaPaperPlane className="text-xs" />
               </button>
             </form>
           </div>

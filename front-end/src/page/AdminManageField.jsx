@@ -7,6 +7,7 @@ import LoadingOverlay from '../components/LoadingOverlay'
 import Sidebar from '../components/Sidebar'
 import ConfirmationModal from './ConfirmationModal'
 import SuccessMessage from '../components/SuccessMessage'
+import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { API_BASE_URL, apiUrl } from '../config/api'
 
 const MAX_DESCRIPTION_LENGTH = 160
@@ -352,15 +353,19 @@ const AdminManageField = () => {
 
         {/* MAIN CONTENT */}
         <main className="flex-1 p-8 md:p-10 overflow-y-auto">
-          {/* Alerts */}
-          {error && (
-            <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
-              {error}
-            </div>
-          )}
+          <div className="max-w-6xl mx-auto">
+            {/* Alerts */}
+            {error && (
+              <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
+                {error}
+              </div>
+            )}
 
-          {/* FIELDS MANAGEMENT */}
-          <div>
+            {/* FIELDS MANAGEMENT */}
+            <div>
+            <div className="mb-3">
+              <AdminSectionBreadcrumb label="Manage Fields" />
+            </div>
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-3xl font-bold tracking-tight">Manage Fields</h1>
               <button
@@ -497,6 +502,7 @@ const AdminManageField = () => {
                 ))}
               </div>
             )}
+            </div>
           </div>
         </main>
 

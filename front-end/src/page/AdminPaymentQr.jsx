@@ -4,6 +4,7 @@ import Cookies from 'js-cookie'
 import { FiBarChart2, FiGrid, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi'
 import Sidebar from '../components/Sidebar'
 import SuccessMessage from '../components/SuccessMessage'
+import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { API_BASE_URL, apiUrl } from '../config/api'
 
 const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '')
@@ -185,65 +186,70 @@ const AdminPaymentQr = () => {
       />
 
       <main className="flex-1 p-8 md:p-10 overflow-y-auto">
-        {error && (
-          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
-            {error}
-          </div>
-        )}
+        <div className="max-w-6xl mx-auto">
+          {error && (
+            <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
+              {error}
+            </div>
+          )}
 
-        <div className="max-w-2xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Payment</h1>
-            <p className="text-gray-600 text-sm mt-1">Upload the QR users will scan to pay for bookings on your venues.</p>
-          </div>
+          <div className="max-w-2xl">
+            <div className="mb-3">
+              <AdminSectionBreadcrumb label="Payment" />
+            </div>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold tracking-tight">Payment</h1>
+              <p className="text-gray-600 text-sm mt-1">Upload the QR users will scan to pay for bookings on your venues.</p>
+            </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            {loading ? (
-              <div className="text-center py-10 text-gray-500">Loading payment QR...</div>
-            ) : (
-              <div>
-                <button
-                  type="button"
-                  onClick={handleUploadButtonClick}
-                  disabled={isUploading}
-                  className={`w-full px-4 py-3 rounded-full text-[13px] font-semibold text-white transition ${
-                    isUploading ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/80'
-                  }`}
-                >
-                  {isUploading ? 'Uploading...' : 'Upload QR'}
-                </button>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              {loading ? (
+                <div className="text-center py-10 text-gray-500">Loading payment QR...</div>
+              ) : (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleUploadButtonClick}
+                    disabled={isUploading}
+                    className={`w-full px-4 py-3 rounded-full text-[13px] font-semibold text-white transition ${
+                      isUploading ? 'bg-primary/60 cursor-not-allowed' : 'bg-primary hover:bg-primary/80'
+                    }`}
+                  >
+                    {isUploading ? 'Uploading...' : 'Upload QR'}
+                  </button>
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
 
-                {uploadTypeError && (
-                  <p className="mt-2 text-xs text-red-500 text-center">{uploadTypeError}</p>
-                )}
+                  {uploadTypeError && (
+                    <p className="mt-2 text-xs text-red-500 text-center">{uploadTypeError}</p>
+                  )}
 
-                <div className="mt-5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                    Current QR
-                  </p>
+                  <div className="mt-5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                      Current QR
+                    </p>
 
-                  <div className="w-full h-72 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
-                    {imageUrl ? (
-                      <img
-                        src={resolveImageUrl(imageUrl)}
-                        alt="Payment QR"
-                        className="h-full w-full object-contain bg-white"
-                      />
-                    ) : (
-                      <p className="text-sm text-gray-500">No QR uploaded yet</p>
-                    )}
+                    <div className="w-full h-72 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center">
+                      {imageUrl ? (
+                        <img
+                          src={resolveImageUrl(imageUrl)}
+                          alt="Payment QR"
+                          className="h-full w-full object-contain bg-white"
+                        />
+                      ) : (
+                        <p className="text-sm text-gray-500">No QR uploaded yet</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </main>

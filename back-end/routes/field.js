@@ -142,7 +142,6 @@ router.get('/', async (req, res) => {
         f.city,
         f.image_url,
         f.is_active,
-        f.rating,
         stats.min_price,
         stats.max_price
       FROM field f
