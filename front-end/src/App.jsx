@@ -12,7 +12,8 @@ import AdminManageSlot from "./page/AdminManageSlot"
 import AdminBooking from "./page/AdminBooking"
 import AdminPaymentQr from "./page/AdminPaymentQr"
 import AdminSecurityInfo from "./page/AdminSecurityInfo"
-import ProfilePage from "./page/ProfilePage"
+import UserBooking from "./page/UserBooking"
+import UserSecurityInfo from "./page/UserSecurityInfo"
 import Payment from "./page/Payment"
 import Home from "./page/Home"
 import About from "./page/About"
@@ -103,7 +104,7 @@ const LoginGuard = ({ children }) => {
 
 function App() {
   const location = useLocation()
-  const fullWidthPages = ["/dashboard", "/profile", "/field", "/booking", "/admin/payment-qr", "/admin/security-info", "/", "/contact"]
+  const fullWidthPages = ["/dashboard", "/bookings", "/user/security-info", "/field", "/booking", "/admin/payment-qr", "/admin/security-info", "/", "/contact"]
   const paymentPages = location.pathname.match(/^\/payment\//)
   const fieldManagePages = location.pathname.match(/^\/field\/manage\/[^/]+$/)
   const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages && !fieldManagePages
@@ -180,13 +181,21 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route 
-          path="/profile" 
+        <Route
+          path="/bookings"
           element={
             <ProtectedRoute allowedRole="user">
-              <ProfilePage />
+              <UserBooking />
             </ProtectedRoute>
-          } 
+          }
+        />
+        <Route
+          path="/user/security-info"
+          element={
+            <ProtectedRoute allowedRole="user">
+              <UserSecurityInfo />
+            </ProtectedRoute>
+          }
         />
         <Route 
           path="/venue/:id" 

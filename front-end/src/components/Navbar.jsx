@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom"
 import logo from '../assets/logo.svg'
-import { FaBars, FaTimes, FaUserEdit, FaSignOutAlt } from "react-icons/fa"
-import { MdAccountCircle, MdLineStyle } from "react-icons/md"
+import { FaBars, FaTimes, FaCalendarCheck, FaShieldAlt } from "react-icons/fa"
+import { FiBarChart2, FiCalendar, FiGrid, FiCreditCard, FiShield, FiLogOut } from "react-icons/fi"
+import { MdAccountCircle } from "react-icons/md"
 import Cookies from 'js-cookie'
 
 const Navbar = () => {
@@ -10,6 +11,8 @@ const Navbar = () => {
   const [user, setUser] = useState(null)
   const [admin, setAdmin] = useState(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [isCardExiting, setIsCardExiting] = useState(false)
+  const [isCardEntering, setIsCardEntering] = useState(true)
   const dropdownRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
@@ -32,11 +35,26 @@ const Navbar = () => {
     }
   }, [location])
 
+  // Trigger fade-in animation when dropdown appears
+  useEffect(() => {
+    if (showDropdown && isCardEntering) {
+      const timer = setTimeout(() => {
+        setIsCardEntering(false)
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [showDropdown, isCardEntering])
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowDropdown(false)
+        setIsCardExiting(true)
+        setTimeout(() => {
+          setShowDropdown(false)
+          setIsCardExiting(false)
+          setIsCardEntering(true)
+        }, 300)
       }
     }
     document.addEventListener("mousedown", handleClickOutside)
@@ -48,8 +66,28 @@ const Navbar = () => {
     Cookies.remove('admin_session')
     setUser(null)
     setAdmin(null)
-    setShowDropdown(false)
+    setIsCardExiting(true)
+    setTimeout(() => {
+      setShowDropdown(false)
+      setIsCardExiting(false)
+      setIsCardEntering(true)
+    }, 300)
     navigate('/')
+  }
+
+  const handleToggleDropdown = () => {
+    if (showDropdown) {
+      setIsCardExiting(true)
+      setTimeout(() => {
+        setShowDropdown(false)
+        setIsCardExiting(false)
+        setIsCardEntering(true)
+      }, 300)
+    } else {
+      setShowDropdown(true)
+      setIsCardExiting(false)
+      setIsCardEntering(true)
+    }
   }
 
   const navItemClass = ({ isActive }) =>
@@ -114,7 +152,7 @@ const Navbar = () => {
             
             {/* Modern Icon Button */}
             <button
-              onClick={() => setShowDropdown(!showDropdown)}
+              onClick={handleToggleDropdown}
               className="flex items-center justify-center p-1 rounded-full hover:bg-gray-100 transition cursor-pointer"
             >
               <MdAccountCircle size={40} className="text-primary" />
@@ -122,35 +160,135 @@ const Navbar = () => {
 
             {/* Dropdown in Navbar.jsx */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl py-3 z-50 border border-gray-200 animate-in fade-in slide-in-from-top-2">
+              <div 
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  width: '256px',
+                  backgroundColor: 'white',
+                  borderRadius: '1rem',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                  paddingTop: '0.5rem',
+                  paddingBottom: '0.5rem',
+                  paddingLeft: '0.5rem',
+                  paddingRight: '0.5rem',
+                  zIndex: 50,
+                  border: '1px solid #e5e7eb',
+                  opacity: isCardEntering || isCardExiting ? 0 : 1,
+                  transform: isCardEntering || isCardExiting ? 'translateY(-10px)' : 'translateY(0)',
+                  transition: 'opacity 0.3s ease-out, transform 0.3s ease-out'
+                }}
+              >
                 
                 {/* Profile Info Header */}
-                <div className="px-5 py-3 border-b border-gray-200">
-                  <p className="text-sm font-black text-gray-800 truncate">{admin ? admin.adminName : user?.name || "User"}</p>
-                  <p className="text-xs text-gray-400 truncate">{admin ? admin.email : user?.email || "user@example.com"}</p>
+                <div className="px-4 py-3 border-b border-gray-200">
+                  <p className="text-[15px] font-bold text-gray-800 truncate mb-1.5">{admin ? admin.adminName : user?.name || "User"}</p>
+                  <p className="text-xs font-normal text-gray-500 truncate">{admin ? admin.email : user?.email || "user@example.com"}</p>
                 </div>
 
-                <div className="py-2">
+                <div className="pt-3 space-y-3">
+                  {/* Regular User Options */}
                   {user && (
-                    <Link to="/profile" onClick={() => setShowDropdown(false)}>
-                      <div className="px-5 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm font-bold text-gray-600 transition-colors">
-                        <FaUserEdit className="text-gray-400" /> Profile
-                      </div>
-                    </Link>
+                    <>
+                      <Link to="/bookings" onClick={() => {
+                        setIsCardExiting(true)
+                        setTimeout(() => {
+                          setShowDropdown(false)
+                          setIsCardExiting(false)
+                          setIsCardEntering(true)
+                        }, 300)
+                      }}>
+                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
+                              <FaCalendarCheck className="h-3.75 w-3.75 text-gray-500" /> Manage Bookings
+                        </div>
+                      </Link>
+                      <Link to="/user/security-info" onClick={() => {
+                        setIsCardExiting(true)
+                        setTimeout(() => {
+                          setShowDropdown(false)
+                          setIsCardExiting(false)
+                          setIsCardEntering(true)
+                        }, 300)
+                      }}>
+                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
+                              <FaShieldAlt className="h-3.75 w-3.75 text-gray-500" /> Security & Info
+                        </div>
+                      </Link>
+                    </>
                   )}
+
+                  {/* Admin Options */}
                   {admin && (
-                    <Link to="/dashboard" onClick={() => setShowDropdown(false)}>
-                      <div className="px-5 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm font-bold text-gray-600 transition-colors">
-                        <FaUserEdit className="text-gray-400" /> Dashboard
-                      </div>
-                    </Link>
+                    <>
+                      <Link to="/dashboard" onClick={() => {
+                        setIsCardExiting(true)
+                        setTimeout(() => {
+                          setShowDropdown(false)
+                          setIsCardExiting(false)
+                          setIsCardEntering(true)
+                        }, 300)
+                      }}>
+                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
+                              <FiBarChart2 className="h-3.75 w-3.75 text-gray-500" /> Dashboard
+                        </div>
+                      </Link>
+                      <Link to="/field" onClick={() => {
+                        setIsCardExiting(true)
+                        setTimeout(() => {
+                          setShowDropdown(false)
+                          setIsCardExiting(false)
+                          setIsCardEntering(true)
+                        }, 300)
+                      }}>
+                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
+                              <FiGrid className="h-3.75 w-3.75 text-gray-500" /> Manage Fields
+                        </div>
+                      </Link>
+                      <Link to="/booking" onClick={() => {
+                        setIsCardExiting(true)
+                        setTimeout(() => {
+                          setShowDropdown(false)
+                          setIsCardExiting(false)
+                          setIsCardEntering(true)
+                        }, 300)
+                      }}>
+                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
+                              <FiCalendar className="h-3.75 w-3.75 text-gray-500" /> Bookings
+                        </div>
+                      </Link>
+                      <Link to="/admin/payment-qr" onClick={() => {
+                        setIsCardExiting(true)
+                        setTimeout(() => {
+                          setShowDropdown(false)
+                          setIsCardExiting(false)
+                          setIsCardEntering(true)
+                        }, 300)
+                      }}>
+                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
+                              <FiCreditCard className="h-3.75 w-3.75 text-gray-500" /> Payment QR
+                        </div>
+                      </Link>
+                      <Link to="/admin/security-info" onClick={() => {
+                        setIsCardExiting(true)
+                        setTimeout(() => {
+                          setShowDropdown(false)
+                          setIsCardExiting(false)
+                          setIsCardEntering(true)
+                        }, 300)
+                      }}>
+                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
+                              <FaShieldAlt className="h-3.75 w-3.75 text-gray-500" /> Security & Info
+                        </div>
+                      </Link>
+                    </>
                   )}
 
                   <div
                     onClick={handleLogout}
-                    className="px-5 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm font-bold text-red-500 cursor-pointer transition-colors"
+                        className="p-3 hover:bg-red-50 hover:rounded-lg flex items-center gap-3 text-sm font-bold text-red-500 cursor-pointer transition-colors border-t border-gray-200 mt-3"
                   >
-                    <FaSignOutAlt /> Logout
+                        <FiLogOut className="h-3.75 w-3.75 text-red-500" /> Log Out
                   </div>
                 </div>
               </div>
@@ -195,11 +333,15 @@ const Navbar = () => {
 
           {user ? (
             <>
-              <Link to="/profile" onClick={() => setIsOpen(false)}>
-                <div className="flex items-center gap-2">
-                  <MdAccountCircle size={28} className="text-primary" />
+              <div className="flex items-center gap-2">
+                <MdAccountCircle size={28} className="text-primary" />
                 <span>{user.name}</span>
               </div>
+              <Link to="/bookings" onClick={() => setIsOpen(false)}>
+                Manage Bookings
+              </Link>
+              <Link to="/user/security-info" onClick={() => setIsOpen(false)}>
+                Security & Info
               </Link>
             </>
           ) : admin ? (

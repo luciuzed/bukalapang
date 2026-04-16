@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { FaCalendarCheck, FaShieldAlt } from 'react-icons/fa';
 import { FiLogOut, FiUser, FiMenu, FiX } from 'react-icons/fi';
 import LOGO from '../assets/header.svg';
 
-const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLogout }) => {
+const ProfileSidebar = ({ userName, userEmail, handleLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const isBookingsActive = location.pathname === '/bookings';
+  const isSecurityActive = location.pathname === '/user/security-info';
 
   return (
     <>
       {/* Mobile Toggle Button */}
       <div
         className={`md:hidden fixed top-4 z-50 transition-all duration-300 ${
-          isOpen ? 'left-[calc(16rem-3.5rem)]' : 'left-4'
+          isOpen ? 'left-50' : 'left-4'
         }`}
       >
         <button
@@ -47,29 +51,31 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
 
         {/* Navigation Section */}
         <nav className="px-3 pb-8 space-y-1 flex-1 overflow-y-auto">
-          <button
-            onClick={() => { setActiveTab('bookings'); setIsOpen(false); }}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition cursor-pointer ${
-              activeTab === 'bookings' 
-                ? 'bg-white/20 text-white' 
+          <Link
+            to="/bookings"
+            onClick={() => setIsOpen(false)}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition-colors duration-500 ease-in-out cursor-pointer ${
+              isBookingsActive
+                ? 'bg-white/20 text-white'
                 : 'text-white/90 hover:bg-white/15'
             }`}
           >
-            <FaCalendarCheck className="h-5 w-5" /> 
+            <FaCalendarCheck className="h-5 w-5" />
             <span>Manage Bookings</span>
-          </button>
-          
-          <button
-            onClick={() => { setActiveTab('security'); setIsOpen(false); }}
-            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition cursor-pointer ${
-              activeTab === 'security' 
-                ? 'bg-white/20 text-white' 
+          </Link>
+
+          <Link
+            to="/user/security-info"
+            onClick={() => setIsOpen(false)}
+            className={`flex w-full items-center gap-3 rounded-lg px-4 py-4 text-left text-sm font-bold transition-colors duration-500 ease-in-out cursor-pointer ${
+              isSecurityActive
+                ? 'bg-white/20 text-white'
                 : 'text-white/90 hover:bg-white/15'
             }`}
           >
-            <FaShieldAlt className="h-5 w-5" /> 
+            <FaShieldAlt className="h-5 w-5" />
             <span>Security & Info</span>
-          </button>
+          </Link>
         </nav>
 
         {/* Bottom Section: User Info & Logout */}
@@ -106,7 +112,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
         />
       )}
     </>
-  );
-};
+  )
+}
 
 export default ProfileSidebar;

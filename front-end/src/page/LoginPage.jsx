@@ -670,7 +670,7 @@ const LoginPage = () => {
       <LoadingOverlay show={isLoading} />
 
       {/* LEFT SIDE */}
-      <div className="w-full lg:w-1/2 flex items-start sm:px-6 lg:px-16">
+      <div className={`w-full lg:w-1/2 flex ${showOtpUI || showResetUI ? 'items-start' : 'items-center'} sm:px-6 lg:px-16`}>
         {showOtpUI ? (
           <div className="w-full flex flex-col ">
             <button

@@ -201,7 +201,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
 
   const handleFinishNow = () => {
     setIsLimitModalOpen(false);
-    navigate('/profile?tab=bookings&status=unpaid');
+    navigate('/bookings?status=unpaid');
   };
 
   const checkBookingLimit = async () => {
@@ -333,13 +333,13 @@ Total: Rp ${totalPrice.toLocaleString()}`;
               >
 
                 {/* EMPTY TOP LEFT */}
-                <div className="min-w-[110px]"></div>
+                <div className="min-w-27.5"></div>
 
                 {/* HEADER */}
                 {courts.map(court => (
                   <div
                     key={court.id}
-                    className="h-10 flex items-center justify-center font-bold text-[10px] sm:text-xs min-w-[110px]"
+                    className="h-10 flex items-center justify-center font-bold text-[10px] sm:text-xs min-w-27.5"
                   >
                     {court.name}
                   </div>
@@ -367,7 +367,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
 
                       // If no slot exists, render empty div
                       if (!slot) {
-                        return <div key={key} className="min-w-[110px]"></div>;
+                        return <div key={key} className="min-w-27.5"></div>;
                       }
 
                       const isBooked = slot.is_booked === 1;
@@ -377,7 +377,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
                           key={key}
                           onClick={() => !isBooked && toggleSlot(court.id, time)}
                           disabled={isBooked}
-                          className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition min-w-[110px] ${
+                          className={`h-12 sm:h-14 rounded-xl border flex items-center justify-center transition min-w-27.5 ${
                             isBooked
                               ? "bg-gray-300 text-gray-500 border-gray-300 "
                               : isSelected

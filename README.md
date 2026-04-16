@@ -180,7 +180,8 @@ Public/user-facing routes currently defined:
 - `/venue/:id`, `/venues/:id`
 - `/login`
 - `/payment/:paymentId` (user protected)
-- `/profile` (user protected)
+- `/booking-history` (user protected)
+- `/user/security-info` (user protected)
 
 Admin routes currently defined:
 - `/dashboard` (admin protected)
