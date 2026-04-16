@@ -43,9 +43,9 @@ const AdminSectionBreadcrumb = ({ label, items = [] }) => {
     <div className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
       <button
         type="button"
-        onClick={() => navigate('/dashboard')}
+        onClick={() => navigate('/venue')}
         className="cursor-pointer hover:opacity-80 transition"
-        aria-label="Go to dashboard"
+        aria-label="Go to venue"
       >
         <FiHome className="h-4 w-4" aria-hidden="true" />
       </button>

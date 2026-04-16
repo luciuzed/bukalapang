@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FiBarChart2, FiBriefcase, FiGrid, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi'
+import { FiBarChart2, FiBriefcase, FiGrid, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FaShieldAlt } from 'react-icons/fa'
 import Cookies from 'js-cookie'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Sidebar from '../components/Sidebar'
@@ -95,6 +96,8 @@ const AdminBooking = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
+  const [venueQuery, setVenueQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [bookingToCancel, setBookingToCancel] = useState(null)
   const [isCancelProcessing, setIsCancelProcessing] = useState(false)
 
@@ -242,8 +245,22 @@ const AdminBooking = () => {
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
     { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
-    { id: 'security-info', label: 'Security & Info', icon: FiUser, path: '/admin/security-info' },
+    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
+
+  const filteredBookings = bookings.filter((booking) => {
+    const venueName = String(booking.field_name || booking.venue_name || booking.venue || '')
+    const matchesVenue = venueQuery.trim()
+      ? venueName.toLowerCase().includes(venueQuery.trim().toLowerCase())
+      : true
+
+    const normalizedStatus = String(booking.status || '').toLowerCase()
+    const matchesStatus = statusFilter
+      ? normalizedStatus === statusFilter
+      : true
+
+    return matchesVenue && matchesStatus
+  })
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 flex">
@@ -260,18 +277,18 @@ const AdminBooking = () => {
         tabItems={tabItems}
       />
 
-        {/* MAIN CONTENT */}
-        <main className="flex-1 p-8 md:p-10 overflow-y-auto">
-          <div className="max-w-6xl mx-auto">
-            {/* Alerts */}
-            {error && (
-              <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
-                {error}
-              </div>
-            )}
+      {/* MAIN CONTENT */}
+      <main className="flex-1 p-8 md:p-10 overflow-y-auto">
+        <div className="max-w-6xl mx-auto">
+          {/* Alerts */}
+          {error && (
+            <div className="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-medium">
+              {error}
+            </div>
+          )}
 
-            {/* BOOKINGS MANAGEMENT */}
-            <div className="space-y-6">
+          {/* BOOKINGS MANAGEMENT */}
+          <div className="space-y-6">
             <div>
               <div className="mb-3">
                 <AdminSectionBreadcrumb label="Bookings" />
@@ -287,50 +304,72 @@ const AdminBooking = () => {
                 <p className="text-gray-500 font-medium">No bookings yet</p>
               </div>
             ) : (
-              <div className="grid gap-4">
-                {bookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    id={`booking-${booking.id}`}
-                    className={`bg-white rounded-2xl shadow-sm border transition hover:shadow-md overflow-hidden ${
-                      booking.status === 'pending' ? 'border-gray-300' :
-                      'border-gray-200'
-                    }`}
+              <>
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <input
+                    type="text"
+                    placeholder="Search by Venue..."
+                    value={venueQuery}
+                    onChange={(event) => setVenueQuery(event.target.value)}
+                    className="flex-1 min-w-75 bg-white border border-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                    className="bg-white border border-gray-100 px-4 py-3 rounded-xl text-sm font-medium"
                   >
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900">{booking.field_name}</h3>
-                        <p className="text-sm text-gray-600 mt-1">Booking ID: #{booking.id}</p>
-                      </div>
-                        <span className={`inline-flex items-center gap-2 font-bold px-4 py-1.5 text-[10px] rounded-full shrink-0 uppercase tracking-widest ${
-                          booking.status === 'confirmed' ? 'bg-primary text-white' :
-                          booking.status === 'pending' ? 'bg-[#ff8904] text-white' :
-                          'bg-red-600 text-white'}`}> 
+                    <option value="">Filter by Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
 
-                          {booking.status === 'confirmed' && (
-                            <span className="inline-flex items-center gap-2">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                className="w-3.5 h-3.5"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  d="M5 13l4 4L19 7"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                              <span>Confirmed</span>
-                            </span>
-                          )}
-                          
-                          {booking.status === 'pending' && (
-                              <span className="inline-flex items-center gap-2">
+                {filteredBookings.length > 0 ? (
+                  <div className="grid gap-4">
+                    {filteredBookings.map((booking) => (
+                      <div
+                        key={booking.id}
+                        id={`booking-${booking.id}`}
+                        className={`bg-white rounded-2xl shadow-sm border transition hover:shadow-md overflow-hidden ${
+                          booking.status === 'pending' ? 'border-gray-300' :
+                          'border-gray-200'
+                        }`}
+                      >
+                        <div className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold text-gray-900">{booking.field_name}</h3>
+                              <p className="text-sm text-gray-600 mt-1">Booking ID: #{booking.id}</p>
+                            </div>
+                            <span className={`inline-flex items-center gap-2 font-bold px-4 py-1.5 text-[10px] rounded-full shrink-0 uppercase tracking-widest ${
+                              booking.status === 'confirmed' ? 'bg-primary text-white' :
+                              booking.status === 'pending' ? 'bg-[#ff8904] text-white' :
+                              'bg-red-600 text-white'}`}>
+
+                              {booking.status === 'confirmed' && (
+                                <span className="inline-flex items-center gap-2">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    className="w-3.5 h-3.5"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d="M5 13l4 4L19 7"
+                                      stroke="currentColor"
+                                      strokeWidth="3"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                  <span>Confirmed</span>
+                                </span>
+                              )}
+
+                              {booking.status === 'pending' && (
+                                <span className="inline-flex items-center gap-2">
                                   <img
                                     src={pendingIcon}
                                     alt="pending"
@@ -339,111 +378,117 @@ const AdminBooking = () => {
                                     aria-hidden="true"
                                   />
                                   <span>Pending</span>
-                              </span>
-                          )}
+                                </span>
+                              )}
 
-                          {booking.status === 'cancelled' && (
-                            <span className="inline-flex items-center gap-2">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                className="w-3.5 h-3.5"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  d="M6 6l12 12M18 6l-12 12"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                              <span>Cancelled</span>
+                              {booking.status === 'cancelled' && (
+                                <span className="inline-flex items-center gap-2">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    className="w-3.5 h-3.5"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      d="M6 6l12 12M18 6l-12 12"
+                                      stroke="currentColor"
+                                      strokeWidth="3"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                  <span>Rejected</span>
+                                </span>
+                              )}
                             </span>
+                          </div>
+
+                          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-900 font-semibold mt-1">{booking.user_name}</p>
+                              <p className="text-gray-500 text-xs mt-3">{booking.user_email}</p>
+                              {booking.user_phone && (
+                                <p className="text-gray-500 text-xs mt-1">{booking.user_phone}</p>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex gap-10">
+                                <span className="text-gray-600 w-24">Date</span>
+                                {renderWrappedValue(formatSlotDatesFromTimeSlots(booking.time_slots))}
+                              </div>
+                              <div className="flex gap-10">
+                                <span className="text-gray-600 w-24">Time</span>
+                                {renderWrappedValue(formatTimeSlots(booking.time_slots))}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 font-medium">Booking Date</p>
+                              <p className="text-gray-900 font-semibold mt-1">
+                                {new Date(booking.booking_date).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600 font-medium">Amount</p>
+                              <p className="text-primary font-bold text-lg mt-1">
+                                Rp {parseInt(booking.total_amount).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* ACTION BUTTONS */}
+                          {booking.status === 'pending' && (
+                            <div className="flex gap-3 justify-end mt-6 pt-6 border-t border-gray-200">
+                              <button
+                                onClick={() => openCancelModal(booking.id)}
+                                className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition inline-flex items-center gap-2"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  className="w-4 h-4"
+                                  aria-hidden="true"
+                                >
+                                  <path
+                                    d="M6 6l12 12M18 6l-12 12"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                                <span>Cancel</span>
+                              </button>
+                              <button
+                                onClick={() => handleConfirmBooking(booking.id)}
+                                className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary transition flex items-center gap-2"
+                              >
+                                <FiCheck size={16} />
+                                Confirm
+                              </button>
+                            </div>
                           )}
-                      </span>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-900 font-semibold mt-1">{booking.user_name}</p>
-                        <p className="text-gray-500 text-xs mt-3">{booking.user_email}</p>
-                        {booking.user_phone && (
-                          <p className="text-gray-500 text-xs mt-1">{booking.user_phone}</p>
-                        )}
-                        </div>
-                      <div className="space-y-2">
-                        <div className="flex gap-10">
-                          <span className="text-gray-600 w-24">Date</span>
-                          {renderWrappedValue(formatSlotDatesFromTimeSlots(booking.time_slots))}
-                        </div>
-                        <div className="flex gap-10">
-                          <span className="text-gray-600 w-24">Time</span>
-                          {renderWrappedValue(formatTimeSlots(booking.time_slots))}
                         </div>
                       </div>
-                      <div>
-                        <p className="text-gray-600 font-medium">Booking Date</p>
-                        <p className="text-gray-900 font-semibold mt-1">
-                          {new Date(booking.booking_date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600 font-medium">Amount</p>
-                        <p className="text-primary font-bold text-lg mt-1">
-                          Rp {parseInt(booking.total_amount).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* ACTION BUTTONS */}
-                    {booking.status === 'pending' && (
-                      <div className="flex gap-3 justify-end mt-6 pt-6 border-t border-gray-200">
-                        <button
-                          onClick={() => openCancelModal(booking.id)}
-                          className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition inline-flex items-center gap-2"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            className="w-4 h-4"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M6 6l12 12M18 6l-12 12"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          <span>Cancel</span>
-                        </button>
-                        <button
-                          onClick={() => handleConfirmBooking(booking.id)}
-                          className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary transition flex items-center gap-2"
-                        >
-                          <FiCheck size={16} />
-                          Confirm
-                        </button>
-                      </div>
-                    )}
+                    ))}
                   </div>
-                </div>
-                ))}
-              </div>
+                ) : (
+                  <div className="py-10 text-center text-gray-500 font-medium">
+                    No matching bookings found
+                  </div>
+                )}
+              </>
             )}
-            </div>
           </div>
-        </main>
+        </div>
+      </main>
 
       {/* LOADING OVERLAY */}
       <LoadingOverlay show={loading} />

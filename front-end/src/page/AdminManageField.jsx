@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { FiBarChart2, FiBriefcase, FiGrid, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi'
+import { FiBarChart2, FiBriefcase, FiGrid, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FaShieldAlt } from 'react-icons/fa'
 import Cookies from 'js-cookie'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Sidebar from '../components/Sidebar'
@@ -332,7 +333,7 @@ const AdminManageField = () => {
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
     { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
-    { id: 'security-info', label: 'Security & Info', icon: FiUser, path: '/admin/security-info' },
+    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 
   return (

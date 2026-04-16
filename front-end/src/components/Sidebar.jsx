@@ -30,7 +30,7 @@ const Sidebar = ({ activeTabId, adminName, adminEmail, handleLogout, tabItems })
       </nav>
 
       <div className="mt-auto px-3 pb-6">
-        <div className="flex items-center gap-3 rounded-xl bg-white/15 px-4 py-4 backdrop-blur-sm">
+        <div className="flex items-center gap-3 rounded-xl bg-white/15 px-4 py-4">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/25">
             <FiUser className="h-5 w-5 text-white" />
           </div>

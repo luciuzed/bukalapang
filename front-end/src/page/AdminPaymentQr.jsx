@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiBarChart2, FiGrid, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi'
+import { FiBarChart2, FiGrid, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FaShieldAlt } from 'react-icons/fa'
 import Sidebar from '../components/Sidebar'
+import LoadingOverlay from '../components/LoadingOverlay'
 import SuccessMessage from '../components/SuccessMessage'
 import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { API_BASE_URL, apiUrl } from '../config/api'
@@ -166,11 +168,13 @@ const AdminPaymentQr = () => {
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
     { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
-    { id: 'security-info', label: 'Security & Info', icon: FiUser, path: '/admin/security-info' },
+    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 flex">
+      <LoadingOverlay show={loading || isUploading} />
+
       <SuccessMessage
         message={success?.message}
         triggerKey={success?.id}
@@ -204,7 +208,7 @@ const AdminPaymentQr = () => {
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               {loading ? (
-                <div className="text-center py-10 text-gray-500">Loading payment QR...</div>
+                <div className="text-center py-10 text-gray-500">Loading payment data...</div>
               ) : (
                 <div>
                   <button

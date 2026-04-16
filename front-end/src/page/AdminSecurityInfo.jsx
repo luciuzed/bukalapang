@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiBarChart2, FiGrid, FiCalendar, FiCreditCard, FiUser } from 'react-icons/fi'
-import { FaUserEdit, FaKey } from 'react-icons/fa'
+import { FiBarChart2, FiGrid, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FaUserEdit, FaKey, FaShieldAlt } from 'react-icons/fa'
 import Sidebar from '../components/Sidebar'
 import SuccessMessage from '../components/SuccessMessage'
 import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
@@ -115,7 +115,7 @@ const AdminSecurityInfo = () => {
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
     { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
-    { id: 'security-info', label: 'Security & Info', icon: FiUser, path: '/admin/security-info' },
+    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 
   return (
@@ -136,7 +136,7 @@ const AdminSecurityInfo = () => {
 
       <main className="flex-1 p-8 md:p-10 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
+          <div className="max-w-2xl">
             <div className="mb-3">
               <AdminSectionBreadcrumb label="Security & Info" />
             </div>

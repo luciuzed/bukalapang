@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiBarChart2, FiCalendar, FiGrid, FiTrendingUp, FiCreditCard, FiUser } from 'react-icons/fi'
+import { FiBarChart2, FiCalendar, FiGrid, FiTrendingUp, FiCreditCard } from 'react-icons/fi'
+import { FaShieldAlt } from 'react-icons/fa'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Notification from '../components/Notification'
 import Sidebar from '../components/Sidebar'
@@ -291,7 +292,7 @@ const AdminDashboard = () => {
     { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
     { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
     { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
-    { id: 'security-info', label: 'Security & Info', icon: FiUser, path: '/admin/security-info' },
+    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 
   const handleNotificationClick = (bookingId) => {
