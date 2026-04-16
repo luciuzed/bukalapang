@@ -3,6 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 ENV UPLOADS_DIR=/app/uploads
+ENV QR-UPLOADS_DIR=/app/qr
 
 COPY package*.json ./
 RUN npm ci --omit=dev
@@ -10,6 +11,7 @@ RUN npm ci --omit=dev
 COPY . .
 
 RUN mkdir -p /app/uploads
+RUN mkdir -p /app/qr
 
 ENV NODE_ENV=production
 ENV PORT=5000
