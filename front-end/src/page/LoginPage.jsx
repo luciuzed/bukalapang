@@ -670,13 +670,13 @@ const LoginPage = () => {
       <LoadingOverlay show={isLoading} />
 
       {/* LEFT SIDE */}
-      <div className="w-full lg:w-1/2 flex items-center px-6 lg:px-10">
+      <div className="w-full lg:w-1/2 flex items-start sm:px-6 lg:px-16">
         {showOtpUI ? (
           <div className="w-full flex flex-col ">
             <button
                 type="button"
                 onClick={handleOtpBackToAuth}
-                className="flex w-fit items-center gap-2 text-xs font-bold text-gray-400 mb-6 -mt-8 cursor-pointer uppercase hover:text-black"
+                className="flex w-fit items-center gap-2 text-xs font-bold text-gray-400 mb-6 pt-10 cursor-pointer uppercase hover:text-black"
               >
               <FaChevronLeft /> Back
             </button>
@@ -688,7 +688,7 @@ const LoginPage = () => {
             </div>
 
             <div className="w-full flex justify-center mb-6">
-              <div className="w-3/4 flex justify-between gap-3">
+              <div className="flex justify-center gap-3 sm:w-3/4 sm:justify-between">
                 {otpCode.map((digit, index) => (
                   <input
                     key={index}
@@ -749,12 +749,12 @@ const LoginPage = () => {
         ) : showResetUI ? (
           <form
             onSubmit={handleSubmit(handleResetPasswordSubmit)}
-            className="w-full flex flex-col pt-5"
+            className="w-full flex flex-col"
           >
             <button
               type="button"
               onClick={handleResetBackToAuth}
-              className="flex w-fit items-center gap-2 text-xs font-bold cursor-pointer text-gray-400 mb-6 -mt-8 uppercase hover:text-black"
+              className="flex w-fit items-center gap-2 text-xs font-bold cursor-pointer text-gray-400 mb-6 pt-10 uppercase hover:text-black"
             >
               <FaChevronLeft /> Back
             </button>
@@ -1017,9 +1017,9 @@ const LoginPage = () => {
 
           {mode === "register" && (
             <div className="w-full flex justify-center">
-              <div className="w-3/4 flex gap-4 mb-4">
+              <div className="w-3/4 flex flex-col sm:flex-row gap-4 mb-4">
 
-                <div className={`w-1/2 ${errors.password ? 'mb-0' : ''}`}>
+                <div className={`w-full sm:w-1/2 ${errors.password ? 'mb-0' : ''}`}>
                   <PasswordInput
                     placeholder="Password"
                     showPassword={showPassword}
@@ -1041,7 +1041,7 @@ const LoginPage = () => {
                   )}
                 </div>
 
-                <div className={`w-1/2 ${errors.confirmPassword ? 'mb-0' : ''}`}>
+                <div className={`w-full sm:w-1/2 ${errors.confirmPassword ? 'mb-0' : ''}`}>
                   <PasswordInput
                     placeholder="Confirm Password"
                     showPassword={showConfirmPassword}

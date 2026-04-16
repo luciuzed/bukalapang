@@ -5,7 +5,7 @@ import { FaInstagram, FaEnvelope } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#e6f7ef] border-t border-gray-100 pt-16 pb-8 px-6 mt-20 relative left-1/2 right-1/2 w-screen -translate-x-1/2">
+    <footer className="bg-[#e6f7ef] border-t border-gray-100 pt-16 pb-8 px-6 mt-20 w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 pb-12 border-b border-primary/20">
           

@@ -304,7 +304,7 @@ const Payment = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
                     onClick={() => navigate('/venue')}
-                    className="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-2xl font-bold text-base sm:text-lg hover:bg-gray-50 transition-colors"
+                    className="w-full border-2 border-gray-300 text-gray-700 py-3 rounded-2xl cursor-pointer font-bold text-base sm:text-lg hover:bg-gray-50 transition-colors"
                   >
                     Return to Venues
                   </button>
@@ -312,7 +312,7 @@ const Payment = () => {
                   <button
                     onClick={handleConfirmPayment}
                     disabled={processing || paymentStatus !== 'unpaid'}
-                    className="w-full bg-primary text-white py-3 rounded-2xl font-bold text-base sm:text-lg hover:shadow-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="w-full bg-primary text-white py-3 rounded-2xl cursor-pointer font-bold text-base sm:text-lg hover:shadow-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {processing ? (
                       <span className="flex items-center justify-center gap-2">

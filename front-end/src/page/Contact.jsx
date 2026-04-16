@@ -19,7 +19,8 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <main className="flex-grow flex flex-col lg:flex-row overflow-x-hidden">
+      
+      <main className="flex-grow flex flex-col lg:flex-row ">
         
         {/* LEFT SIDE: Image Section */}
         <div className="lg:w-1/2 relative min-h-[30vh] lg:min-h-screen scale-80">
@@ -31,7 +32,7 @@ const Contact = () => {
           {/* Gradient overlay for text contrast */}
           <div className="absolute inset-0 bg-primary/50 lg:bg-gradient-to-r from-primary/80 via-black/40 to-transparent rounded-4xl"></div>
           
-          <div className="relative h-full flex flex-col justify-center px-8 lg:px-20 text-white z-10">
+          <div className="relative h-full flex flex-col justify-center p-10 px-8 lg:px-20 lg:p-0 text-white z-10">
             <h2 className="text-4xl lg:text-6xl font-black mb-6 leading-tight">
               Ayo Mulai<br />Main Bareng!
             </h2>
@@ -44,13 +45,13 @@ const Contact = () => {
                 <div className="bg-primary p-4 rounded-2xl text-white">
                   <FaPhoneAlt />
                 </div>
-                <p className="font-bold text-lg">+62 812-3456-7890</p>
+                <p className="font-bold text-lg">+62 822-6750-2066</p>
               </div>
               <div className="flex items-center gap-4">
                 <div className="bg-primary p-4 rounded-2xl text-white">
                   <FaEnvelope />
                 </div>
-                <p className="font-bold text-lg">support@mainyuk.id</p>
+                <p className="font-bold text-lg">mainyukapp@gmail.com</p>
               </div>
             </div>
           </div>

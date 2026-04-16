@@ -257,7 +257,7 @@ Total: Rp ${totalPrice.toLocaleString()}`;
     <div className="max-w-6xl mx-auto py-8 px-4 mb-20">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-xs font-bold text-gray-400 mb-6 uppercase hover:text-black"
+        className="flex items-center gap-2 text-xs font-bold cursor-pointer text-gray-400 mb-6 uppercase hover:text-black"
       >
         <FaChevronLeft /> Back
       </button>
@@ -279,10 +279,10 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             <h1 className="text-3xl font-black">{field.name}</h1>
             <button
               onClick={openGoogleMaps}
-              className="mt-2 flex w-full items-start gap-2 text-left text-primary hover:underline"
+              className="mt-2 flex items-start gap-2 text-left cursor-pointer text-primary hover:underline"
             >
               <FaMapMarkerAlt className="mt-0.5 shrink-0" />
-              <span className="min-w-0 flex-1 wrap-anywhere">{field.address}</span>
+              <span className="min-w-0 flex-1 wrap-anywhere w-fit">{field.address}</span>
             </button>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -309,11 +309,10 @@ Total: Rp ${totalPrice.toLocaleString()}`;
                 setSelectedDate(e.target.value);
                 setSelectedSlotIds([]);
               }}
-              className="border border-gray-300 rounded-xl px-4 py-2 w-full"
+              className="border border-gray-300 rounded-xl px-4 py-2 w-full cursor-pointer"
             />
           </div>
 
-          {/* SLOT TABLE */}
           {/* SLOT GRID */}
           <div>
             <p className="text-xs font-bold mb-3">Select Time & Court</p>
@@ -451,14 +450,14 @@ Total: Rp ${totalPrice.toLocaleString()}`;
             <button
               onClick={handleBookClick}
               disabled={selectedDateSlots.length === 0 || selectedSlotIds.length === 0 || isCheckingBookingLimit}
-              className="w-full py-4 bg-primary text-white rounded-2xl font-bold disabled:bg-gray-300 disabled:cursor-not-allowed disabled:text-gray-500 hover:bg-primary/90 transition"
+              className="w-full py-4 bg-primary text-white rounded-2xl cursor-pointer font-bold disabled:bg-gray-300 disabled:text-gray-500 hover:bg-primary/90 transition"
             >
               {isCheckingBookingLimit ? 'Checking...' : `Book • Rp ${totalPrice.toLocaleString()}`}
             </button>
 
             <button
               onClick={contactWhatsApp}
-              className="w-full py-3 bg-[#22c35d] text-white rounded-2xl flex items-center justify-center gap-2 font-semibold hover:bg-green-600 transition"
+              className="w-full py-3 bg-[#22c35d] text-white rounded-2xl flex items-center justify-center gap-2 cursor-pointer font-semibold hover:bg-green-600 transition"
             >
               <FaWhatsapp /> Ask via WhatsApp
             </button>

@@ -103,12 +103,13 @@ const LoginGuard = ({ children }) => {
 
 function App() {
   const location = useLocation()
-  const fullWidthPages = ["/dashboard", "/profile", "/field", "/booking", "/admin/payment-qr", "/admin/security-info", "/"]
+  const fullWidthPages = ["/dashboard", "/profile", "/field", "/booking", "/admin/payment-qr", "/admin/security-info", "/", "/contact"]
   const paymentPages = location.pathname.match(/^\/payment\//)
   const fieldManagePages = location.pathname.match(/^\/field\/manage\/[^/]+$/)
   const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages && !fieldManagePages
   const isHome = location.pathname === "/"
-  const finalShowNavbar = showNavbar || isHome
+  const isContact = location.pathname === "/contact"
+  const finalShowNavbar = showNavbar || isHome || isContact
   const isFullWidth = fullWidthPages.includes(location.pathname) || Boolean(fieldManagePages)
   const wrapperClass = isFullWidth ? "min-h-screen" : "container mx-auto px-10"
 

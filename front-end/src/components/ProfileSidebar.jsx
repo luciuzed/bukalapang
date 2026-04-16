@@ -11,12 +11,30 @@ const ProfileSidebar = ({ activeTab, setActiveTab, userName, userEmail, handleLo
   return (
     <>
       {/* Mobile Toggle Button */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <button 
+      <div
+        className={`md:hidden fixed top-4 z-50 transition-all duration-300 ${
+          isOpen ? 'left-[calc(16rem-3.5rem)]' : 'left-4'
+        }`}
+      >
+        <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-3 bg-primary shadow-lg rounded-xl text-white"
+          className={`
+            group relative flex items-center justify-center
+            w-11 h-11 rounded-2xl
+            bg-white/90 backdrop-blur-md
+            shadow-lg shadow-black/10
+            border border-white/30
+            transition-all duration-300
+            hover:scale-105 active:scale-95
+          `}
         >
-          {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          {/* Glow effect */}
+          <div className="absolute inset-0 rounded-2xl bg-primary/10 opacity-0 group-hover:opacity-100 transition" />
+
+          {/* Icon */}
+          <div className="relative text-primary">
+            {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+          </div>
         </button>
       </div>
 
