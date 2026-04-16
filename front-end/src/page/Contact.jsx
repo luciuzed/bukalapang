@@ -19,7 +19,7 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <main className="flex-grow flex flex-col lg:flex-row">
+      <main className="flex-grow flex flex-col lg:flex-row overflow-x-hidden">
         
         {/* LEFT SIDE: Image Section */}
         <div className="lg:w-1/2 relative min-h-[30vh] lg:min-h-screen scale-80">

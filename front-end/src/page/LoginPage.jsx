@@ -521,7 +521,7 @@ const LoginPage = () => {
           type="button"
           onClick={() => !disabled && handleRoleChange('User')}
           disabled={disabled}
-          className={`flex-1 pb-3 font-semibold ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${
+          className={`flex-1 pb-3 font-semibold cursor-pointer ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${
             role === 'User'
               ? 'text-primary border-b-2 border-primary'
               : 'text-gray-400'
@@ -534,7 +534,7 @@ const LoginPage = () => {
           type="button"
           onClick={() => !disabled && handleRoleChange('Business')}
           disabled={disabled}
-          className={`flex-1 pb-3 font-semibold ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${
+          className={`flex-1 pb-3 font-semibold cursor-pointer ${disabled ? 'cursor-not-allowed opacity-60' : ''} ${
             role === 'Business'
               ? 'text-primary border-b-2 border-primary'
               : 'text-gray-400'
@@ -676,7 +676,7 @@ const LoginPage = () => {
             <button
                 type="button"
                 onClick={handleOtpBackToAuth}
-                className="flex items-center gap-2 text-xs font-bold text-gray-400 mb-6 -mt-8  uppercase hover:text-black"
+                className="flex w-fit items-center gap-2 text-xs font-bold text-gray-400 mb-6 -mt-8 cursor-pointer uppercase hover:text-black"
               >
               <FaChevronLeft /> Back
             </button>
@@ -717,7 +717,7 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={handleOtpVerify}
-                className="w-3/4 bg-primary text-white py-3 rounded-full font-semibold hover:opacity-90 transition"
+                className="w-3/4 bg-primary text-white py-3 rounded-full font-semibold cursor-pointer hover:opacity-90 transition"
                 disabled={otpRemaining <= 0 || isLoading}
               >
                 Verify OTP
@@ -728,7 +728,7 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={handleResendOtp}
-                className="text-gray-500 hover:text-primary hover:underline"
+                className="text-gray-500 cursor-pointer hover:text-primary hover:underline"
                 disabled={isLoading}
               >
                 Resend OTP
@@ -754,7 +754,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={handleResetBackToAuth}
-              className="flex items-center gap-2 text-xs font-bold text-gray-400 mb-6 -mt-8 uppercase hover:text-black"
+              className="flex w-fit items-center gap-2 text-xs font-bold cursor-pointer text-gray-400 mb-6 -mt-8 uppercase hover:text-black"
             >
               <FaChevronLeft /> Back
             </button>
@@ -1006,7 +1006,7 @@ const LoginPage = () => {
                   <button
                     type="button"
                     onClick={handleForgotPassword}
-                    className="text-sm text-primary hover:text-primary-dark hover:underline focus:outline-none"
+                    className="text-sm text-primary hover:text-primary-dark cursor-pointer hover:underline focus:outline-none"
                   >
                     Forgot Password?
                   </button>
