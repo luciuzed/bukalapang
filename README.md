@@ -69,7 +69,6 @@ MainYuk! is a full-stack web app for sports venue reservations.
 
 - Node.js 20+
 - npm
-- MySQL database (with the required schema/tables already created)
 - Docker Desktop (optional, for containerized run)
 
 ### Environment Variables
@@ -87,7 +86,7 @@ DB_USER=your_mysql_user
 DB_PASSWORD=your_mysql_password
 DB_NAME=your_database_name
 
-# Optional for Docker backend host override
+# Optional if you run backend in Docker without this compose file
 DB_HOST_DOCKER=host.docker.internal
 
 # Upload storage path (optional)
@@ -119,6 +118,21 @@ This repository does not include migration/seed SQL files. The app expects these
 - `booking`
 - `booking_slot`
 - `payment`
+
+You can create all required tables with one command (run this after the database container is up):
+
+```bash
+docker compose exec backend npm run db:setup
+```
+
+Alternative from host machine (outside containers):
+
+```bash
+cd back-end
+npm run db:setup
+```
+
+The setup script is in `back-end/setup-database.js` and is manual-only (it is not run automatically by `npm start` or `npm run dev`).
 
 ### Local Development
 
@@ -152,9 +166,18 @@ From repository root:
 docker compose up --build
 ```
 
+This starts frontend, backend, and a local MySQL container for contributor convenience. The MySQL container is intended for local/dev usage only, not as a production deployment database.
+
+If your database schema has not been initialized yet, run:
+
+```bash
+docker compose exec backend npm run db:setup
+```
+
 Default exposed ports:
 - Frontend: `http://localhost:8080`
 - Backend API: `http://localhost:5000`
+- MySQL: `localhost:3306`
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -196,6 +219,7 @@ Admin routes currently defined:
 
 - `npm start` - run with Node
 - `npm run dev` - run with Nodemon
+- `npm run db:setup` - create required MySQL tables
 
 ### Frontend (`front-end/package.json`)
 

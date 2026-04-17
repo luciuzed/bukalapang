@@ -3,7 +3,7 @@ const { Resend } = require('resend');
 
 const router = express.Router();
 
-const CONTACT_EMAIL = process.env.CONTACT_TO || 'mainyukapp@gmail.com';
+const CONTACT_EMAIL = process.env.CONTACT_TO;
 
 const escapeHtml = (value) => String(value)
   .replace(/&/g, '&amp;')
