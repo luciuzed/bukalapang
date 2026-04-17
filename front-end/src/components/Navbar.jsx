@@ -259,6 +259,7 @@ const Navbar = () => {
                 style={{
                   position: 'absolute',
                   right: 0,
+                  top: '100%',
                   marginTop: '0.5rem',
                   width: '256px',
                   backgroundColor: 'white',
