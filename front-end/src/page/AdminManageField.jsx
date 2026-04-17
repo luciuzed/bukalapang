@@ -12,6 +12,9 @@ import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { API_BASE_URL, apiUrl } from '../config/api'
 
 const MAX_DESCRIPTION_LENGTH = 160
+const FIELD_NAME_MAX_LENGTH = 80
+const FIELD_ADDRESS_MAX_LENGTH = 200
+const GOOGLE_MAPS_LINK_MAX_LENGTH = 500
 const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '')
 const LOCAL_UPLOAD_IMAGE_PATTERN = /^\/uploads\/.+\.(jpe?g|png)$/i
 
@@ -319,7 +322,7 @@ const AdminManageField = () => {
 
   const openSlotManagementPage = (field) => {
     setError('')
-    navigate(`/field/manage/${field.id}`)
+    navigate(`/admin/manage-field/manage/${field.id}`)
   }
 
   const handleLogout = () => {
@@ -329,10 +332,10 @@ const AdminManageField = () => {
   }
 
   const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
-    { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
-    { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
+    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
+    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
+    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
+    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
     { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 
@@ -527,8 +530,15 @@ const AdminManageField = () => {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Name *</label>
                 <input
-                  {...register('fieldName', { required: 'Field name is required' })}
+                  {...register('fieldName', {
+                    required: 'Field name is required',
+                    maxLength: {
+                      value: FIELD_NAME_MAX_LENGTH,
+                      message: `Field name must be ${FIELD_NAME_MAX_LENGTH} characters or fewer`,
+                    },
+                  })}
                   placeholder="e.g., Main Futsal Court"
+                  maxLength={FIELD_NAME_MAX_LENGTH}
                   className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
                     errors.fieldName ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -560,8 +570,15 @@ const AdminManageField = () => {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Address *</label>
                 <input
-                  {...register('address', { required: 'Address is required' })}
+                  {...register('address', {
+                    required: 'Address is required',
+                    maxLength: {
+                      value: FIELD_ADDRESS_MAX_LENGTH,
+                      message: `Address must be ${FIELD_ADDRESS_MAX_LENGTH} characters or fewer`,
+                    },
+                  })}
                   placeholder="e.g., Jl. Merdeka No. 1"
+                  maxLength={FIELD_ADDRESS_MAX_LENGTH}
                   className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
                     errors.address ? 'border-red-500' : 'border-gray-300'
                   }`}
@@ -652,11 +669,20 @@ const AdminManageField = () => {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Google Maps Link</label>
                 <input
-                  {...register('googleMapsLink')}
+                  {...register('googleMapsLink', {
+                    maxLength: {
+                      value: GOOGLE_MAPS_LINK_MAX_LENGTH,
+                      message: `Google Maps link must be ${GOOGLE_MAPS_LINK_MAX_LENGTH} characters or fewer`,
+                    },
+                  })}
                   placeholder="https://maps.google.com/..."
                   type="url"
+                  maxLength={GOOGLE_MAPS_LINK_MAX_LENGTH}
                   className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px]"
                 />
+                {errors.googleMapsLink && (
+                  <p className="text-red-500 text-xs mt-1 ml-4">{errors.googleMapsLink.message}</p>
+                )}
               </div>
 
               <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">

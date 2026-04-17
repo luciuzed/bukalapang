@@ -5,6 +5,10 @@ import { apiUrl } from "../config/api";
 
 import img from "../assets/badmin.jpg";
 
+const CONTACT_NAME_MAX_LENGTH = 100;
+const CONTACT_EMAIL_MAX_LENGTH = 254;
+const CONTACT_MESSAGE_MAX_LENGTH = 1000;
+
 const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -108,6 +112,7 @@ const Contact = () => {
                   required
                   placeholder="Nama anda"
                   value={formData.name}
+                  maxLength={CONTACT_NAME_MAX_LENGTH}
                   className="w-full bg-gray-50 border border-gray-100 focus:border-primary/20 focus:bg-white focus:ring-4 focus:ring-primary/5 p-4 rounded-2xl text-sm transition-all outline-none"
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                 />
@@ -120,6 +125,7 @@ const Contact = () => {
                   required
                   placeholder="email@example.com"
                   value={formData.email}
+                  maxLength={CONTACT_EMAIL_MAX_LENGTH}
                   className="w-full bg-gray-50 border border-gray-100 focus:border-primary/20 focus:bg-white focus:ring-4 focus:ring-primary/5 p-4 rounded-2xl text-sm transition-all outline-none"
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
@@ -132,6 +138,7 @@ const Contact = () => {
                   required
                   placeholder="Apa yang bisa kami bantu?"
                   value={formData.message}
+                  maxLength={CONTACT_MESSAGE_MAX_LENGTH}
                   className="w-full bg-gray-50 border border-gray-100 focus:border-primary/20 focus:bg-white focus:ring-4 focus:ring-primary/5 p-4 rounded-3xl text-sm transition-all outline-none resize-none"
                   onChange={(e) => setFormData({...formData, message: e.target.value})}
                 ></textarea>

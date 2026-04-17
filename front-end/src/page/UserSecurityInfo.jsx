@@ -6,6 +6,8 @@ import ProfileSidebar from '../components/ProfileSidebar'
 import { apiUrl } from '../config/api'
 import { FaUserEdit, FaKey } from 'react-icons/fa';
 
+const PASSWORD_MAX_LENGTH = 72
+
 const getAccountId = (session) =>
   session?.id ?? session?.userId ?? session?.user_id ?? session?.accountId ?? null
 
@@ -55,6 +57,11 @@ const UserSecurityInfo = () => {
 
     if (newPassword.length < 6) {
       setGeneralError('New password must be at least 6 characters')
+      return
+    }
+
+    if (newPassword.length > PASSWORD_MAX_LENGTH) {
+      setGeneralError(`New password must be ${PASSWORD_MAX_LENGTH} characters or fewer`)
       return
     }
 
@@ -168,6 +175,7 @@ const UserSecurityInfo = () => {
                     type="password"
                     placeholder="Current Password"
                     value={currentPassword}
+                    maxLength={PASSWORD_MAX_LENGTH}
                     onChange={(event) => {
                       setCurrentPassword(event.target.value)
                       if (currentPasswordError) setCurrentPasswordError('')
@@ -183,6 +191,7 @@ const UserSecurityInfo = () => {
                     type="password"
                     placeholder="New Password"
                     value={newPassword}
+                    maxLength={PASSWORD_MAX_LENGTH}
                     onChange={(event) => setNewPassword(event.target.value)}
                     className="w-full bg-gray-50 border border-transparent focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none"
                   />

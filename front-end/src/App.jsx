@@ -58,7 +58,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
     const userSession = Cookies.get('user_session')
 
     if (adminSession) {
-      return <Navigate to="/dashboard" replace />
+      return <Navigate to="/admin/dashboard" replace />
     } else if (userSession) {
       return <Navigate to="/venue" replace />
     } else {
@@ -95,7 +95,7 @@ const LoginGuard = ({ children }) => {
   if (!canAccess) {
     // Redirect based on session type
     const adminSession = Cookies.get('admin_session')
-    const redirectPath = adminSession ? '/dashboard' : '/venue'
+    const redirectPath = adminSession ? '/admin/dashboard' : '/venue'
     return <Navigate to={redirectPath} replace />
   }
 
@@ -104,9 +104,9 @@ const LoginGuard = ({ children }) => {
 
 function App() {
   const location = useLocation()
-  const fullWidthPages = ["/dashboard", "/bookings", "/user/security-info", "/field", "/booking", "/admin/payment-qr", "/admin/security-info", "/", "/contact"]
+  const fullWidthPages = ["/admin/dashboard", "/bookings", "/user/security-info", "/admin/manage-field", "/admin/manage-booking", "/admin/payment-method", "/admin/security-info", "/", "/contact"]
   const paymentPages = location.pathname.match(/^\/payment\//)
-  const fieldManagePages = location.pathname.match(/^\/field\/manage\/[^/]+$/)
+  const fieldManagePages = location.pathname.match(/^\/admin\/manage-field\/manage\/[^/]+$/)
   const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages && !fieldManagePages
   const isHome = location.pathname === "/"
   const isContact = location.pathname === "/contact"
@@ -134,7 +134,7 @@ function App() {
         />
         <Route path="/login" element={<LoginGuard><LoginPage /></LoginGuard>} />
         <Route 
-          path="/dashboard" 
+          path="/admin/dashboard" 
           element={
             <ProtectedRoute allowedRole="admin">
               <AdminDashboard />
@@ -142,7 +142,7 @@ function App() {
           } 
         />
         <Route 
-          path="/field" 
+          path="/admin/manage-field" 
           element={
             <ProtectedRoute allowedRole="admin">
               <AdminManageField />
@@ -150,7 +150,7 @@ function App() {
           } 
         />
         <Route
-          path="/field/manage/:fieldId"
+          path="/admin/manage-field/manage/:fieldId"
           element={
             <ProtectedRoute allowedRole="admin">
               <AdminManageSlot />
@@ -158,7 +158,7 @@ function App() {
           }
         />
         <Route 
-          path="/booking" 
+          path="/admin/manage-booking" 
           element={
             <ProtectedRoute allowedRole="admin">
               <AdminBooking />
@@ -166,7 +166,7 @@ function App() {
           } 
         />
         <Route
-          path="/admin/payment-qr"
+          path="/admin/payment-method"
           element={
             <ProtectedRoute allowedRole="admin">
               <AdminPaymentQr />

@@ -33,6 +33,9 @@ const addDaysToLocalDateString = (dateString, daysToAdd) => {
 const getSlotDate = (dateTimeValue) => String(dateTimeValue || '').slice(0, 10)
 const getSlotTime = (dateTimeValue) => String(dateTimeValue || '').slice(11, 16)
 
+const COURT_NAME_MAX_LENGTH = 60
+const SLOT_PRICE_MAX = 10000000
+
 const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) => {
   const maxGenerateDays = 120
   const [courts, setCourts] = useState([])
@@ -146,6 +149,11 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
       return
     }
 
+    if (newCourtName.trim().length > COURT_NAME_MAX_LENGTH) {
+      showErrorMessage(`Court name must be ${COURT_NAME_MAX_LENGTH} characters or fewer`)
+      return
+    }
+
     try {
       const response = await fetch(apiUrl(`/field/${field.id}/courts`), {
         method: 'POST',
@@ -219,6 +227,17 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
       return
     }
 
+    const parsedCourtPrice = parseFloat(courtPrice)
+    if (!Number.isFinite(parsedCourtPrice) || parsedCourtPrice <= 0) {
+      showErrorMessage('Please enter a valid price')
+      return
+    }
+
+    if (parsedCourtPrice > SLOT_PRICE_MAX) {
+      showErrorMessage(`Price per slot cannot exceed Rp ${SLOT_PRICE_MAX.toLocaleString('id-ID')}`)
+      return
+    }
+
     if (courtOpenTime >= courtCloseTime) {
       showErrorMessage('Opening time must be before closing time')
       return
@@ -229,6 +248,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
 
   const handleGenerateSlots = async () => {
     const today = getLocalToday()
+    const parsedCourtPrice = parseFloat(courtPrice)
 
     if (!Number.isInteger(recurringDuration) || recurringDuration < 1) {
       showErrorMessage('Please fill a valid duration')
@@ -250,6 +270,16 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
       return
     }
 
+    if (!Number.isFinite(parsedCourtPrice) || parsedCourtPrice <= 0) {
+      showErrorMessage('Please enter a valid price')
+      return
+    }
+
+    if (parsedCourtPrice > SLOT_PRICE_MAX) {
+      showErrorMessage(`Price per slot cannot exceed Rp ${SLOT_PRICE_MAX.toLocaleString('id-ID')}`)
+      return
+    }
+
     setSlotsLoading(true)
     try {
       const response = await fetch(apiUrl(`/field/${field.id}/generate-slots`), {
@@ -261,7 +291,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
           courtName: selectedCourt.name,
           openingTime: courtOpenTime,
           closingTime: courtCloseTime,
-          price: parseFloat(courtPrice),
+          price: parsedCourtPrice,
           startDate: recurringStartDate,
           duration: recurringDuration,
           durationType: recurrenceType,
@@ -466,6 +496,11 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
       return
     }
 
+    if (parsedPrice > SLOT_PRICE_MAX) {
+      showErrorMessage(`Price per slot cannot exceed Rp ${SLOT_PRICE_MAX.toLocaleString('id-ID')}`)
+      return
+    }
+
     try {
       setIsEditingSlotPrice(true)
       const response = await fetch(apiUrl(`/field/${field.id}/slots/update-price`), {
@@ -554,7 +589,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
             <div className="mb-3">
               <AdminSectionBreadcrumb
                 items={[
-                  { label: 'Manage Fields', path: '/field' },
+                  { label: 'Manage Fields', path: '/admin/manage-field' },
                   { label: 'Manage Courts' },
                 ]}
               />
@@ -593,6 +628,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                     <input
                       placeholder="e.g., Court A, Lapangan 1"
                       value={newCourtName}
+                      maxLength={COURT_NAME_MAX_LENGTH}
                       onChange={(e) => setNewCourtName(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -705,6 +741,8 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                       <input
                         type="number"
                         value={courtPrice}
+                        min="1"
+                        max={SLOT_PRICE_MAX}
                         onChange={(e) => setCourtPrice(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
                       />
@@ -1114,6 +1152,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                 <input
                   type="number"
                   min="1"
+                  max={SLOT_PRICE_MAX}
                   value={editPriceValue}
                   onChange={(e) => setEditPriceValue(e.target.value)}
                   onKeyDown={(e) => {
@@ -1280,10 +1319,10 @@ const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
   }
 
   const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
-    { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
-    { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
+    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
+    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
+    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
+    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
     { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 
@@ -1315,7 +1354,7 @@ const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
             <AdminManageSlotContent
               field={routeField}
               adminId={routeAdminId}
-              onClose={() => navigate('/field')}
+              onClose={() => navigate('/admin/manage-field')}
               embedded
             />
           )}

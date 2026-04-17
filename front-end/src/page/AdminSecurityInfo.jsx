@@ -8,6 +8,8 @@ import SuccessMessage from '../components/SuccessMessage'
 import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { apiUrl } from '../config/api'
 
+const PASSWORD_MAX_LENGTH = 72
+
 const maskEmail = (email) => {
   if (!email || !email.includes('@')) return '***@***.com'
   const [name, domain] = email.split('@')
@@ -57,6 +59,11 @@ const AdminSecurityInfo = () => {
 
     if (newPassword.length < 6) {
       setGeneralError('New password must be at least 6 characters')
+      return
+    }
+
+    if (newPassword.length > PASSWORD_MAX_LENGTH) {
+      setGeneralError(`New password must be ${PASSWORD_MAX_LENGTH} characters or fewer`)
       return
     }
 
@@ -111,10 +118,10 @@ const AdminSecurityInfo = () => {
   }
 
   const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
-    { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
-    { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
+    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
+    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
+    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
+    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
     { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 
@@ -190,6 +197,7 @@ const AdminSecurityInfo = () => {
                     type="password"
                     placeholder="Current Password"
                     value={currentPassword}
+                    maxLength={PASSWORD_MAX_LENGTH}
                     onChange={(event) => {
                       setCurrentPassword(event.target.value)
                       if (currentPasswordError) setCurrentPasswordError('')
@@ -205,6 +213,7 @@ const AdminSecurityInfo = () => {
                     type="password"
                     placeholder="New Password"
                     value={newPassword}
+                    maxLength={PASSWORD_MAX_LENGTH}
                     onChange={(event) => setNewPassword(event.target.value)}
                     className="w-full bg-gray-50 border border-transparent focus:border-primary/20 focus:bg-white p-4 rounded-xl text-sm transition-all outline-none"
                   />

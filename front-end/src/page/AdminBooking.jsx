@@ -241,10 +241,10 @@ const AdminBooking = () => {
   }
 
   const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/field' },
-    { id: 'bookings', label: 'Bookings', icon: FiCalendar, path: '/booking' },
-    { id: 'payment-qr', label: 'Payment QR', icon: FiCreditCard, path: '/admin/payment-qr' },
+    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
+    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
+    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
+    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
     { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
   ]
 

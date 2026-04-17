@@ -221,7 +221,7 @@ const Navbar = () => {
                   {/* Admin Options */}
                   {admin && (
                     <>
-                      <Link to="/dashboard" onClick={() => {
+                      <Link to="/admin/dashboard" onClick={() => {
                         setIsCardExiting(true)
                         setTimeout(() => {
                           setShowDropdown(false)
@@ -233,7 +233,7 @@ const Navbar = () => {
                               <FiBarChart2 className="h-3.75 w-3.75 text-gray-500" /> Dashboard
                         </div>
                       </Link>
-                      <Link to="/field" onClick={() => {
+                      <Link to="/admin/manage-field" onClick={() => {
                         setIsCardExiting(true)
                         setTimeout(() => {
                           setShowDropdown(false)
@@ -245,7 +245,7 @@ const Navbar = () => {
                               <FiGrid className="h-3.75 w-3.75 text-gray-500" /> Manage Fields
                         </div>
                       </Link>
-                      <Link to="/booking" onClick={() => {
+                      <Link to="/admin/manage-booking" onClick={() => {
                         setIsCardExiting(true)
                         setTimeout(() => {
                           setShowDropdown(false)
@@ -254,10 +254,10 @@ const Navbar = () => {
                         }, 300)
                       }}>
                             <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
-                              <FiCalendar className="h-3.75 w-3.75 text-gray-500" /> Bookings
+                              <FiCalendar className="h-3.75 w-3.75 text-gray-500" /> Manage Bookings
                         </div>
                       </Link>
-                      <Link to="/admin/payment-qr" onClick={() => {
+                      <Link to="/admin/payment-method" onClick={() => {
                         setIsCardExiting(true)
                         setTimeout(() => {
                           setShowDropdown(false)
@@ -266,7 +266,7 @@ const Navbar = () => {
                         }, 300)
                       }}>
                             <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
-                              <FiCreditCard className="h-3.75 w-3.75 text-gray-500" /> Payment QR
+                              <FiCreditCard className="h-3.75 w-3.75 text-gray-500" /> Payment Method
                         </div>
                       </Link>
                       <Link to="/admin/security-info" onClick={() => {
@@ -351,7 +351,7 @@ const Navbar = () => {
                 <span>{admin.adminName}</span>
               </div>
 
-              <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+              <Link to="/admin/dashboard" onClick={() => setIsOpen(false)}>
                 Dashboard
               </Link>
 

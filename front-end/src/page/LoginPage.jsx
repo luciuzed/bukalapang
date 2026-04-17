@@ -11,6 +11,11 @@ import { apiUrl } from '../config/api'
 import Cookies from 'js-cookie';
 import { FaUser, FaLock, FaPhoneAlt, FaEye, FaEyeSlash, FaChevronLeft, FaEnvelope } from "react-icons/fa";
 
+const EMAIL_MAX_LENGTH = 254
+const PASSWORD_MAX_LENGTH = 72
+const FULL_NAME_MAX_LENGTH = 100
+const PHONE_MAX_LENGTH = 15
+
 const PasswordInput = ({ placeholder, showPassword, setShowPassword, error, ...props }) => {
   return (
     <div className="relative w-full">
@@ -154,7 +159,7 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok && data.otpNeeded) {
-        const targetRoute = role === "User" ? "/venue" : "/dashboard"
+        const targetRoute = role === "User" ? "/venue" : "/admin/dashboard"
         setPendingOtpInfo({ email: formData.email, role, redirect: targetRoute })
         setPendingLoginRoute(targetRoute)
         setOtpCode(['', '', '', ''])
@@ -164,7 +169,7 @@ const LoginPage = () => {
         return
       } else if (response.ok) {
         Cookies.set('user_session', JSON.stringify(data.user), { expires: 7 });
-        const targetRoute = role === "User" ? "/venue" : "/dashboard"
+        const targetRoute = role === "User" ? "/venue" : "/admin/dashboard"
         navigate(targetRoute)
         return
       } else {
@@ -205,7 +210,7 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (response.ok && data.otpNeeded) {
-        const targetRoute = role === "User" ? "/home" : "/dashboard"
+        const targetRoute = role === "User" ? "/home" : "/admin/dashboard"
         setPendingOtpInfo({ email: formData.email, role, name: formData.fullName, phone: formData.phone, redirect: targetRoute })
         setOtpCode(['', '', '', ''])
         setOtpTimerCycle((prev) => prev + 1)
@@ -215,7 +220,7 @@ const LoginPage = () => {
         return
       } else if (response.ok) {
         Cookies.set('user_session', JSON.stringify(data.user), { expires: 7 });
-        const targetRoute = role === "User" ? "/home" : "/dashboard"
+        const targetRoute = role === "User" ? "/home" : "/admin/dashboard"
         navigate(targetRoute)
         setError('')
         return
@@ -357,8 +362,8 @@ const LoginPage = () => {
     let cleaned = value.replace(/[^\d+]/g, '')
     
     if (cleaned.startsWith('+62')) {
-      if (cleaned.length < 10 || cleaned.length > 15) {
-        return "Phone number must be between 10-15 digits"
+      if (cleaned.length < 12 || cleaned.length > PHONE_MAX_LENGTH) {
+        return `Phone number must be 12-${PHONE_MAX_LENGTH} characters in +62 format`
       }
     } else if (cleaned.startsWith('0')) {
       if (cleaned.length < 10 || cleaned.length > 13) {
@@ -605,6 +610,14 @@ const LoginPage = () => {
       return
     }
 
+    if (String(formData.newPassword).length > PASSWORD_MAX_LENGTH) {
+      setFieldError('newPassword', {
+        type: 'manual',
+        message: `Maximum ${PASSWORD_MAX_LENGTH} characters`,
+      })
+      return
+    }
+
     if (!formData.confirmNewPassword) {
       setFieldError('confirmNewPassword', { type: 'manual', message: 'Please confirm your new password' })
       return
@@ -770,11 +783,16 @@ const LoginPage = () => {
                   showPassword={showPassword}
                   setShowPassword={setShowPassword}
                   error={errors.newPassword}
+                  maxLength={PASSWORD_MAX_LENGTH}
                   {...register("newPassword", {
                     required: "New password is required",
                     minLength: {
                       value: 6,
                       message: "Minimum 6 characters"
+                    },
+                    maxLength: {
+                      value: PASSWORD_MAX_LENGTH,
+                      message: `Maximum ${PASSWORD_MAX_LENGTH} characters`
                     }
                   })}
                 />
@@ -794,8 +812,13 @@ const LoginPage = () => {
                   showPassword={showConfirmPassword}
                   setShowPassword={setShowConfirmPassword}
                   error={errors.confirmNewPassword}
+                  maxLength={PASSWORD_MAX_LENGTH}
                   {...register("confirmNewPassword", {
                     required: "Please confirm your new password",
+                    maxLength: {
+                      value: PASSWORD_MAX_LENGTH,
+                      message: `Maximum ${PASSWORD_MAX_LENGTH} characters`
+                    },
                     validate: (value) =>
                       value === watch("newPassword") || "Passwords do not match"
                   })}
@@ -897,8 +920,13 @@ const LoginPage = () => {
                       minLength: {
                         value: 3,
                         message: "Minimum 3 characters"
+                      },
+                      maxLength: {
+                        value: FULL_NAME_MAX_LENGTH,
+                        message: `Maximum ${FULL_NAME_MAX_LENGTH} characters`
                       }
                     })}
+                    maxLength={FULL_NAME_MAX_LENGTH}
                     className={`w-full pl-12 pr-4 py-3 text-sm border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary ${
                       errors.fullName ? 'border-red-500' : 'border-gray-300'
                     }`}
@@ -923,8 +951,13 @@ const LoginPage = () => {
                 <input
                   type="email"
                   placeholder="Email Address"
+                  maxLength={EMAIL_MAX_LENGTH}
                   {...register("email", {
                     required: "Email is required",
+                    maxLength: {
+                      value: EMAIL_MAX_LENGTH,
+                      message: `Maximum ${EMAIL_MAX_LENGTH} characters`
+                    },
                     pattern: {
                       value: /^\S+@\S+\.\S+$/i,
                       message: "Invalid email"
@@ -955,16 +988,22 @@ const LoginPage = () => {
                   <input
                     type="tel"
                     placeholder="Phone Number"
+                    maxLength={PHONE_MAX_LENGTH}
                     {...register("phone", {
                       required: "Phone number is required",
                       validate: validatePhoneNumber, 
+                      maxLength: {
+                        value: PHONE_MAX_LENGTH,
+                        message: `Maximum ${PHONE_MAX_LENGTH} characters`
+                      },
                       onChange: (e) => {
                         let value = e.target.value
                         if (value.startsWith("0")) {
                           value = "+62" + value.slice(1)
-                          e.target.value = value
                         }
+                        value = value.replace(/(?!^)\+/g, '')
                         value = value.replace(/[^\d+]/g, '')
+                        value = value.slice(0, PHONE_MAX_LENGTH)
                         e.target.value = value
                       }
                     })}
@@ -991,8 +1030,13 @@ const LoginPage = () => {
                   showPassword={showPassword}
                   setShowPassword={setShowPassword}
                   error={errors.password}
+                  maxLength={PASSWORD_MAX_LENGTH}
                   {...register("password", {
-                    required: "Password is required"
+                    required: "Password is required",
+                    maxLength: {
+                      value: PASSWORD_MAX_LENGTH,
+                      message: `Maximum ${PASSWORD_MAX_LENGTH} characters`
+                    }
                   })}
                 />
                 {errors.password && (
@@ -1025,11 +1069,16 @@ const LoginPage = () => {
                     showPassword={showPassword}
                     setShowPassword={setShowPassword}
                     error={errors.password}
+                    maxLength={PASSWORD_MAX_LENGTH}
                     {...register("password", {
                       required: "Password is required",
                       minLength: {
                         value: 6,
                         message: "Minimum 6 characters"
+                      },
+                      maxLength: {
+                        value: PASSWORD_MAX_LENGTH,
+                        message: `Maximum ${PASSWORD_MAX_LENGTH} characters`
                       }
                     })}
                   />
@@ -1047,8 +1096,13 @@ const LoginPage = () => {
                     showPassword={showConfirmPassword}
                     setShowPassword={setShowConfirmPassword}
                     error={errors.confirmPassword}
+                    maxLength={PASSWORD_MAX_LENGTH}
                     {...register("confirmPassword", {
                       required: "Confirm password is required",
+                      maxLength: {
+                        value: PASSWORD_MAX_LENGTH,
+                        message: `Maximum ${PASSWORD_MAX_LENGTH} characters`
+                      },
                       validate: (value) =>
                         value === watch("password") || "Passwords do not match"
                     })}
