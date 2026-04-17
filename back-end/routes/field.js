@@ -5,7 +5,7 @@ const db = require('../config/database');
 
 const router = express.Router();
 
-const MAX_DESCRIPTION_LENGTH = 160;
+const MAX_DESCRIPTION_LENGTH = 1000;
 const MAX_ADDRESS_LENGTH = 150;
 const MAX_GENERATE_DURATION_DAYS = 120;
 const CLEAR_SLOT_PROTECTED_DAYS = 7;

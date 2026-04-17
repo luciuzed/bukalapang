@@ -33,7 +33,7 @@ const addDaysToLocalDateString = (dateString, daysToAdd) => {
 const getSlotDate = (dateTimeValue) => String(dateTimeValue || '').slice(0, 10)
 const getSlotTime = (dateTimeValue) => String(dateTimeValue || '').slice(11, 16)
 
-const COURT_NAME_MAX_LENGTH = 60
+const COURT_NAME_MAX_LENGTH = 10
 const SLOT_PRICE_MAX = 10000000
 
 const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) => {
@@ -683,7 +683,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                         >
                           <div>
                             <p className="font-semibold text-gray-900">{court.name}</p>
-                            <p className="text-xs text-gray-500 mt-1">Click the card to set schedule</p>
+                            <p className="text-xs text-gray-500 mt-1">Click the card to generate slots</p>
                           </div>
                           <div className="flex gap-2">
                             <button
@@ -1007,7 +1007,7 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                           onClick={handleDisableSelectedSlots}
                           disabled={isDisablingSlots}
                           className={`h-10 w-10 rounded-lg text-white flex items-center justify-center transition cursor-pointer ${
-                            isDisablingSlots ? 'bg-primary/40 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
+                            isDisablingSlots ? 'bg-red-300 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'
                           }`}
                           title="Disable selected slots"
                           aria-label="Disable selected slots"

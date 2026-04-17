@@ -35,7 +35,7 @@ const SuccessMessage = ({ message, triggerKey, duration = 5000, onClose }) => {
           viewBox="0 0 24 24"
           className="h-full w-full"
         >
-          <circle cx="12" cy="12" r="12" fill="#22c55e" />
+          <circle cx="12" cy="12" r="12" fill="#009966" />
           <path
             d="M7 12.5l3 3 7-7"
             fill="none"
@@ -46,7 +46,7 @@ const SuccessMessage = ({ message, triggerKey, duration = 5000, onClose }) => {
           />
         </svg>
       </span>
-      <span className="text-base leading-none font-normal">{message}</span>
+      <span className="text-base leading-none font-bold text-primary">{message}</span>
     </div>
   )
 }

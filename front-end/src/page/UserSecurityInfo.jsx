@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
 import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
+import SuccessMessage from '../components/SuccessMessage'
 import ProfileSidebar from '../components/ProfileSidebar'
 import { apiUrl } from '../config/api'
 import { FaUserEdit, FaKey } from 'react-icons/fa';
@@ -78,6 +79,7 @@ const UserSecurityInfo = () => {
 
     try {
       setIsUpdatingPassword(true)
+      setSuccess(null)
       const response = await fetch(apiUrl('/user/change-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -102,7 +104,10 @@ const UserSecurityInfo = () => {
 
       setCurrentPassword('')
       setNewPassword('')
-      setSuccess({ id: Date.now(), message: data?.message || 'Password updated successfully' })
+      setSuccess({
+        id: Date.now(),
+        message: data?.message || 'Password updated successfully. You can now sign in with your new password.',
+      })
     } catch (error) {
       setGeneralError('Cannot connect to server')
     } finally {
@@ -112,6 +117,11 @@ const UserSecurityInfo = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      <SuccessMessage
+        message={success?.message}
+        triggerKey={success?.id}
+        onClose={() => setSuccess(null)}
+      />
       <ProfileSidebar
         userName={user.name}
         userEmail={user.email}
@@ -121,12 +131,6 @@ const UserSecurityInfo = () => {
       <div className="flex-1 p-8">
         <div className="max-w-6xl mx-auto">
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
-            {success && (
-              <div className="mb-4 rounded-xl bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm font-medium">
-                {success.message}
-              </div>
-            )}
-
             <div className="mb-5">
               <AdminSectionBreadcrumb label="Security & Info" />
             </div>

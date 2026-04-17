@@ -11,7 +11,7 @@ import SuccessMessage from '../components/SuccessMessage'
 import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import { API_BASE_URL, apiUrl } from '../config/api'
 
-const MAX_DESCRIPTION_LENGTH = 160
+const MAX_DESCRIPTION_LENGTH = 1000
 const FIELD_NAME_MAX_LENGTH = 80
 const FIELD_ADDRESS_MAX_LENGTH = 200
 const GOOGLE_MAPS_LINK_MAX_LENGTH = 500
@@ -322,7 +322,7 @@ const AdminManageField = () => {
 
   const openSlotManagementPage = (field) => {
     setError('')
-    navigate(`/admin/manage-field/manage/${field.id}`)
+    navigate(`/admin/manage-field/courts/${field.id}`)
   }
 
   const handleLogout = () => {
@@ -561,6 +561,7 @@ const AdminManageField = () => {
                   <option value="Badminton">Badminton</option>
                   <option value="Basketball">Basketball</option>
                   <option value="Tennis">Tennis</option>
+                  <option value="Biliard">Biliard</option>
                 </select>
                 {errors.category && (
                   <p className="text-red-500 text-xs mt-1 ml-4">{errors.category.message}</p>

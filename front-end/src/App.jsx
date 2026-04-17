@@ -106,7 +106,7 @@ function App() {
   const location = useLocation()
   const fullWidthPages = ["/admin/dashboard", "/bookings", "/user/security-info", "/admin/manage-field", "/admin/manage-booking", "/admin/payment-method", "/admin/security-info", "/", "/contact"]
   const paymentPages = location.pathname.match(/^\/payment\//)
-  const fieldManagePages = location.pathname.match(/^\/admin\/manage-field\/manage\/[^/]+$/)
+  const fieldManagePages = location.pathname.match(/^\/admin\/manage-field\/courts\/[^/]+$/)
   const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages && !fieldManagePages
   const isHome = location.pathname === "/"
   const isContact = location.pathname === "/contact"
@@ -133,6 +133,14 @@ function App() {
           element={<BookingPage />} 
         />
         <Route path="/login" element={<LoginGuard><LoginPage /></LoginGuard>} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <Navigate to="/admin/dashboard" replace />
+            </ProtectedRoute>
+          }
+        />
         <Route 
           path="/admin/dashboard" 
           element={
@@ -150,7 +158,7 @@ function App() {
           } 
         />
         <Route
-          path="/admin/manage-field/manage/:fieldId"
+          path="/admin/manage-field/courts/:fieldId"
           element={
             <ProtectedRoute allowedRole="admin">
               <AdminManageSlot />

@@ -377,7 +377,7 @@ router.post('/verify-otp', async (req, res) => {
   res.json({ 
     success: true, 
     user: userData,
-    redirect: entry.role === 'Business' ? '/dashboard' : '/venue' 
+    redirect: entry.role === 'Business' ? '/admin/dashboard' : '/venue' 
   });
 });
 

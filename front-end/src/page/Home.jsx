@@ -74,7 +74,7 @@ const Home = () => {
           </h1>
 
           <p className="text-gray-500 text-sm sm:text-lg max-w-2xl mx-auto mb-10 font-medium">
-            Ratusan venue terpercaya dari futsal hingga biliar. Booking mudah, cepat, dan aman.
+            Ratusan venue terpercaya dari futsal hingga biliard. Booking mudah, cepat, dan aman.
           </p>
 
           <div className="w-full max-w-2xl mx-auto">
@@ -129,7 +129,7 @@ const Home = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className={`transition-all duration-700 ${whyVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
               <h4 className="text-primary font-black text-[10px] uppercase tracking-[0.3em] mb-3">Fitur Unggulan</h4>
-              <h2 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-10 leading-tight">Mengapa Memilih<br /> MAIN YUK!</h2>
+              <h2 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-10 leading-tight">Mengapa Memilih<br /> MAINYUK!</h2>
               <div className="space-y-8">
                 {[
                   { icon: <FaCheckCircle />, title: "Venue Terpercaya", desc: "Fasilitas terverifikasi dengan kualitas lapangan standar profesional." },

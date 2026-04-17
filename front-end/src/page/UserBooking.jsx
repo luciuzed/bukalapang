@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
+import pendingIcon from '../assets/pending.svg'
 import AdminSectionBreadcrumb from '../components/AdminSectionBreadcrumb'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ProfileSidebar from '../components/ProfileSidebar'
@@ -133,14 +134,14 @@ const formatBookingStatus = (status) => {
   }
 }
 
-const StatusBadgeIcon = ({ icon }) => {
+const StatusBadgeIcon = ({ icon, className = 'w-3.5 h-3.5 shrink-0' }) => {
   if (icon === 'check') {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="none"
-        className="w-3.5 h-3.5 shrink-0"
+        className={className}
         aria-hidden="true"
       >
         <path
@@ -160,7 +161,7 @@ const StatusBadgeIcon = ({ icon }) => {
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="none"
-        className="w-3.5 h-3.5 shrink-0"
+        className={className}
         aria-hidden="true"
       >
         <path
@@ -171,6 +172,12 @@ const StatusBadgeIcon = ({ icon }) => {
           strokeLinejoin="round"
         />
       </svg>
+    )
+  }
+
+  if (icon === 'pending') {
+    return (
+      <img src={pendingIcon} alt="" aria-hidden="true" className={className} />
     )
   }
 
@@ -231,14 +238,16 @@ const BookingCard = ({ booking, displayName, statusInfo, navigate, onRequestCanc
             onClick={() => onRequestCancel(booking.id)}
             className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-xl cursor-pointer hover:opacity-90 transition inline-flex items-center gap-2"
           >
+            <StatusBadgeIcon icon="x" className="w-4 h-4 shrink-0" />
             Cancel
           </button>
 
           <button
             type="button"
             onClick={() => navigate(`/payment/${booking.payment_id}`)}
-            className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl cursor-pointer hover:opacity-90 transition"
+            className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl cursor-pointer hover:opacity-90 transition inline-flex items-center gap-2"
           >
+            <StatusBadgeIcon icon="check" className="w-4 h-4 shrink-0" />
             Confirm Payment
           </button>
         </div>
