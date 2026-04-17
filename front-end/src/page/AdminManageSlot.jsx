@@ -716,21 +716,39 @@ const AdminManageSlotContent = ({ field, adminId, onClose, embedded = false }) =
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold mb-2 text-gray-700">Opening Time</label>
-                      <input
-                        type="time"
+                      <select
                         value={courtOpenTime}
                         onChange={(e) => setCourtOpenTime(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
-                      />
+                        className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const hour = i.toString().padStart(2, '0');
+                          const timeValue = `${hour}:00`;
+                          return (
+                            <option key={timeValue} value={timeValue}>
+                              {timeValue}
+                            </option>
+                          );
+                        })}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold mb-2 text-gray-700">Closing Time</label>
-                      <input
-                        type="time"
+                      <select
                         value={courtCloseTime}
                         onChange={(e) => setCourtCloseTime(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
-                      />
+                        className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm appearance-none bg-white"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const hour = i.toString().padStart(2, '0');
+                          const timeValue = `${hour}:00`;
+                          return (
+                            <option key={timeValue} value={timeValue}>
+                              {timeValue}
+                            </option>
+                          );
+                        })}
+                      </select>
                     </div>
                   </div>
 

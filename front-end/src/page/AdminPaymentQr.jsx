@@ -13,10 +13,15 @@ const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '')
 const LOCAL_QR_IMAGE_PATTERN = /^\/qr\/.+\.(jpe?g|png)$/i
 
 const resolveImageUrl = (imageUrl) => {
-  if (typeof imageUrl !== 'string') return ''
-  const normalized = imageUrl.trim()
-  if (!LOCAL_QR_IMAGE_PATTERN.test(normalized)) return ''
-  return `${BACKEND_BASE_URL}${normalized}`
+  if (!imageUrl || typeof imageUrl !== 'string') return '';
+  
+  // If it's already a full URL (starts with http or https), return it as is
+  if (imageUrl.startsWith('http')) return imageUrl;
+
+  // Ensure the path starts with a forward slash
+  const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+  
+  return `${BACKEND_BASE_URL}${path}`;
 }
 
 const AdminPaymentQr = () => {
