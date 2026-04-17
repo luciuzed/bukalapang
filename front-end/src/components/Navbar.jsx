@@ -5,15 +5,20 @@ import { FaBars, FaTimes, FaCalendarCheck, FaShieldAlt } from "react-icons/fa"
 import { FiBarChart2, FiCalendar, FiGrid, FiCreditCard, FiShield, FiLogOut } from "react-icons/fi"
 import { MdAccountCircle } from "react-icons/md"
 import Cookies from 'js-cookie'
+import Notification from './Notification'
+import { apiUrl } from '../config/api'
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState(null)
   const [admin, setAdmin] = useState(null)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
   const [isCardExiting, setIsCardExiting] = useState(false)
   const [isCardEntering, setIsCardEntering] = useState(true)
+  const [pendingBookings, setPendingBookings] = useState([])
   const dropdownRef = useRef(null)
+  const notificationRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -35,6 +40,40 @@ const Navbar = () => {
     }
   }, [location])
 
+  const fetchPendingBookings = async () => {
+    if (!admin?.adminId) {
+      setPendingBookings([])
+      return
+    }
+
+    try {
+      const response = await fetch(apiUrl(`/bookings/admin/${admin.adminId}`))
+      if (!response.ok) {
+        setPendingBookings([])
+        return
+      }
+
+      const data = await response.json()
+      setPendingBookings(Array.isArray(data) ? data.filter((booking) => booking.status === 'pending') : [])
+    } catch (error) {
+      setPendingBookings([])
+    }
+  }
+
+  useEffect(() => {
+    fetchPendingBookings()
+
+    if (!admin?.adminId) {
+      return undefined
+    }
+
+    const interval = setInterval(() => {
+      fetchPendingBookings()
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [admin?.adminId, location.pathname])
+
   // Trigger fade-in animation when dropdown appears
   useEffect(() => {
     if (showDropdown && isCardEntering) {
@@ -48,12 +87,16 @@ const Navbar = () => {
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      const clickedInsideDropdown = dropdownRef.current && dropdownRef.current.contains(e.target)
+      const clickedInsideNotifications = notificationRef.current && notificationRef.current.contains(e.target)
+
+      if (!clickedInsideDropdown && !clickedInsideNotifications) {
         setIsCardExiting(true)
         setTimeout(() => {
           setShowDropdown(false)
           setIsCardExiting(false)
           setIsCardEntering(true)
+          setShowNotifications(false)
         }, 300)
       }
     }
@@ -76,6 +119,8 @@ const Navbar = () => {
   }
 
   const handleToggleDropdown = () => {
+    setShowNotifications(false)
+
     if (showDropdown) {
       setIsCardExiting(true)
       setTimeout(() => {
@@ -88,6 +133,16 @@ const Navbar = () => {
       setIsCardExiting(false)
       setIsCardEntering(true)
     }
+  }
+
+  const handleToggleNotifications = () => {
+    setShowDropdown(false)
+    setShowNotifications((prev) => !prev)
+  }
+
+  const handleNotificationClick = (bookingId) => {
+    setShowNotifications(false)
+    navigate(`/admin/manage-booking#booking-${bookingId}`)
   }
 
   const navItemClass = ({ isActive }) =>
@@ -148,7 +203,47 @@ const Navbar = () => {
       {/* RIGHT SECTION */}
       <div className="hidden md:block relative" ref={dropdownRef}>
         {user || admin ? (
-          <div className="relative">
+          <div className="relative flex items-center gap-2">
+            {admin && (
+              <div className="relative" ref={notificationRef}>
+                <button
+                  type="button"
+                  onClick={handleToggleNotifications}
+                  className="relative flex h-11 w-11 items-center justify-center rounded-full hover:bg-gray-100 transition cursor-pointer text-primary"
+                  aria-label="Admin notifications"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-6 w-6"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9 17a3 3 0 0 0 6 0"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {pendingBookings.length > 0 && (
+                    <span className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-red-600 ring-2 ring-white animate-pulse" />
+                  )}
+                </button>
+
+                <Notification
+                  isOpen={showNotifications}
+                  pendingBookings={pendingBookings}
+                  onNotificationClick={handleNotificationClick}
+                />
+              </div>
+            )}
             
             {/* Modern Icon Button */}
             <button
