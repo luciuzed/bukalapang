@@ -16,16 +16,32 @@ const maskEmail = (email) => {
   return `${name.substring(0, 2)}***@${domain}`
 }
 
+const formatCreatedAt = (createdAt) => {
+  if (!createdAt) return 'Not available'
+
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return 'Not available'
+
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
+}
+
 const AdminSecurityInfo = () => {
   const navigate = useNavigate()
   const [adminId, setAdminId] = useState(null)
   const [adminName, setAdminName] = useState('')
+  const [adminNumber, setAdminNumber] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
+  const [adminCreatedAt, setAdminCreatedAt] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [currentPasswordError, setCurrentPasswordError] = useState('')
   const [generalError, setGeneralError] = useState('')
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [success, setSuccess] = useState(null)
 
   useEffect(() => {
@@ -37,14 +53,74 @@ const AdminSecurityInfo = () => {
       return
     }
 
-    if (adminCookie) {
-      const sessionData = JSON.parse(adminCookie)
-      setAdminId(sessionData.adminId)
-      setAdminName(sessionData.adminName || 'Admin')
-      setAdminEmail(sessionData.email || '')
-      localStorage.setItem('adminId', sessionData.adminId)
-    } else if (adminSession) {
-      setAdminId(adminSession)
+    let isActive = true
+
+    const loadAdminProfile = async () => {
+      try {
+        let sessionData = null
+
+        if (adminCookie) {
+          try {
+            sessionData = JSON.parse(adminCookie)
+          } catch (error) {
+            console.error('Failed to parse admin session:', error)
+          }
+        }
+
+        if (sessionData) {
+          setAdminId(sessionData.adminId ?? null)
+          setAdminName(sessionData.adminName || 'Admin')
+          setAdminNumber(sessionData.adminNumber || sessionData.phone || '')
+          setAdminEmail(sessionData.email || '')
+          setAdminCreatedAt(sessionData.createdAt || sessionData.created_at || '')
+
+          if (sessionData.adminId) {
+            localStorage.setItem('adminId', sessionData.adminId)
+          }
+        } else if (adminSession) {
+          setAdminId(adminSession)
+        }
+
+        const lookupParams = new URLSearchParams()
+        if (sessionData?.email) {
+          lookupParams.set('email', sessionData.email)
+        } else if (sessionData?.adminId || adminSession) {
+          lookupParams.set('adminId', String(sessionData?.adminId || adminSession))
+        }
+
+        if (!lookupParams.toString()) {
+          return
+        }
+
+        const response = await fetch(apiUrl(`/admin/profile?${lookupParams.toString()}`))
+        const data = await response.json()
+
+        if (!response.ok) {
+          return
+        }
+
+        if (!isActive || !data?.admin) {
+          return
+        }
+
+        setAdminId(data.admin.adminId ?? sessionData?.adminId ?? adminSession ?? null)
+        setAdminName(data.admin.adminName || sessionData?.adminName || 'Admin')
+        setAdminNumber(data.admin.adminNumber || sessionData?.adminNumber || sessionData?.phone || '')
+        setAdminEmail(data.admin.email || sessionData?.email || '')
+        setAdminCreatedAt(data.admin.createdAt || sessionData?.createdAt || sessionData?.created_at || '')
+      } catch (error) {
+        console.error('Failed to load admin profile:', error)
+      } finally {
+        if (isActive) {
+          setIsLoadingProfile(false)
+        }
+      }
+    }
+
+    void loadAdminProfile()
+
+    return () => {
+      isActive = false
     }
   }, [navigate])
 
@@ -134,21 +210,21 @@ const AdminSecurityInfo = () => {
 
       <main className="flex-1 p-8 md:p-10 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
-          <div className="max-w-2xl">
+          <div className="w-full max-w-none">
             <div className="mb-3">
               <AdminSectionBreadcrumb label="Security & Info" />
             </div>
             <h1 className="text-3xl font-black text-gray-800 mb-8">Security & Information</h1>
 
             <div className="space-y-6">
-              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="w-full bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="bg-primary/10 p-3 rounded-2xl text-primary">
                     <FaUserEdit size={20} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-800">Account Identity</h3>
-                    <p className="text-xs text-gray-400">Verified identity details</p>
+                    <h3 className="font-bold text-gray-800">Account Information</h3>
+                    <p className="text-xs text-gray-400">Verified account details</p>
                   </div>
                 </div>
 
@@ -156,23 +232,45 @@ const AdminSecurityInfo = () => {
                   <div className="flex justify-between items-center border-b border-gray-200 pb-4">
                     <div>
                       <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Admin Name</p>
-                      <p className="text-sm font-bold text-gray-700">{adminName || 'Admin'}</p>
+                      <p className="text-sm font-bold text-gray-700">
+                        {isLoadingProfile ? 'Loading...' : adminName || 'Admin'}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center border-b border-gray-200 pb-4">
                     <div>
                       <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Primary Email</p>
-                      <p className="text-sm font-bold text-gray-700">{maskEmail(adminEmail)}</p>
+                      <p className="text-sm font-bold text-gray-700">
+                        {isLoadingProfile ? 'Loading...' : maskEmail(adminEmail)}
+                      </p>
                     </div>
                     <span className="text-[10px] bg-green-100 text-green-600 px-2.5 py-1 rounded-full font-black uppercase tracking-widest">
                       Verified
                     </span>
                   </div>
+
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Phone Number</p>
+                      <p className="text-sm font-bold text-gray-700">
+                        {isLoadingProfile ? 'Loading...' : adminNumber || 'Not available'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest font-black text-gray-400 mb-1">Member Since</p>
+                      <p className="text-sm font-bold text-gray-700">
+                        {isLoadingProfile ? 'Loading...' : formatCreatedAt(adminCreatedAt)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="w-full bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="bg-primary/10 p-3 rounded-2xl text-primary">
                     <FaKey size={20} />
