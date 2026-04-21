@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiBarChart2, FiGrid, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FiBarChart2, FiGrid, FiCalendar } from 'react-icons/fi'
 import { FaUserEdit, FaKey, FaShieldAlt } from 'react-icons/fa'
 import Sidebar from '../components/Sidebar'
 import SuccessMessage from '../components/SuccessMessage'
@@ -117,14 +117,6 @@ const AdminSecurityInfo = () => {
     navigate('/login')
   }
 
-  const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
-    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
-    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
-    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 flex">
       <SuccessMessage
@@ -138,7 +130,6 @@ const AdminSecurityInfo = () => {
         adminName={adminName}
         adminEmail={adminEmail}
         handleLogout={handleLogout}
-        tabItems={tabItems}
       />
 
       <main className="flex-1 p-8 md:p-10 overflow-y-auto">
@@ -147,7 +138,7 @@ const AdminSecurityInfo = () => {
             <div className="mb-3">
               <AdminSectionBreadcrumb label="Security & Info" />
             </div>
-            <h1 className="text-2xl font-black text-gray-800 mb-8">Security & Information</h1>
+            <h1 className="text-3xl font-black text-gray-800 mb-8">Security & Information</h1>
 
             <div className="space-y-6">
               <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">

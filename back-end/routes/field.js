@@ -10,6 +10,7 @@ const MAX_ADDRESS_LENGTH = 150;
 const MAX_GENERATE_DURATION_DAYS = 120;
 const CLEAR_SLOT_PROTECTED_DAYS = 7;
 const uploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../dev-storage/uploads');
+const paymentQrDir = process.env.PAYMENT_QR_DIR || path.resolve(__dirname, '../../dev-storage/qr');
 const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Asia/Jakarta';
 
 const formatDateToLocalYmd = (dateValue) => {
@@ -60,6 +61,26 @@ const normalizeImageUrl = (rawImageUrl) => {
   return normalized;
 };
 
+const normalizeQrUrl = (rawQrUrl) => {
+  if (rawQrUrl === undefined || rawQrUrl === null) {
+    return null;
+  }
+
+  const normalized = String(rawQrUrl).trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const lower = normalized.toLowerCase();
+  const hasAllowedExtension = lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.png');
+
+  if (!normalized.startsWith('/qr/') || !hasAllowedExtension) {
+    return { error: 'QR must be uploaded via upload button' };
+  }
+
+  return normalized;
+};
+
 const deleteUploadedImage = async (imageUrl) => {
   if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('/uploads/')) {
     return;
@@ -77,6 +98,27 @@ const deleteUploadedImage = async (imageUrl) => {
   } catch (err) {
     if (err.code !== 'ENOENT') {
       console.error('Failed to delete previous field image:', err);
+    }
+  }
+};
+
+const deleteUploadedQr = async (qrUrl) => {
+  if (!qrUrl || typeof qrUrl !== 'string' || !qrUrl.startsWith('/qr/')) {
+    return;
+  }
+
+  const fileName = path.basename(qrUrl);
+  if (!fileName) {
+    return;
+  }
+
+  const filePath = path.join(paymentQrDir, fileName);
+
+  try {
+    await fs.promises.unlink(filePath);
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.error('Failed to delete previous field QR:', err);
     }
   }
 };
@@ -204,7 +246,7 @@ router.get('/detail/:fieldId', async (req, res) => {
 
 // Create a new field
 router.post('/', async (req, res) => {
-  const { adminId, name, category, description, address, city, imageUrl, isActive, googleMapsLink } = req.body;
+  const { adminId, name, category, description, address, city, imageUrl, qrUrl, isActive, googleMapsLink } = req.body;
 
   // Validate required fields: Name, Category, Address, City
   if (!adminId || !name || !category || !address || !city) {
@@ -226,6 +268,11 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: normalizedImageUrl.error });
   }
 
+  const normalizedQrUrl = normalizeQrUrl(qrUrl);
+  if (normalizedQrUrl && normalizedQrUrl.error) {
+    return res.status(400).json({ error: normalizedQrUrl.error });
+  }
+
   try {
     // Verify admin exists
     const [admin] = await db.execute('SELECT id FROM admin WHERE id = ?', [adminId]);
@@ -234,8 +281,8 @@ router.post('/', async (req, res) => {
     }
 
     const [result] = await db.execute(
-      'INSERT INTO field (admin_id, name, category, description, address, city, image_url, is_active, google_maps_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [adminId, name, category, normalizedDescription, normalizedAddress, city, normalizedImageUrl, isActive !== false ? 1 : 0, googleMapsLink || null]
+      'INSERT INTO field (admin_id, name, category, description, address, city, image_url, qr_url, is_active, google_maps_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [adminId, name, category, normalizedDescription, normalizedAddress, city, normalizedImageUrl, normalizedQrUrl, isActive !== false ? 1 : 0, googleMapsLink || null]
     );
 
     res.status(201).json({
@@ -247,6 +294,7 @@ router.post('/', async (req, res) => {
       address: normalizedAddress,
       city,
       imageUrl: normalizedImageUrl,
+      qrUrl: normalizedQrUrl,
       isActive: isActive !== false ? 1 : 0,
       googleMapsLink: googleMapsLink || null,
       message: 'Field created successfully'
@@ -260,7 +308,7 @@ router.post('/', async (req, res) => {
 // Update a field
 router.put('/:fieldId', async (req, res) => {
   const { fieldId } = req.params;
-  const { adminId, name, category, description, address, city, imageUrl, isActive, googleMapsLink } = req.body;
+  const { adminId, name, category, description, address, city, imageUrl, qrUrl, isActive, googleMapsLink } = req.body;
 
   // Validate required fields: Name, Category, Address, City
   if (!name || !category || !address || !city) {
@@ -282,9 +330,14 @@ router.put('/:fieldId', async (req, res) => {
     return res.status(400).json({ error: normalizedImageUrl.error });
   }
 
+  const normalizedQrUrl = normalizeQrUrl(qrUrl);
+  if (normalizedQrUrl && normalizedQrUrl.error) {
+    return res.status(400).json({ error: normalizedQrUrl.error });
+  }
+
   try {
     // Verify field belongs to admin
-    const [field] = await db.execute('SELECT admin_id, image_url FROM field WHERE id = ?', [fieldId]);
+    const [field] = await db.execute('SELECT admin_id, image_url, qr_url FROM field WHERE id = ?', [fieldId]);
     if (field.length === 0) {
       return res.status(404).json({ error: 'Field not found' });
     }
@@ -294,12 +347,16 @@ router.put('/:fieldId', async (req, res) => {
     }
 
     await db.execute(
-      'UPDATE field SET name = ?, category = ?, description = ?, address = ?, city = ?, image_url = ?, is_active = ?, google_maps_link = ? WHERE id = ?',
-      [name, category, normalizedDescription, normalizedAddress, city, normalizedImageUrl, isActive !== undefined ? (isActive ? 1 : 0) : 1, googleMapsLink || null, fieldId]
+      'UPDATE field SET name = ?, category = ?, description = ?, address = ?, city = ?, image_url = ?, qr_url = ?, is_active = ?, google_maps_link = ? WHERE id = ?',
+      [name, category, normalizedDescription, normalizedAddress, city, normalizedImageUrl, normalizedQrUrl, isActive !== undefined ? (isActive ? 1 : 0) : 1, googleMapsLink || null, fieldId]
     );
 
     if (field[0].image_url && field[0].image_url !== normalizedImageUrl) {
       await deleteUploadedImage(field[0].image_url);
+    }
+
+    if (field[0].qr_url && field[0].qr_url !== normalizedQrUrl) {
+      await deleteUploadedQr(field[0].qr_url);
     }
 
     res.json({ message: 'Field updated successfully' });
@@ -315,7 +372,7 @@ router.delete('/:fieldId', async (req, res) => {
   const { adminId } = req.body;
 
   try {
-    const [field] = await db.execute('SELECT admin_id FROM field WHERE id = ?', [fieldId]);
+    const [field] = await db.execute('SELECT admin_id, image_url, qr_url FROM field WHERE id = ?', [fieldId]);
     if (field.length === 0) {
       return res.status(404).json({ error: 'Field not found' });
     }
@@ -325,6 +382,15 @@ router.delete('/:fieldId', async (req, res) => {
     }
 
     await db.execute('DELETE FROM field WHERE id = ?', [fieldId]);
+
+    if (field[0].image_url) {
+      await deleteUploadedImage(field[0].image_url);
+    }
+
+    if (field[0].qr_url) {
+      await deleteUploadedQr(field[0].qr_url);
+    }
+
     res.json({ message: 'Field removed successfully' });
   } catch (err) {
     console.error(err);

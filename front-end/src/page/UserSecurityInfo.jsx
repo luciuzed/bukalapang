@@ -134,7 +134,7 @@ const UserSecurityInfo = () => {
             <div className="mb-5">
               <AdminSectionBreadcrumb label="Security & Info" />
             </div>
-            <h1 className="text-3xl font-black text-gray-800 mb-8">Security & Information</h1>
+            <h1 className="text-3xl font-black text-gray-400 mb-8">Security & Information</h1>
 
             <div className="space-y-6">
               <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">

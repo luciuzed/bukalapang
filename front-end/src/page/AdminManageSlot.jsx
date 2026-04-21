@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FiX, FiCheck, FiTrash2, FiBarChart2, FiGrid, FiCalendar } from 'react-icons/fi'
 import { FaShieldAlt } from 'react-icons/fa'
 import LoadingOverlay from '../components/LoadingOverlay'
 import ConfirmationModal from './ConfirmationModal'
@@ -1336,14 +1336,6 @@ const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
     navigate('/login')
   }
 
-  const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
-    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
-    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
-    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
-  ]
-
   if (hasDirectProps) {
     return <AdminManageSlotContent field={field} adminId={adminId} onClose={onClose} embedded={embedded} />
   }
@@ -1357,7 +1349,6 @@ const AdminManageSlot = ({ field, adminId, onClose, embedded = false }) => {
         adminName={adminName}
         adminEmail={adminEmail}
         handleLogout={handleLogout}
-        tabItems={tabItems}
       />
 
       <main className="flex-1 p-8 md:p-10 overflow-y-auto">

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom"
 import logo from '../assets/logo.svg'
 import { FaBars, FaTimes, FaCalendarCheck, FaShieldAlt } from "react-icons/fa"
-import { FiBarChart2, FiCalendar, FiGrid, FiCreditCard, FiShield, FiLogOut } from "react-icons/fi"
+import { FiBarChart2, FiCalendar, FiGrid, FiShield, FiLogOut } from "react-icons/fi"
 import { MdAccountCircle } from "react-icons/md"
 import Cookies from 'js-cookie'
 import Notification from './Notification'
@@ -351,18 +351,6 @@ const Navbar = () => {
                       }}>
                             <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
                               <FiCalendar className="h-3.75 w-3.75 text-gray-500" /> Manage Bookings
-                        </div>
-                      </Link>
-                      <Link to="/admin/payment-method" onClick={() => {
-                        setIsCardExiting(true)
-                        setTimeout(() => {
-                          setShowDropdown(false)
-                          setIsCardExiting(false)
-                          setIsCardEntering(true)
-                        }, 300)
-                      }}>
-                            <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
-                              <FiCreditCard className="h-3.75 w-3.75 text-gray-500" /> Payment Method
                         </div>
                       </Link>
                       <Link to="/admin/security-info" onClick={() => {

@@ -1,9 +1,17 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiLogOut, FiUser } from 'react-icons/fi'
+import { FiBarChart2, FiCalendar, FiGrid, FiLogOut, FiUser } from 'react-icons/fi'
+import { FaShieldAlt } from 'react-icons/fa'
 import LOGO from '../assets/header.svg'
 
-const Sidebar = ({ activeTabId, adminName, adminEmail, handleLogout, tabItems }) => {
+const ADMIN_TAB_ITEMS = [
+  { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
+  { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
+  { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
+  { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
+]
+
+const Sidebar = ({ activeTabId, adminName, adminEmail, handleLogout }) => {
   const navigate = useNavigate()
 
   return (
@@ -13,7 +21,7 @@ const Sidebar = ({ activeTabId, adminName, adminEmail, handleLogout, tabItems })
       </div>
 
       <nav className="px-3 pb-8 space-y-1 flex-1 overflow-y-auto">
-        {tabItems.map((tab) => (
+        {ADMIN_TAB_ITEMS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => navigate(tab.path)}

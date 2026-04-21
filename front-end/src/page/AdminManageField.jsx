@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { FiBarChart2, FiBriefcase, FiGrid, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FiBarChart2, FiBriefcase, FiGrid, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar } from 'react-icons/fi'
 import { FaShieldAlt } from 'react-icons/fa'
 import Cookies from 'js-cookie'
 import LoadingOverlay from '../components/LoadingOverlay'
@@ -17,11 +17,19 @@ const FIELD_ADDRESS_MAX_LENGTH = 200
 const GOOGLE_MAPS_LINK_MAX_LENGTH = 500
 const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '')
 const LOCAL_UPLOAD_IMAGE_PATTERN = /^\/uploads\/.+\.(jpe?g|png)$/i
+const LOCAL_QR_IMAGE_PATTERN = /^\/qr\/.+\.(jpe?g|png)$/i
 
 const resolveImageUrl = (imageUrl) => {
   if (typeof imageUrl !== 'string') return ''
   const normalized = imageUrl.trim()
   if (!LOCAL_UPLOAD_IMAGE_PATTERN.test(normalized)) return ''
+  return `${BACKEND_BASE_URL}${normalized}`
+}
+
+const resolveQrUrl = (imageUrl) => {
+  if (typeof imageUrl !== 'string') return ''
+  const normalized = imageUrl.trim()
+  if (!LOCAL_QR_IMAGE_PATTERN.test(normalized)) return ''
   return `${BACKEND_BASE_URL}${normalized}`
 }
 
@@ -37,11 +45,22 @@ const AdminManageField = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
   const [fieldToDelete, setFieldToDelete] = useState(null)
+  const [imageToDelete, setImageToDelete] = useState(false)
+  const [qrToDelete, setQrToDelete] = useState(false)
   const [isDeleteProcessing, setIsDeleteProcessing] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
-  const [uploadTypeError, setUploadTypeError] = useState('')
-  const [paymentQrUrl, setPaymentQrUrl] = useState('')
-  const fileInputRef = useRef(null)
+  const [isUploadingQr, setIsUploadingQr] = useState(false)
+  const [pendingImageFile, setPendingImageFile] = useState(null)
+  const [pendingImagePreviewUrl, setPendingImagePreviewUrl] = useState('')
+  const [pendingImageRemoved, setPendingImageRemoved] = useState(false)
+  const [pendingQrFile, setPendingQrFile] = useState(null)
+  const [pendingQrPreviewUrl, setPendingQrPreviewUrl] = useState('')
+  const [pendingQrRemoved, setPendingQrRemoved] = useState(false)
+  const [imageUploadTypeError, setImageUploadTypeError] = useState('')
+  const [qrUploadTypeError, setQrUploadTypeError] = useState('')
+  const [qrRequiredError, setQrRequiredError] = useState('')
+  const imageFileInputRef = useRef(null)
+  const qrFileInputRef = useRef(null)
 
   const showSuccessMessage = (message) => {
     setSuccess({ id: Date.now(), message })
@@ -57,8 +76,10 @@ const AdminManageField = () => {
   } = useForm()
 
   const imagePreviewUrl = watch('imageUrl')
+  const qrPreviewUrl = watch('qrUrl')
+  const displayedImagePreviewUrl = pendingImagePreviewUrl || (!pendingImageRemoved && imagePreviewUrl ? resolveImageUrl(imagePreviewUrl) : '')
+  const displayedQrPreviewUrl = pendingQrPreviewUrl || (!pendingQrRemoved && qrPreviewUrl ? resolveQrUrl(qrPreviewUrl) : '')
   const isActiveChecked = Boolean(watch('isActive'))
-  const hasPaymentQr = Boolean(paymentQrUrl)
 
   // Check admin session on mount
   useEffect(() => {
@@ -86,7 +107,6 @@ const AdminManageField = () => {
   useEffect(() => {
     if (adminId) {
       fetchFields()
-      fetchPaymentQr()
     }
   }, [adminId])
 
@@ -107,32 +127,82 @@ const AdminManageField = () => {
     }
   }
 
-  const fetchPaymentQr = async () => {
-    try {
-      const response = await fetch(apiUrl(`/payment-qr/admin/${adminId}`))
+  const handleFieldSubmit = async (data) => {
+    const currentImageUrl = String(data.imageUrl || '').trim()
+    const currentQrUrl = String(data.qrUrl || '').trim()
+
+    const wantsOpen = data.isActive === 'on' ? true : (data.isActive ? true : false)
+    const uploadedImageUrls = []
+    const uploadedQrUrls = []
+
+    const uploadFileToStorage = async (file, endpoint) => {
+      const base64Data = await readFileAsBase64(file)
+
+      const response = await fetch(apiUrl(endpoint), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          mimeType: file.type,
+          base64Data,
+        }),
+      })
+
       if (!response.ok) {
-        return
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to upload file')
       }
 
-      const data = await response.json()
-      setPaymentQrUrl(data.imageUrl || '')
-    } catch (err) {
-      // Keep modal usable even if this fetch fails.
-      setPaymentQrUrl('')
+      const uploadData = await response.json()
+      return uploadData.imageUrl || ''
     }
-  }
 
-  const handleFieldSubmit = async (data) => {
-    const wantsOpen = data.isActive === 'on' ? true : (data.isActive ? true : false)
+    const rollbackUploads = async () => {
+      for (const imageUrl of uploadedImageUrls.reverse()) {
+        if (imageUrl && imageUrl.startsWith('/uploads/')) {
+          await fetch(apiUrl('/uploads'), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl }),
+          }).catch(() => {})
+        }
+      }
 
-    if (wantsOpen && !hasPaymentQr) {
-      setError('Upload payment QR first before opening fields')
-      return
+      for (const imageUrl of uploadedQrUrls.reverse()) {
+        if (imageUrl && imageUrl.startsWith('/qr/')) {
+          await fetch(apiUrl(`/payment-qr/admin/${adminId}`), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl }),
+          }).catch(() => {})
+        }
+      }
     }
 
     try {
       setError('')
       setSuccess(null)
+
+      let nextImageUrl = pendingImageRemoved ? '' : currentImageUrl
+      let nextQrUrl = pendingQrRemoved ? '' : currentQrUrl
+
+      if (pendingImageFile) {
+        setIsUploadingImage(true)
+        nextImageUrl = await uploadFileToStorage(pendingImageFile, '/uploads')
+        uploadedImageUrls.push(nextImageUrl)
+      }
+
+      if (pendingQrFile) {
+        setIsUploadingQr(true)
+        nextQrUrl = await uploadFileToStorage(pendingQrFile, `/payment-qr/admin/${adminId}`)
+        uploadedQrUrls.push(nextQrUrl)
+      }
+
+      if (!nextQrUrl) {
+        setQrRequiredError('Payment QR is required')
+        await rollbackUploads()
+        return
+      }
 
       const fieldData = {
         adminId,
@@ -141,7 +211,8 @@ const AdminManageField = () => {
         description: data.description,
         address: data.address,
         city: data.city,
-        imageUrl: data.imageUrl,
+        imageUrl: nextImageUrl,
+        qrUrl: nextQrUrl,
         isActive: wantsOpen,
         googleMapsLink: data.googleMapsLink,
       }
@@ -161,6 +232,15 @@ const AdminManageField = () => {
       if (response.ok) {
         showSuccessMessage(editingField ? 'Field updated successfully' : 'Field created successfully')
         setError('')
+        setImageUploadTypeError('')
+        setQrUploadTypeError('')
+        setQrRequiredError('')
+        setPendingImageFile(null)
+        setPendingImagePreviewUrl('')
+        setPendingImageRemoved(false)
+        setPendingQrFile(null)
+        setPendingQrPreviewUrl('')
+        setPendingQrRemoved(false)
         reset()
         setShowFieldForm(false)
         setEditingField(null)
@@ -168,9 +248,14 @@ const AdminManageField = () => {
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to save field')
+        await rollbackUploads()
       }
     } catch (err) {
       setError('Cannot connect to server')
+      await rollbackUploads()
+    } finally {
+      setIsUploadingImage(false)
+      setIsUploadingQr(false)
     }
   }
 
@@ -183,8 +268,15 @@ const AdminManageField = () => {
     setValue('address', field.address)
     setValue('city', field.city)
     setValue('imageUrl', field.image_url)
-    setValue('isActive', hasPaymentQr ? (field.is_active === 1 ? true : false) : false)
+    setValue('qrUrl', field.qr_url || '')
+    setValue('isActive', field.is_active === 1 ? true : false)
     setValue('googleMapsLink', field.google_maps_link || '')
+    setPendingImageFile(null)
+    setPendingImagePreviewUrl('')
+    setPendingImageRemoved(false)
+    setPendingQrFile(null)
+    setPendingQrPreviewUrl('')
+    setPendingQrRemoved(false)
     setShowFieldForm(true)
   }
 
@@ -227,13 +319,140 @@ const AdminManageField = () => {
   const handleCloseForm = () => {
     setShowFieldForm(false)
     setEditingField(null)
-    setUploadTypeError('')
+    setImageUploadTypeError('')
+    setQrUploadTypeError('')
+    setQrRequiredError('')
+    setPendingImageFile(null)
+    setPendingImagePreviewUrl('')
+    setPendingImageRemoved(false)
+    setPendingQrFile(null)
+    setPendingQrPreviewUrl('')
+    setPendingQrRemoved(false)
     reset()
   }
 
+  const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      const result = reader.result
+      if (typeof result !== 'string') {
+        reject(new Error('Failed to read file'))
+        return
+      }
+
+      const commaIndex = result.indexOf(',')
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result)
+    }
+
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+
+  const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      const result = reader.result
+      if (typeof result !== 'string') {
+        reject(new Error('Failed to read file'))
+        return
+      }
+
+      resolve(result)
+    }
+
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+
   const handleUploadImageClick = () => {
-    setUploadTypeError('')
-    fileInputRef.current?.click()
+    setImageUploadTypeError('')
+    imageFileInputRef.current?.click()
+  }
+
+  const handleDeleteImage = async () => {
+    if (pendingImageFile) {
+      setPendingImageFile(null)
+      setPendingImagePreviewUrl('')
+      setImageUploadTypeError('')
+      showSuccessMessage('Image removed successfully')
+      return
+    }
+
+    if (!imagePreviewUrl) {
+      return
+    }
+
+    setImageUploadTypeError('')
+    setPendingImageRemoved(true)
+    setPendingImagePreviewUrl('')
+    setValue('imageUrl', '', { shouldDirty: true })
+    showSuccessMessage('Image removed successfully')
+  }
+
+  const openImageDeleteModal = () => {
+    if (!displayedImagePreviewUrl) {
+      return
+    }
+
+    setImageToDelete(true)
+  }
+
+  const closeImageDeleteModal = () => {
+    if (isDeleteProcessing) return
+    setImageToDelete(false)
+  }
+
+  const confirmImageDelete = async () => {
+    setImageToDelete(false)
+    await handleDeleteImage()
+  }
+
+  const handleDeleteQr = async () => {
+    if (pendingQrFile) {
+      setPendingQrFile(null)
+      setPendingQrPreviewUrl('')
+      setQrUploadTypeError('')
+      setQrRequiredError('')
+      showSuccessMessage('Payment QR removed successfully')
+      return
+    }
+
+    if (!qrPreviewUrl) {
+      return
+    }
+
+    setQrUploadTypeError('')
+    setQrRequiredError('')
+    setPendingQrRemoved(true)
+    setPendingQrPreviewUrl('')
+    setValue('qrUrl', '', { shouldDirty: true })
+    showSuccessMessage('Payment QR removed successfully')
+  }
+
+  const openQrDeleteModal = () => {
+    if (!displayedQrPreviewUrl) {
+      return
+    }
+
+    setQrToDelete(true)
+  }
+
+  const closeQrDeleteModal = () => {
+    if (isDeleteProcessing) return
+    setQrToDelete(false)
+  }
+
+  const confirmQrDelete = async () => {
+    setQrToDelete(false)
+    await handleDeleteQr()
+  }
+
+  const handleUploadQrClick = () => {
+    setQrRequiredError('')
+    setQrUploadTypeError('')
+    qrFileInputRef.current?.click()
   }
 
   const handleImageFileChange = async (event) => {
@@ -249,74 +468,53 @@ const AdminManageField = () => {
     const isAllowedExtension = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')
 
     if (!isAllowedMime || !isAllowedExtension) {
-      setUploadTypeError('only .jpg .jpeg and .png allowed')
+      setImageUploadTypeError('only .jpg .jpeg and .png allowed')
       return
     }
 
-    setUploadTypeError('')
+    setImageUploadTypeError('')
     setError('')
-    setIsUploadingImage(true)
-    const previousImageUrl = imagePreviewUrl
+    setPendingImageRemoved(false)
 
     try {
-      const base64Data = await new Promise((resolve, reject) => {
-        const reader = new FileReader()
-
-        reader.onload = () => {
-          const result = reader.result
-          if (typeof result !== 'string') {
-            reject(new Error('Failed to read file'))
-            return
-          }
-
-          const commaIndex = result.indexOf(',')
-          resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result)
-        }
-
-        reader.onerror = () => reject(new Error('Failed to read file'))
-        reader.readAsDataURL(file)
-      })
-
-      const response = await fetch(apiUrl('/uploads'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: file.name,
-          mimeType: file.type,
-          base64Data,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        if ((errorData.error || '').toLowerCase() === 'only .jpg .jpeg and .png allowed') {
-          setUploadTypeError('only .jpg .jpeg and .png allowed')
-        } else {
-          setError(errorData.error || 'Failed to upload image')
-        }
-        return
-      }
-
-      const uploadData = await response.json()
-
-      if (
-        previousImageUrl &&
-        previousImageUrl.startsWith('/uploads/') &&
-        previousImageUrl !== uploadData.imageUrl
-      ) {
-        await fetch(apiUrl('/uploads'), {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: previousImageUrl }),
-        })
-      }
-
-      setValue('imageUrl', uploadData.imageUrl, { shouldDirty: true })
-      showSuccessMessage('Image uploaded successfully')
+      const dataUrl = await readFileAsDataUrl(file)
+      setPendingImageFile(file)
+      setPendingImagePreviewUrl(dataUrl)
+      setError('')
     } catch (err) {
-      setError('Failed to upload image')
-    } finally {
-      setIsUploadingImage(false)
+      setError('Failed to read image')
+    }
+  }
+
+  const handleQrFileChange = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) {
+      return
+    }
+
+    const fileName = file.name.toLowerCase()
+    const isAllowedMime = file.type === 'image/jpeg' || file.type === 'image/png'
+    const isAllowedExtension = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')
+
+    if (!isAllowedMime || !isAllowedExtension) {
+      setQrUploadTypeError('only .jpg .jpeg and .png allowed')
+      return
+    }
+
+    setQrUploadTypeError('')
+    setError('')
+    setPendingQrRemoved(false)
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      setPendingQrFile(file)
+      setPendingQrPreviewUrl(dataUrl)
+      setError('')
+      setQrRequiredError('')
+    } catch (err) {
+      setError('Failed to read payment QR')
     }
   }
 
@@ -331,14 +529,6 @@ const AdminManageField = () => {
     navigate('/login')
   }
 
-  const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
-    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
-    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
-    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 flex">
       <SuccessMessage
@@ -352,7 +542,6 @@ const AdminManageField = () => {
         adminName={adminName}
         adminEmail={adminEmail}
         handleLogout={handleLogout}
-        tabItems={tabItems}
       />
 
         {/* MAIN CONTENT */}
@@ -371,7 +560,10 @@ const AdminManageField = () => {
               <AdminSectionBreadcrumb label="Manage Fields" />
             </div>
             <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold tracking-tight">Manage Fields</h1>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight mb-1">Manage Fields</h1>
+                <p className="text-gray-600 text-sm">All fields for your business</p>
+              </div>
               <button
                 onClick={() => {
                   setError('')
@@ -513,7 +705,7 @@ const AdminManageField = () => {
       {/* FIELD FORM MODAL */}
       {showFieldForm && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold">
                 {editingField ? 'Edit Field' : 'Add New Field'}
@@ -526,244 +718,273 @@ const AdminManageField = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit(handleFieldSubmit)} className="space-y-5">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Name *</label>
-                <input
-                  {...register('fieldName', {
-                    required: 'Field name is required',
-                    maxLength: {
-                      value: FIELD_NAME_MAX_LENGTH,
-                      message: `Field name must be ${FIELD_NAME_MAX_LENGTH} characters or fewer`,
-                    },
-                  })}
-                  placeholder="e.g., Main Futsal Court"
-                  maxLength={FIELD_NAME_MAX_LENGTH}
-                  className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
-                    errors.fieldName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.fieldName && (
-                  <p className="text-red-500 text-xs mt-1 ml-4">{errors.fieldName.message}</p>
-                )}
-              </div>
+            <form onSubmit={handleSubmit(handleFieldSubmit)}>
+              <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Name *</label>
+                    <input
+                      {...register('fieldName', {
+                        required: 'Field name is required',
+                        maxLength: {
+                          value: FIELD_NAME_MAX_LENGTH,
+                          message: `Field name must be ${FIELD_NAME_MAX_LENGTH} characters or fewer`,
+                        },
+                      })}
+                      placeholder="e.g., Main Futsal Court"
+                      maxLength={FIELD_NAME_MAX_LENGTH}
+                      className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
+                        errors.fieldName ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.fieldName && (
+                      <p className="text-red-500 text-xs mt-1 ml-4">{errors.fieldName.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Category *</label>
-                <select
-                  {...register('category', { required: 'Category is required' })}
-                  className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
-                    errors.category ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select a category</option>
-                  <option value="Futsal">Futsal</option>
-                  <option value="Badminton">Badminton</option>
-                  <option value="Basketball">Basketball</option>
-                  <option value="Tennis">Tennis</option>
-                  <option value="Biliard">Biliard</option>
-                </select>
-                {errors.category && (
-                  <p className="text-red-500 text-xs mt-1 ml-4">{errors.category.message}</p>
-                )}
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Category *</label>
+                    <select
+                      {...register('category', { required: 'Category is required' })}
+                      className={`w-full px-4 py-3 pr-10 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
+                        errors.category ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select a category</option>
+                      <option value="Futsal">Futsal</option>
+                      <option value="Badminton">Badminton</option>
+                      <option value="Basketball">Basketball</option>
+                      <option value="Tennis">Tennis</option>
+                      <option value="Biliard">Biliard</option>
+                    </select>
+                    {errors.category && (
+                      <p className="text-red-500 text-xs mt-1 ml-4">{errors.category.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Address *</label>
-                <input
-                  {...register('address', {
-                    required: 'Address is required',
-                    maxLength: {
-                      value: FIELD_ADDRESS_MAX_LENGTH,
-                      message: `Address must be ${FIELD_ADDRESS_MAX_LENGTH} characters or fewer`,
-                    },
-                  })}
-                  placeholder="e.g., Jl. Merdeka No. 1"
-                  maxLength={FIELD_ADDRESS_MAX_LENGTH}
-                  className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
-                    errors.address ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.address && (
-                  <p className="text-red-500 text-xs mt-1 ml-4">{errors.address.message}</p>
-                )}
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Address *</label>
+                    <input
+                      {...register('address', {
+                        required: 'Address is required',
+                        maxLength: {
+                          value: FIELD_ADDRESS_MAX_LENGTH,
+                          message: `Address must be ${FIELD_ADDRESS_MAX_LENGTH} characters or fewer`,
+                        },
+                      })}
+                      placeholder="e.g., Jl. Merdeka No. 1"
+                      maxLength={FIELD_ADDRESS_MAX_LENGTH}
+                      className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
+                        errors.address ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.address && (
+                      <p className="text-red-500 text-xs mt-1 ml-4">{errors.address.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">City *</label>
-                <select
-                  {...register('city', { required: 'City is required' })}
-                  className={`w-full px-4 py-3 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
-                    errors.city ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="">Select a city</option>
-                  <option value="Medan">Medan</option>
-                  <option value="Jakarta">Jakarta</option>
-                  <option value="Surabaya">Surabaya</option>
-                  <option value="Bandung">Bandung</option>
-                  <option value="Pekanbaru">Pekanbaru</option>
-                </select>
-                {errors.city && (
-                  <p className="text-red-500 text-xs mt-1 ml-4">{errors.city.message}</p>
-                )}
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">City *</label>
+                    <select
+                      {...register('city', { required: 'City is required' })}
+                      className={`w-full px-4 py-3 pr-10 border rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] ${
+                        errors.city ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Select a city</option>
+                      <option value="Medan">Medan</option>
+                      <option value="Jakarta">Jakarta</option>
+                      <option value="Surabaya">Surabaya</option>
+                      <option value="Bandung">Bandung</option>
+                      <option value="Pekanbaru">Pekanbaru</option>
+                    </select>
+                    {errors.city && (
+                      <p className="text-red-500 text-xs mt-1 ml-4">{errors.city.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Description</label>
-                <textarea
-                  {...register('description', {
-                    maxLength: {
-                      value: MAX_DESCRIPTION_LENGTH,
-                      message: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or fewer`,
-                    },
-                  })}
-                  placeholder="Add details about your field..."
-                  rows="3"
-                  maxLength={MAX_DESCRIPTION_LENGTH}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] resize-none"
-                />
-                {errors.description && (
-                  <p className="text-red-500 text-xs mt-1 ml-4">{errors.description.message}</p>
-                )}
-              </div>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Description</label>
+                    <textarea
+                      {...register('description', {
+                        maxLength: {
+                          value: MAX_DESCRIPTION_LENGTH,
+                          message: `Description must be ${MAX_DESCRIPTION_LENGTH} characters or fewer`,
+                        },
+                      })}
+                      placeholder="Add details about your field..."
+                      rows="3"
+                      maxLength={MAX_DESCRIPTION_LENGTH}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px] resize-none"
+                    />
+                    {errors.description && (
+                      <p className="text-red-500 text-xs mt-1 ml-4">{errors.description.message}</p>
+                    )}
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Field Image</label>
-                <input {...register('imageUrl')} type="hidden" />
-                <button
-                  type="button"
-                  onClick={handleUploadImageClick}
-                  disabled={isUploadingImage}
-                  className={`w-full px-4 py-3 rounded-full text-[13px] font-semibold text-white transition ${
-                    isUploadingImage
-                      ? 'bg-primary/60 cursor-not-allowed'
-                      : 'bg-primary hover:bg-primary/80'
-                  }`}
-                >
-                  {isUploadingImage ? 'Uploading...' : 'Upload Image'}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                  className="hidden"
-                  onChange={handleImageFileChange}
-                />
-                {uploadTypeError && (
-                  <p className="mt-2 text-xs text-red-500 text-center">{uploadTypeError}</p>
-                )}
-                {imagePreviewUrl && (
-                  <div className="mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Preview</p>
-                    <div className="w-full h-52 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
-                      <img
-                        src={resolveImageUrl(imagePreviewUrl)}
-                        alt="Uploaded field preview"
-                        className="h-full w-full object-cover"
-                      />
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Google Maps Link</label>
+                    <input
+                      {...register('googleMapsLink', {
+                        maxLength: {
+                          value: GOOGLE_MAPS_LINK_MAX_LENGTH,
+                          message: `Google Maps link must be ${GOOGLE_MAPS_LINK_MAX_LENGTH} characters or fewer`,
+                        },
+                      })}
+                      placeholder="https://maps.google.com/..."
+                      type="url"
+                      maxLength={GOOGLE_MAPS_LINK_MAX_LENGTH}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px]"
+                    />
+                    {errors.googleMapsLink && (
+                      <p className="text-red-500 text-xs mt-1 ml-4">{errors.googleMapsLink.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
+                    <input
+                      type="checkbox"
+                      {...register('isActive')}
+                      className="w-5 h-5 accent-primary rounded cursor-pointer shrink-0"
+                      id="isActiveToggle"
+                    />
+                    <label htmlFor="isActiveToggle" className="text-[13px] font-semibold text-gray-700 cursor-pointer flex-1 min-w-0">
+                      Open for Bookings
+                    </label>
+                  </div>
+
+                </div>
+
+                <div className="space-y-5">
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                    <input {...register('imageUrl')} type="hidden" />
+                    <div className="mb-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Field Image</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleUploadImageClick}
+                        disabled={isUploadingImage}
+                        className={`mt-3 w-full px-4 py-2 rounded-full text-[13px] font-semibold text-white transition ${
+                          isUploadingImage
+                            ? 'bg-primary/60 cursor-not-allowed'
+                            : 'bg-primary hover:bg-primary/80'
+                        }`}
+                      >
+                        {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+                      </button>
+                    </div>
+                    <input
+                      ref={imageFileInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                      className="hidden"
+                      onChange={handleImageFileChange}
+                    />
+                    {imageUploadTypeError && (
+                      <p className="mb-3 text-xs text-red-500">{imageUploadTypeError}</p>
+                    )}
+                    <div className="relative h-48 rounded-2xl overflow-hidden border border-gray-200 bg-white">
+                      {displayedImagePreviewUrl ? (
+                        <>
+                          <img
+                            src={displayedImagePreviewUrl}
+                            alt="Uploaded field preview"
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={openImageDeleteModal}
+                            className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-xl bg-red-600/90 text-white shadow-lg transition hover:bg-red-700"
+                            aria-label="Delete image"
+                          >
+                            <FiTrash2 className="h-4 w-4" strokeWidth={2.5} />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-sm text-gray-400">
+                          No image uploaded yet
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Google Maps Link</label>
-                <input
-                  {...register('googleMapsLink', {
-                    maxLength: {
-                      value: GOOGLE_MAPS_LINK_MAX_LENGTH,
-                      message: `Google Maps link must be ${GOOGLE_MAPS_LINK_MAX_LENGTH} characters or fewer`,
-                    },
-                  })}
-                  placeholder="https://maps.google.com/..."
-                  type="url"
-                  maxLength={GOOGLE_MAPS_LINK_MAX_LENGTH}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-[13px]"
-                />
-                {errors.googleMapsLink && (
-                  <p className="text-red-500 text-xs mt-1 ml-4">{errors.googleMapsLink.message}</p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <input
-                  type="checkbox"
-                  {...register('isActive')}
-                  disabled={!hasPaymentQr}
-                  className="w-5 h-5 accent-primary rounded cursor-pointer"
-                  id="isActiveToggle"
-                />
-                <label htmlFor="isActiveToggle" className="text-[13px] font-semibold text-gray-700 cursor-pointer flex-1">
-                  {editingField ? (
-                    <>Open for Bookings</>
-                  ) : (
-                    <>Open for Bookings</>
-                  )}
-                </label>
-                {!hasPaymentQr ? (
-                  <span className="text-xs font-semibold text-red-500 text-right">
-                    Upload Payment QR first
-                  </span>
-                ) : (
-                <span className="text-xs font-medium text-gray-500">
-                  {isActiveChecked ? (
-                      <span className="inline-flex items-center gap-1">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          className="w-3.5 h-3.5"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M5 13l4 4L19 7"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                    <input {...register('qrUrl')} type="hidden" />
+                    <div className="mb-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Payment QR *</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleUploadQrClick}
+                        disabled={isUploadingQr}
+                        className={`mt-3 w-full px-4 py-2 rounded-full text-[13px] font-semibold text-white transition ${
+                          isUploadingQr
+                            ? 'bg-primary/60 cursor-not-allowed'
+                            : 'bg-primary hover:bg-primary/80'
+                        }`}
+                      >
+                        {isUploadingQr ? 'Uploading...' : 'Upload QR'}
+                      </button>
+                    </div>
+                    <input
+                      ref={qrFileInputRef}
+                      type="file"
+                      accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                      className="hidden"
+                      onChange={handleQrFileChange}
+                    />
+                    {qrUploadTypeError && (
+                      <p className="mb-3 text-xs text-red-500">{qrUploadTypeError}</p>
+                    )}
+                    {qrRequiredError && (
+                      <p className="mb-3 text-xs text-red-500">{qrRequiredError}</p>
+                    )}
+                    <div className="relative h-48 rounded-2xl overflow-hidden border border-gray-200 bg-white flex items-center justify-center">
+                      {displayedQrPreviewUrl ? (
+                        <>
+                          <img
+                            src={displayedQrPreviewUrl}
+                            alt="Uploaded payment QR preview"
+                            className="h-full w-full object-contain bg-white"
                           />
-                        </svg>
-                        <span>Open</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          className="w-3.5 h-3.5"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M6 6l12 12M18 6l-12 12"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        <span>Closed</span>
-                      </span>
-                  )}
-                </span>
-                )}
+                          <button
+                            type="button"
+                            onClick={openQrDeleteModal}
+                            className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-xl bg-red-600/90 text-white shadow-lg transition hover:bg-red-700"
+                            aria-label="Delete payment QR"
+                          >
+                            <FiTrash2 className="h-4 w-4" strokeWidth={2.5} />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-sm text-gray-400">
+                          No QR uploaded yet
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex gap-3 justify-end pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={handleCloseForm}
-                  className="px-6 py-2.5 border border-gray-300 rounded-full hover:bg-gray-50 transition cursor-pointer font-semibold text-[13px] text-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-primary text-white rounded-full hover:opacity-90 transition cursor-pointer flex items-center gap-2 font-semibold text-[13px]"
-                >
-                  <FiCheck className="h-4 w-4" /> {editingField ? 'Update' : 'Create'}
-                </button>
+              <div className="pt-6 mt-8 border-t border-gray-200">
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
+                    className="px-6 py-2.5 border border-gray-300 rounded-full hover:bg-gray-50 transition cursor-pointer font-semibold text-[13px] text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-primary text-white rounded-full hover:opacity-90 transition cursor-pointer flex items-center gap-2 font-semibold text-[13px]"
+                  >
+                    <FiCheck className="h-4 w-4" /> {editingField ? 'Update' : 'Create'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -778,6 +999,22 @@ const AdminManageField = () => {
         onClose={closeDeleteFieldModal}
         onConfirm={handleDeleteField}
         actionText="delete this field"
+        isProcessing={isDeleteProcessing}
+      />
+
+      <ConfirmationModal
+        isOpen={imageToDelete}
+        onClose={closeImageDeleteModal}
+        onConfirm={confirmImageDelete}
+        actionText="delete this image"
+        isProcessing={isDeleteProcessing}
+      />
+
+      <ConfirmationModal
+        isOpen={qrToDelete}
+        onClose={closeQrDeleteModal}
+        onConfirm={confirmQrDelete}
+        actionText="delete this payment QR"
         isProcessing={isDeleteProcessing}
       />
     </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { FiBarChart2, FiBriefcase, FiGrid, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar, FiCreditCard } from 'react-icons/fi'
+import { FiBarChart2, FiBriefcase, FiGrid, FiPlus, FiEdit2, FiTrash2, FiX, FiCheck, FiTrendingUp, FiAward, FiUsers, FiCalendar } from 'react-icons/fi'
 import { FaShieldAlt } from 'react-icons/fa'
 import Cookies from 'js-cookie'
 import LoadingOverlay from '../components/LoadingOverlay'
@@ -240,14 +240,6 @@ const AdminBooking = () => {
     )
   }
 
-  const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
-    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
-    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
-    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
-  ]
-
   const filteredBookings = bookings.filter((booking) => {
     const venueName = String(booking.field_name || booking.venue_name || booking.venue || '')
     const matchesVenue = venueQuery.trim()
@@ -274,7 +266,6 @@ const AdminBooking = () => {
         adminName={adminName}
         adminEmail={adminEmail}
         handleLogout={handleLogout}
-        tabItems={tabItems}
       />
 
       {/* MAIN CONTENT */}

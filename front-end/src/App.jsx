@@ -10,7 +10,6 @@ import AdminDashboard from "./page/AdminDashboard"
 import AdminManageField from "./page/AdminManageField"
 import AdminManageSlot from "./page/AdminManageSlot"
 import AdminBooking from "./page/AdminBooking"
-import AdminPaymentQr from "./page/AdminPaymentQr"
 import AdminSecurityInfo from "./page/AdminSecurityInfo"
 import UserBooking from "./page/UserBooking"
 import UserSecurityInfo from "./page/UserSecurityInfo"
@@ -104,7 +103,7 @@ const LoginGuard = ({ children }) => {
 
 function App() {
   const location = useLocation()
-  const fullWidthPages = ["/admin/dashboard", "/bookings", "/user/security-info", "/admin/manage-field", "/admin/manage-booking", "/admin/payment-method", "/admin/security-info", "/", "/contact"]
+  const fullWidthPages = ["/admin/dashboard", "/bookings", "/user/security-info", "/admin/manage-field", "/admin/manage-booking", "/admin/security-info", "/", "/contact"]
   const paymentPages = location.pathname.match(/^\/payment\//)
   const fieldManagePages = location.pathname.match(/^\/admin\/manage-field\/courts\/[^/]+$/)
   const showNavbar = !fullWidthPages.includes(location.pathname) && !paymentPages && !fieldManagePages
@@ -177,7 +176,7 @@ function App() {
           path="/admin/payment-method"
           element={
             <ProtectedRoute allowedRole="admin">
-              <AdminPaymentQr />
+              <Navigate to="/admin/manage-field" replace />
             </ProtectedRoute>
           }
         />

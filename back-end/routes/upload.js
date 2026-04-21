@@ -107,35 +107,7 @@ router.delete('/uploads', async (req, res) => {
 })
 
 router.get('/payment-qr/admin/:adminId', async (req, res) => {
-  const { adminId } = req.params
-  const parsedAdminId = Number(adminId)
-
-  if (!Number.isInteger(parsedAdminId) || parsedAdminId < 1) {
-    return res.status(400).json({ error: 'Invalid adminId' })
-  }
-
-  try {
-    const [adminRows] = await db.execute('SELECT id FROM admin WHERE id = ?', [parsedAdminId])
-
-    if (!adminRows.length) {
-      return res.status(404).json({ error: 'Admin not found' })
-    }
-
-    const [fieldRows] = await db.execute(
-      `SELECT qr_url
-       FROM field
-       WHERE admin_id = ? AND qr_url IS NOT NULL AND qr_url <> ''
-       ORDER BY id DESC
-       LIMIT 1`,
-      [parsedAdminId]
-    )
-
-    const imageUrl = fieldRows[0]?.qr_url || null
-    return res.json({ imageUrl })
-  } catch (err) {
-    console.error('Fetch admin payment QR error:', err)
-    return res.status(500).json({ error: 'Failed to fetch payment QR' })
-  }
+  return res.status(410).json({ error: 'Payment QR lookup by admin is no longer supported' })
 })
 
 router.post('/payment-qr/admin/:adminId', async (req, res) => {
@@ -164,22 +136,6 @@ router.post('/payment-qr/admin/:adminId', async (req, res) => {
       return res.status(404).json({ error: 'Admin not found' })
     }
 
-    const [fieldExistRows] = await db.execute(
-      'SELECT id FROM field WHERE admin_id = ? LIMIT 1',
-      [parsedAdminId]
-    )
-
-    if (!fieldExistRows.length) {
-      return res.status(400).json({ error: 'Please create a field first before uploading QR' })
-    }
-
-    const [previousQrRows] = await db.execute(
-      `SELECT DISTINCT qr_url
-       FROM field
-       WHERE admin_id = ? AND qr_url IS NOT NULL AND qr_url <> ''`,
-      [parsedAdminId]
-    )
-
     const extension = inputExtension === '.png' ? '.png' : inputExtension === '.jpeg' ? '.jpeg' : '.jpg'
     const finalFileName = `${generateRandomString(15)}${extension}`
     const filePath = path.join(paymentQrDir, finalFileName)
@@ -187,31 +143,6 @@ router.post('/payment-qr/admin/:adminId', async (req, res) => {
     const nextImageUrl = `/qr/${finalFileName}`
 
     await fs.promises.writeFile(filePath, buffer)
-
-    await db.execute(
-      'UPDATE field SET qr_url = ? WHERE admin_id = ?',
-      [nextImageUrl, parsedAdminId]
-    )
-
-    for (const row of previousQrRows) {
-      const previousImageUrl = row.qr_url
-      if (!previousImageUrl || previousImageUrl === nextImageUrl) {
-        continue
-      }
-
-      const previousFilePath = resolvePaymentQrFilePath(previousImageUrl)
-      if (!previousFilePath) {
-        continue
-      }
-
-      try {
-        await fs.promises.unlink(previousFilePath)
-      } catch (err) {
-        if (err.code !== 'ENOENT') {
-          console.error('Delete previous payment QR error:', err)
-        }
-      }
-    }
 
     return res.status(201).json({
       imageUrl: nextImageUrl,
@@ -224,6 +155,7 @@ router.post('/payment-qr/admin/:adminId', async (req, res) => {
 
 router.delete('/payment-qr/admin/:adminId', async (req, res) => {
   const { adminId } = req.params
+  const { imageUrl } = req.body || {}
   const parsedAdminId = Number(adminId)
 
   if (!Number.isInteger(parsedAdminId) || parsedAdminId < 1) {
@@ -237,32 +169,18 @@ router.delete('/payment-qr/admin/:adminId', async (req, res) => {
       return res.status(404).json({ error: 'Admin not found' })
     }
 
-    const [previousQrRows] = await db.execute(
-      `SELECT DISTINCT qr_url
-       FROM field
-       WHERE admin_id = ? AND qr_url IS NOT NULL AND qr_url <> ''`,
-      [parsedAdminId]
-    )
+    const previousFilePath = resolvePaymentQrFilePath(imageUrl)
 
-    await db.execute(
-      'UPDATE field SET qr_url = NULL WHERE admin_id = ?',
-      [parsedAdminId]
-    )
+    if (!previousFilePath) {
+      return res.status(400).json({ error: 'Invalid image URL' })
+    }
 
-    for (const row of previousQrRows) {
-      const previousImageUrl = row.qr_url
-      const previousFilePath = resolvePaymentQrFilePath(previousImageUrl)
-
-      if (!previousFilePath) {
-        continue
-      }
-
-      try {
-        await fs.promises.unlink(previousFilePath)
-      } catch (err) {
-        if (err.code !== 'ENOENT') {
-          console.error('Delete payment QR file error:', err)
-        }
+    try {
+      await fs.promises.unlink(previousFilePath)
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        console.error('Delete payment QR file error:', err)
+        return res.status(500).json({ error: 'Failed to delete payment QR' })
       }
     }
 

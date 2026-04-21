@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { FiBarChart2, FiCalendar, FiGrid, FiTrendingUp, FiCreditCard } from 'react-icons/fi'
+import { FiBarChart2, FiCalendar, FiGrid, FiTrendingUp } from 'react-icons/fi'
 import { FaShieldAlt } from 'react-icons/fa'
 import LoadingOverlay from '../components/LoadingOverlay'
 import Notification from '../components/Notification'
@@ -287,14 +287,6 @@ const AdminDashboard = () => {
       )
     : null
 
-  const tabItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
-    { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
-    { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
-    { id: 'payment-qr', label: 'Payment Method', icon: FiCreditCard, path: '/admin/payment-method' },
-    { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
-  ]
-
   const handleNotificationClick = (bookingId) => {
     setShowNotifications(false)
     navigate(`/admin/manage-booking#booking-${bookingId}`)
@@ -312,7 +304,6 @@ const AdminDashboard = () => {
         adminName={adminName}
         adminEmail={adminEmail}
         handleLogout={handleLogout}
-        tabItems={tabItems}
       />
 
         {/* MAIN CONTENT */}
