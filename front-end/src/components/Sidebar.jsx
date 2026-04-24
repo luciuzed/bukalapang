@@ -7,7 +7,7 @@ import LOGO from '../assets/header.svg'
 const ADMIN_TAB_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: FiBarChart2, path: '/admin/dashboard' },
   { id: 'fields', label: 'Manage Fields', icon: FiGrid, path: '/admin/manage-field' },
-  { id: 'bookings', label: 'Manage Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
+  { id: 'bookings', label: 'Confirm Bookings', icon: FiCalendar, path: '/admin/manage-booking' },
   { id: 'security-info', label: 'Security & Info', icon: FaShieldAlt, path: '/admin/security-info' },
 ]
 

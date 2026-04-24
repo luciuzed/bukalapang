@@ -397,7 +397,7 @@ const Navbar = () => {
                         }, 300)
                       }}>
                             <div className="p-3 hover:bg-gray-50 rounded-lg flex items-center gap-3 text-sm font-bold text-gray-500 transition-colors">
-                              <FiCalendar className="h-3.75 w-3.75 text-gray-500" /> Manage Bookings
+                              <FiCalendar className="h-3.75 w-3.75 text-gray-500" /> Confirm Bookings
                         </div>
                       </Link>
                       <Link to="/admin/security-info" onClick={() => {
