@@ -466,6 +466,39 @@ router.get('/admin/profile', async (req, res) => {
   }
 });
 
+router.get('/user/profile', async (req, res) => {
+  const { email, userId } = req.query;
+
+  if (!email && !userId) {
+    return res.status(400).json({ error: 'email or userId is required' });
+  }
+
+  try {
+    const [rows] = email
+      ? await db.execute('SELECT id, name, email, number, created_at FROM user WHERE email = ? LIMIT 1', [email])
+      : await db.execute('SELECT id, name, email, number, created_at FROM user WHERE id = ? LIMIT 1', [userId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    const user = rows[0];
+
+    return res.json({
+      user: {
+        userId: user.id,
+        userName: user.name,
+        email: user.email,
+        userNumber: user.number,
+        createdAt: user.created_at,
+      },
+    });
+  } catch (err) {
+    console.error('[USER][PROFILE] Error:', err);
+    return res.status(500).json({ error: 'Failed to load user profile' });
+  }
+});
+
 router.post('/admin/change-password', async (req, res) => {
   const { adminId, currentPassword, newPassword } = req.body;
 
